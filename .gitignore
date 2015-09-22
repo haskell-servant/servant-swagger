@@ -1,0 +1,4 @@
+*.nix
+dist/
+/foo.json
+servant-client-0.4.4/

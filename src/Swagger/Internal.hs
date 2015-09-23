@@ -27,7 +27,7 @@ main =
        _swaggerInfo    = SwaggerInfo (APITitle "foo") (APIVersion "2.0")
                             (APIDescription "Hooray") Nothing
     ,  _swaggerSchemes = Just [ Http ]
-    ,  _swaggerPaths   = [(PathName "dogs", ps)]
+    ,  _swaggerPaths   = [(PathName "/api/dogs", ps)]
     }
   where
     ps = SwaggerPath [(Get, xs)]
@@ -66,7 +66,7 @@ data SwaggerInfo = SwaggerInfo {
 
 data APILicense = APILicense {
      _licenseName :: Text
-  ,  _licenseUrl :: Maybe Text
+  ,  _licenseUrl  :: Maybe Text
   } deriving (Show, Eq)
 
 data SwaggerPath = SwaggerPath {
@@ -129,15 +129,15 @@ instance ToJSON ContentType where
   toJSON PlainText   = String "text/plain; charset=utf-8"
 
 instance ToJSON Scheme where
-  toJSON Http = String "http" 
+  toJSON Http  = String "http" 
   toJSON Https = String "https" 
-  toJSON Ws = String "ws" 
-  toJSON Wss = String "wss" 
+  toJSON Ws    = String "ws" 
+  toJSON Wss   = String "wss" 
 
 instance ToJSON In where
-  toJSON PathUrl = "path"
-  toJSON Query = "query"
-  toJSON Header = "header"
+  toJSON PathUrl  = "path"
+  toJSON Query    = "query"
+  toJSON Header   = "header"
   toJSON FormData = "formData"
 
 data Param = Param {

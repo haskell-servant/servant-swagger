@@ -1,4 +1,4 @@
-name:                swagger
+name:                servant-swagger
 version:             0.1.0.0
 synopsis:            Swagger 
 description:         Swagger 
@@ -13,13 +13,15 @@ cabal-version:       >=1.10
                      
 library
   ghc-options:         -Wall
-  exposed-modules:     Swagger
-  other-modules:       Swagger.Internal
+  exposed-modules:     Servant.Swagger
+  other-modules:       Servant.Swagger.Internal
   hs-source-dirs:      src
   build-depends:       aeson
                      , base >=4.7 && <5
                      , bytestring
                      , hashable
+                     , lens
                      , text
+                     , servant
                      , unordered-containers
   default-language:    Haskell2010

@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE ExistentialQuantification  #-}
@@ -7,9 +8,10 @@
 {-# LANGUAGE RecordWildCards            #-}
 {-# LANGUAGE OverloadedLists            #-}
 ------------------------------------------------------------------------------
-module Swagger.Internal where
+module Servant.Swagger.Internal where
 ------------------------------------------------------------------------------
 import           Control.Arrow
+import Control.Lens
 import           Control.Monad
 import           Data.Aeson
 import           Data.Hashable
@@ -40,6 +42,7 @@ main =
          , _produces  = [ JSON, HTML ]
          , _consumes  = [ JSON, HTML ]
          }
+
 
 newtype APIDescription =  APIDescription { _unApiDesc :: Text }
    deriving (Show, Eq, ToJSON)
@@ -156,7 +159,7 @@ data ItemObject = ItemObject {
 
 newtype APIVersion = APIVersion Text deriving (Show, Eq, ToJSON)
 newtype APITitle = APITitle Text deriving (Show, Eq, ToJSON)
-newtype PathName = PathName { unPathName :: Text } deriving (Show, Eq, Hashable)
+newtype PathName = PathName { unPathName :: Text } deriving (Show, Eq, Hashable, Monoid)
 
 instance ToJSON PathName where
   toJSON (PathName x) = String (T.toLower x)
@@ -217,3 +220,13 @@ instance ToJSON SwaggerInfo where
 
 toTxt :: Show a => a -> Text
 toTxt = T.pack . show
+
+data SwagRoute = SwagRoute {
+    _routePathName :: PathName 
+  , _routeVerb     :: Verb
+  , _routeProduces :: [ContentType]
+  , _routeConsumes :: [ContentType]
+  , _routeParams   :: [Param]
+  } deriving Show
+
+$(makeLenses ''SwagRoute)

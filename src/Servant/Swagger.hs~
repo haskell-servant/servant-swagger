@@ -7,10 +7,9 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE DataKinds #-}
+module Servant.Swagger where
 
-module Swagger where
 import Data.Char
-import           Control.Lens
 import qualified Data.HashMap.Strict as H
 import           Data.Monoid
 import           Data.Proxy
@@ -19,6 +18,14 @@ import qualified Data.Text as T
 import           GHC.Exts (Constraint)
 import           GHC.TypeLits
 import           Servant.API
-import           Servant.API.ContentTypes
 import           Servant.Swagger.Internal
-import           Servant.Utils.Links
+
+
+class HasSwagger h where
+  toSwaggerDocs :: Proxy h -> SwagRoute -> SwaggerAPI
+
+instance (HasSwagger rest, KnownSymbol sym) => HasSwagger (sym :> rest) where
+  toSwaggerDocs Proxy swagRoute =
+    toSwaggerDocs (Proxy :: Proxy rest) (swagRoute ^. .~ 
+  where
+    path = PathName $ "/" <> T.pack (symbolVal (Proxy :: Proxy sym))

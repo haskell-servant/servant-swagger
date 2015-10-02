@@ -62,7 +62,7 @@ data SwaggerAPI = SwaggerAPI {
      _swaggerInfo  :: SwaggerInfo
   ,  _swaggerSchemes :: Maybe [Scheme]
   ,  _swaggerPaths :: H.HashMap PathName SwaggerPath
-  , _swaggerDefinitions  :: H.HashMap ModelName SwaggerModel
+  ,  _swaggerDefinitions  :: H.HashMap ModelName SwaggerModel
   } deriving Show
 
 data SwaggerInfo = SwaggerInfo {
@@ -204,7 +204,7 @@ instance ToJSON SwaggerAPI where
       , "schemes" .= _swaggerSchemes
       , "info"    .= _swaggerInfo
       , "paths"   .= Object (H.fromList $ map f $ H.toList _swaggerPaths)
-      , "definitions" .= ("" :: Text) -- _swaggerDefinitions
+      , "definitions" .= Object mempty
       ]
     where
       f (PathName pathName, sp) = (T.toLower pathName, toJSON sp)
@@ -258,7 +258,7 @@ data SwagRoute = SwagRoute {
   } deriving Show
 
 defSwagRoute :: SwagRoute
-defSwagRoute = SwagRoute (PathName "") [] [] [] defSwaggerInfo Nothing
+defSwagRoute = SwagRoute (PathName "") [] [] [] defSwaggerInfo (Just [Http])
 
 $(makeLenses ''SwagRoute)
 $(makeLenses ''SwaggerAPI)

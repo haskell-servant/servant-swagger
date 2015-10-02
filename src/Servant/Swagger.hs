@@ -10,6 +10,8 @@
 {-# LANGUAGE DataKinds         #-}
 module Servant.Swagger where
 
+import qualified Data.ByteString.Lazy.Char8 as BL8
+import           Data.Aeson
 import           Data.List
 import           Data.Maybe
 import           Data.String
@@ -131,7 +133,16 @@ instance (SwaggerAcceptTypes ctypes, ToSwaggerModel model, HasSwagger rest) =>
              (fromMaybe mempty (unDescription <$> _swagDescription)) True Nothing
 
 -- testing
--- type API = "user" :> Capture "userid" :> Post '[JSON] ()
 
--- main :: IO ()
--- main = print $ toSwaggerDocs (Proxy :: Proxy API) defSwagRoute
+instance ToSwaggerType Int where toSwaggerType = const IntSwag
+instance ToSwaggerDescription Int where toSwaggerDescription = const "UserId of User"
+
+type API = "user" :> Capture "userid" Int :> Post '[JSON] ()
+      :<|> "user" :> Capture "userid" Int :> QueryParam "huh" Int :> Get '[JSON] ()
+      :<|> "user" :> Capture "userid" Int :> Delete '[JSON] ()
+      :<|> "user" :> Capture "userid" Int :> Put '[JSON] ()
+
+go :: IO ()
+go = do
+  let x = encode $ toSwaggerDocs (Proxy :: Proxy API) defSwagRoute
+  BL8.writeFile "foo.json" x

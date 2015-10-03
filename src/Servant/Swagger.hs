@@ -8,9 +8,11 @@
 {-# LANGUAGE KindSignatures    #-}
 {-# LANGUAGE TypeOperators     #-}
 {-# LANGUAGE DataKinds         #-}
+------------------------------------------------------------------------------
 module Servant.Swagger where
-
-import Data.Typeable
+------------------------------------------------------------------------------
+import           Data.Bool
+import           Data.Typeable
 import qualified Data.ByteString.Lazy.Char8 as BL8
 import qualified Data.ByteString.Char8 as B8
 import           Data.Aeson
@@ -28,23 +30,24 @@ import           GHC.Exts (Constraint)
 import           GHC.TypeLits
 import           Servant.API 
 import           Servant.Swagger.Internal
-
+------------------------------------------------------------------------------
+-- | Swaggin' 
 class HasSwagger h where toSwaggerDocs :: Proxy h -> SwagRoute -> SwaggerAPI
-
+------------------------------------------------------------------------------
 instance (HasSwagger rest, KnownSymbol sym) => HasSwagger (sym :> rest) where
   toSwaggerDocs Proxy swagRoute =
     toSwaggerDocs (Proxy :: Proxy rest) (swagRoute & routePathName %~ (<> path))
     where path = PathName $ "/" <> T.pack (symbolVal (Proxy :: Proxy sym))
-
+------------------------------------------------------------------------------
 instance (HasSwagger left, HasSwagger right) => HasSwagger (left :<|> right) where
   toSwaggerDocs Proxy swagRoute@(SwagRoute _ _  _ _  info schemes) =
     let swagLeft = toSwaggerDocs (Proxy :: Proxy left) swagRoute
         swagRight = toSwaggerDocs (Proxy :: Proxy right) swagRoute
         paths = H.unionWith f (swagLeft ^. swaggerPaths) (swagRight ^. swaggerPaths)
         models = H.union (swagLeft ^. swaggerDefinitions) (swagRight ^. swaggerDefinitions)
-    in SwaggerAPI info schemes paths models
+    in SwaggerAPI info schemes paths models (nub $ (swagLeft ^. swaggerTags) ++ (swagRight ^. swaggerTags))
       where f (SwaggerPath l) (SwaggerPath r) = SwaggerPath (H.union l r)
-
+------------------------------------------------------------------------------
 class SwaggerAccept a where toSwaggerAccept :: Proxy a -> ContentType
 instance SwaggerAccept JSON where toSwaggerAccept Proxy = JSON
 instance SwaggerAccept HTML where toSwaggerAccept Proxy = HTML
@@ -53,6 +56,7 @@ instance SwaggerAccept FormUrlEncoded where toSwaggerAccept Proxy = FormUrlEncod
 instance SwaggerAccept PlainText where toSwaggerAccept Proxy = PlainText
 instance SwaggerAccept OctetStream where toSwaggerAccept Proxy = OctetStream
 
+------------------------------------------------------------------------------
 class SwaggerAcceptTypes (xs :: [*]) where toSwaggerAcceptTypes :: Proxy xs -> [ContentType]
 instance SwaggerAcceptTypes '[] where toSwaggerAcceptTypes Proxy = []
 
@@ -68,13 +72,19 @@ instance ToVerb Post where toVerb Proxy  = Post
 instance ToVerb Delete where toVerb Proxy  = Delete
 instance ToVerb Options where toVerb Proxy  = Options
 
+getTag :: PathName -> [Tag]
+getTag (PathName path) = do
+  let xs = T.takeWhile (/='/') (T.drop 1 path)
+  bool [Tag xs] [] $ T.any (=='{') xs
+
 instance (ToSwaggerModel returnType, ToVerb verb, SwaggerAcceptTypes xs) => HasSwagger (verb xs returnType) where
   toSwaggerDocs Proxy swagRoute =
     let swagPath = SwaggerPath [(toVerb (Proxy :: Proxy verb), path)]
-        path = Path mempty (swagRoute ^. routeParams) [(200, Response "Success" (swagModel ^. swagModelName))]
-                  (toSwaggerAcceptTypes (Proxy :: Proxy xs)) (swagRoute ^. routeConsumes)
-    in SwaggerAPI (swagRoute ^. routeSwagInfo) (swagRoute ^. routeSwagSchemes)
-      [(swagRoute ^. routePathName, swagPath)] newModels
+        path = Path "Path summary goes here" (swagRoute ^. routeParams)
+                 [(200, Response "Success" (swagModel ^. swagModelName))]
+                   (toSwaggerAcceptTypes (Proxy :: Proxy xs)) (swagRoute ^. routeConsumes) (getTag $ swagRoute ^. routePathName)
+    in SwaggerAPI (swagRoute ^. routeSwagInfo) (swagRoute ^. routeSwagSchemes) 
+      [(swagRoute ^. routePathName, swagPath)] newModels (getTag $ swagRoute ^. routePathName)
       where
         swagModel@SwaggerModel{..} = toSwagModel (Proxy :: Proxy returnType)
         newModels = case _swagModelName of
@@ -121,8 +131,8 @@ instance (ToSwaggerDescription sym, KnownSymbol sym, HasSwagger rest) =>
       where
         pName = T.pack $ symbolVal (Proxy :: Proxy sym)
         newParam = Param Query pName
-                     Nothing Nothing
-                       (toSwaggerDescription (Proxy :: Proxy sym)) True True Nothing
+                     (Just StringSwagParam) Nothing
+                       (toSwaggerDescription (Proxy :: Proxy sym)) True False Nothing
         newSwagRoute = swagRoute & routeParams %~ (:) newParam
 
 ------------------------------------------------------------------------------
@@ -217,8 +227,18 @@ type API = "user" :> "cat" :> Post '[JSON] User
       :<|> "user" :> Capture "userid" Int :> "happy" :> QueryParam "huh" Int :> Get '[JSON] ()
       :<|> "user" :> Capture "userid" Int :> ReqBody '[JSON] User :> QueryFlag "foo" :> Delete '[JSON] ()
       :<|> "user" :> Capture "userid" Int :> Header "foo" String :> Put '[JSON] ()
+      :<|> "car" :> Capture "userid" Int :> Header "foo" String :> Post '[JSON] ()
+      :<|> "post" :> Capture "userid" Int :> Header "foo" String :> Post '[JSON] ()
 
 go :: IO ()
 go = do
-  let x = encode $ toSwaggerDocs (Proxy :: Proxy API) defSwagRoute
+  let x = encode $ (toSwaggerDocs (Proxy :: Proxy API) defSwagRoute) {
+           _swaggerInfo    = SwaggerInfo (APITitle "Servant Swagger API") (APIVersion "2.0")
+                            (APIDescription "This is a an API that tests swagger integration")
+                            (Just license)
+        ,  _swaggerSchemes = Just [ Http ]
+        }
+  
   BL8.writeFile "foo.json" x
+  where
+    license = APILicense "MIT" (Just "http://mit.com")

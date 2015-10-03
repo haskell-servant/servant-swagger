@@ -16,6 +16,7 @@ import           Control.Arrow
 import           Control.Lens hiding ((.=))
 import           Control.Monad
 import           Data.Aeson
+import           Data.String
 import           Data.Maybe
 import           Data.Hashable
 import           Data.Monoid
@@ -35,6 +36,7 @@ main =
     ,  _swaggerSchemes = Just [ Http ]
     ,  _swaggerPaths   = [(PathName "/api/dogs", ps)]
     ,  _swaggerDefinitions = []
+    ,  _swaggerTags = []
     }
   where
     ps = SwaggerPath [(Get, xs)]
@@ -46,6 +48,7 @@ main =
          , _responses = [(200, Response "success" Nothing)]
          , _produces  = [ JSON, HTML ]
          , _consumes  = [ JSON, HTML ]
+         , _tags = []
          }
 
 defSwaggerInfo :: SwaggerInfo
@@ -59,15 +62,17 @@ newtype APITermsOfService = APITermsOfService { _unAPITermsOfService :: Text }
 
 data Response = Response {
      _description :: Text
-   , _responseModelName :: Maybe ModelName
---  , _reponseHeaders :: Maybe Header
+  , _responseModelName :: Maybe ModelName
   } deriving (Show, Eq)
+
+newtype Tag = Tag Text deriving (Show, Eq, IsString, Ord, ToJSON, FromJSON)
 
 data SwaggerAPI = SwaggerAPI {
      _swaggerInfo  :: SwaggerInfo
   ,  _swaggerSchemes :: Maybe [Scheme]
   ,  _swaggerPaths :: H.HashMap PathName SwaggerPath
   ,  _swaggerDefinitions  :: H.HashMap ModelName SwaggerModel
+  ,  _swaggerTags :: [Tag]
   } deriving Show
 
 data SwaggerInfo = SwaggerInfo {
@@ -108,6 +113,7 @@ data Path = Path {
    , _responses :: H.HashMap Code Response
    , _produces  :: [ContentType]
    , _consumes  :: [ContentType]
+   , _tags      :: [Tag]
   } deriving Show
 
 newtype Code = Code Int
@@ -244,6 +250,10 @@ instance ToJSON SwaggerAPI where
       , "info"        .= _swaggerInfo
       , "paths"       .= Object (H.fromList $ map f $ H.toList _swaggerPaths)
       , "definitions" .= Object (H.fromList $ map g $ H.toList _swaggerDefinitions)
+      , "tags" .= map (\(Tag tag) ->
+                    object [ "name" .= tag
+                           , "description" .= (tag <> " API")
+                           ]) _swaggerTags
       ]
     where
       f (PathName pathName, sp) = (T.toLower pathName, toJSON sp)
@@ -262,6 +272,7 @@ instance ToJSON Path where
             , "produces"   .= _produces 
             , "consumes"   .= _consumes 
             , "summary"    .= _summary  
+            , "tags" .= _tags
             ] 
     where f (Code x, resp) = (toTxt x, toJSON resp)
   
@@ -321,7 +332,7 @@ data SwagRoute = SwagRoute {
   } deriving Show
 
 defSwagRoute :: SwagRoute
-defSwagRoute = SwagRoute (PathName "") [] [] [] defSwaggerInfo (Just [Http])
+defSwagRoute = SwagRoute (PathName "") [] [] [] defSwaggerInfo (Just [Http]) 
 
 $(makeLenses ''SwagRoute)
 $(makeLenses ''SwaggerAPI)

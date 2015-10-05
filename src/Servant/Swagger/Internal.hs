@@ -1,3 +1,5 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -45,7 +47,7 @@ main =
               Param Query "foo" (Just StringSwagParam) Nothing "Foo query param" True True Nothing
            ]
          , _summary   = "Get some dogs"
-         , _responses = [(200, Response "success" Nothing)]
+         , _responses = [(200, Response "success" Nothing [] False)]
          , _produces  = [ JSON, HTML ]
          , _consumes  = [ JSON, HTML ]
          , _tags = []
@@ -60,9 +62,33 @@ newtype APIDescription =  APIDescription { _unApiDesc :: Text }
 newtype APITermsOfService = APITermsOfService { _unAPITermsOfService :: Text }
    deriving (Show, Eq, ToJSON)
 
+class ToResponseHeader a where toResponseHeader :: Proxy a -> ResponseHeader
+class ToResponseHeaders as where toResponseHeaders :: Proxy as -> [ ResponseHeader ]
+
+instance ToJSON ResponseHeader where
+  toJSON ResponseHeader{..} = 
+    object [
+         "type" .= responseHeaderType
+      ,  "description" .= responseHeaderDescription
+      ]
+
+data ResponseHeader = ResponseHeader {
+    responseHeaderDescription :: Text
+  , responseHeaderType :: SwaggerParamType
+  , responseHeaderName :: Text
+  } deriving (Show, Eq)
+
+instance ToResponseHeaders '[] where toResponseHeaders Proxy = []
+
+instance (ToResponseHeader x, ToResponseHeaders xs) => ToResponseHeaders (x ': xs) where
+   toResponseHeaders Proxy =
+     toResponseHeader (Proxy :: Proxy x) : toResponseHeaders (Proxy :: Proxy xs)
+
 data Response = Response {
      _description :: Text
   , _responseModelName :: Maybe ModelName
+  , _responseHeaders :: H.HashMap Text ResponseHeader
+  , _responseIsArray :: Bool
   } deriving (Show, Eq)
 
 newtype Tag = Tag Text deriving (Show, Eq, IsString, Ord, ToJSON, FromJSON)
@@ -107,8 +133,11 @@ data Verb = Post | Get | Put | Options | Head | Delete | Patch
 
 instance Hashable Verb where hash = hash . show
 
+newtype PathSummary = PathSummary Text
+    deriving (Show, Eq, ToJSON, FromJSON, Monoid, IsString)
+
 data Path = Path {
-     _summary   :: Text     
+     _summary   :: PathSummary     
    , _params    :: [Param]
    , _responses :: H.HashMap Code Response
    , _produces  :: [ContentType]
@@ -116,8 +145,7 @@ data Path = Path {
    , _tags      :: [Tag]
   } deriving Show
 
-newtype Code = Code Int
-  deriving (Show, Eq, Ord, ToJSON, Hashable, Num)
+newtype Code = Code Int deriving (Show, Eq, Ord, ToJSON, Hashable, Num)
 
 data SwaggerParamType =
     StringSwagParam
@@ -126,7 +154,7 @@ data SwaggerParamType =
   | BooleanSwagParam
   | ArraySwagParam
   | FileSwagParam
-  deriving Show
+  deriving (Show, Eq)
 
 instance ToJSON SwaggerParamType where
   toJSON StringSwagParam = String "string"
@@ -231,12 +259,11 @@ data SwaggerModel = SwaggerModel {
    } deriving Show
 
 instance ToJSON SwaggerModel where
-  toJSON SwaggerModel{..} =
-    object [
+  toJSON SwaggerModel{..} = object [
         "type" .= ("object" :: Text)
       , "properties" .= H.fromList _swagProperties
       , "description" .= _swagDescription
-    ]
+      ]
 
 $(makeLenses ''SwaggerModel)
 
@@ -252,7 +279,7 @@ instance ToJSON SwaggerAPI where
       , "definitions" .= Object (H.fromList $ map g $ H.toList _swaggerDefinitions)
       , "tags" .= map (\(Tag tag) ->
                     object [ "name" .= tag
-                           , "description" .= (tag <> " API")
+                           , "description" .= (T.toTitle tag <> " API")
                            ]) _swaggerTags
       ]
     where
@@ -279,16 +306,20 @@ instance ToJSON Path where
 instance ToJSON Response where
   toJSON Response {..} = object $ [
       "description" .= _description
+    , "headers" .= _responseHeaders
     ] ++ maybeModelName
     where
       maybeModelName =
         case _responseModelName of
           Nothing -> []
-          Just (ModelName name) -> [
-            "schema" .= object [
-               "$ref" .= ("#/definitions/" <> name)
-             ]
-           ]
+          Just (ModelName name) ->
+            case _responseIsArray of
+              True -> [ "schema" .= object [
+                           "type" .= ("array" :: Text)
+                           , "items" .= object [
+                              "$ref" .= ("#/definitions/" <> name) 
+                       ]]]
+              False -> ["schema".=object["$ref".=("#/definitions/"<> name)]]
 
 instance ToJSON Param where
   toJSON Param{..} = 
@@ -327,12 +358,15 @@ data SwagRoute = SwagRoute {
   , _routeConsumes :: [ContentType]
   , _routeModels   :: H.HashMap ModelName SwaggerModel
   , _routeParams   :: [Param]
+  , _routeVerb     :: Verb
+  , _routePathSummary :: PathSummary
+  , _routeRespHeaders :: H.HashMap Text ResponseHeader
   , _routeSwagInfo :: SwaggerInfo
   , _routeSwagSchemes :: Maybe [Scheme]
   } deriving Show
 
 defSwagRoute :: SwagRoute
-defSwagRoute = SwagRoute (PathName "") [] [] [] defSwaggerInfo (Just [Http]) 
+defSwagRoute = SwagRoute (PathName "") [] [] [] Get mempty [] defSwaggerInfo (Just [Http]) 
 
 $(makeLenses ''SwagRoute)
 $(makeLenses ''SwaggerAPI)

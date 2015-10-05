@@ -1,3 +1,6 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -9,13 +12,15 @@
 {-# LANGUAGE TypeOperators     #-}
 {-# LANGUAGE DataKinds         #-}
 ------------------------------------------------------------------------------
-module Servant.Swagger where
+module Servant.Swagger  where
 ------------------------------------------------------------------------------
 import           Data.Bool
+import           Data.Data
 import           Data.Typeable
 import qualified Data.ByteString.Lazy.Char8 as BL8
 import qualified Data.ByteString.Char8 as B8
 import           Data.Aeson
+import           GHC.Generics
 import           Data.List
 import           Data.Maybe
 import           Data.String
@@ -29,23 +34,43 @@ import qualified Data.Text as T
 import           GHC.Exts (Constraint)
 import           GHC.TypeLits
 import           Servant.API 
+import           Servant.API.ResponseHeaders
 import           Servant.Swagger.Internal
+import qualified Servant.API.Header as H
+-- import qualified Network.HTTP.Types.Header as H
+
+-- genDocs :: HasSwagger h => Proxy h -> Maybe BasePath -> 
+
 ------------------------------------------------------------------------------
 -- | Swaggin' 
-class HasSwagger h where toSwaggerDocs :: Proxy h -> SwagRoute -> SwaggerAPI
+class HasSwagger h where
+  toSwaggerDocs :: Proxy h -> SwagRoute -> SwaggerAPI
 ------------------------------------------------------------------------------
 instance (HasSwagger rest, KnownSymbol sym) => HasSwagger (sym :> rest) where
   toSwaggerDocs Proxy swagRoute =
     toSwaggerDocs (Proxy :: Proxy rest) (swagRoute & routePathName %~ (<> path))
     where path = PathName $ "/" <> T.pack (symbolVal (Proxy :: Proxy sym))
+
+instance ( ToSwaggerParamType headerType
+         , KnownSymbol headerName
+         ) => ToResponseHeader (H.Header headerName headerType) where
+  toResponseHeader Proxy = ResponseHeader mempty ht hn
+      where
+        hn = T.pack . symbolVal $ (Proxy :: Proxy headerName)
+        ht = toSwaggerParamType (Proxy :: Proxy headerType)
+
+------------------------------------------------------------------------------
+instance ToResponseHeaders ls => ToResponseHeaders (Headers ls a) where
+  toResponseHeaders Proxy = toResponseHeaders (Proxy :: Proxy ls)
+
 ------------------------------------------------------------------------------
 instance (HasSwagger left, HasSwagger right) => HasSwagger (left :<|> right) where
-  toSwaggerDocs Proxy swagRoute@(SwagRoute _ _  _ _  info schemes) =
+  toSwaggerDocs Proxy swagRoute@(SwagRoute _ _ _ _ _ _ _ info schemes) =
     let swagLeft = toSwaggerDocs (Proxy :: Proxy left) swagRoute
         swagRight = toSwaggerDocs (Proxy :: Proxy right) swagRoute
-        paths = H.unionWith f (swagLeft ^. swaggerPaths) (swagRight ^. swaggerPaths)
+        paths  = H.unionWith f (swagLeft ^. swaggerPaths) (swagRight ^. swaggerPaths)
         models = H.union (swagLeft ^. swaggerDefinitions) (swagRight ^. swaggerDefinitions)
-    in SwaggerAPI info schemes paths models (nub $ (swagLeft ^. swaggerTags) ++ (swagRight ^. swaggerTags))
+    in SwaggerAPI info schemes paths models (nub $ swagLeft ^. swaggerTags ++ swagRight ^. swaggerTags)
       where f (SwaggerPath l) (SwaggerPath r) = SwaggerPath (H.union l r)
 ------------------------------------------------------------------------------
 class SwaggerAccept a where toSwaggerAccept :: Proxy a -> ContentType
@@ -55,14 +80,12 @@ instance SwaggerAccept XML where toSwaggerAccept Proxy = XML
 instance SwaggerAccept FormUrlEncoded where toSwaggerAccept Proxy = FormUrlEncoded
 instance SwaggerAccept PlainText where toSwaggerAccept Proxy = PlainText
 instance SwaggerAccept OctetStream where toSwaggerAccept Proxy = OctetStream
-
 ------------------------------------------------------------------------------
 class SwaggerAcceptTypes (xs :: [*]) where toSwaggerAcceptTypes :: Proxy xs -> [ContentType]
 instance SwaggerAcceptTypes '[] where toSwaggerAcceptTypes Proxy = []
-
 instance (SwaggerAccept x, SwaggerAcceptTypes xs) => SwaggerAcceptTypes (x ': xs) where
   toSwaggerAcceptTypes Proxy = toSwaggerAccept (Proxy :: Proxy x) : toSwaggerAcceptTypes (Proxy :: Proxy xs)
-
+------------------------------------------------------------------------------
 class ToVerb a where toVerb :: Proxy a -> Verb
 instance ToVerb Get where toVerb Proxy   = Get
 instance ToVerb Put where toVerb Proxy   = Put
@@ -71,18 +94,22 @@ instance ToVerb Head where toVerb Proxy  = Head
 instance ToVerb Post where toVerb Proxy  = Post
 instance ToVerb Delete where toVerb Proxy  = Delete
 instance ToVerb Options where toVerb Proxy  = Options
-
+------------------------------------------------------------------------------
 getTag :: PathName -> [Tag]
 getTag (PathName path) = do
   let xs = T.takeWhile (/='/') (T.drop 1 path)
   bool [Tag xs] [] $ T.any (=='{') xs
 
+class ToSwaggerPathSummary a where
+  toSwaggerPathSummary :: Proxy a -> PathSummary
+
 instance (ToSwaggerModel returnType, ToVerb verb, SwaggerAcceptTypes xs) => HasSwagger (verb xs returnType) where
   toSwaggerDocs Proxy swagRoute =
     let swagPath = SwaggerPath [(toVerb (Proxy :: Proxy verb), path)]
-        path = Path "Path summary goes here" (swagRoute ^. routeParams)
-                 [(200, Response "Success" (swagModel ^. swagModelName))]
-                   (toSwaggerAcceptTypes (Proxy :: Proxy xs)) (swagRoute ^. routeConsumes) (getTag $ swagRoute ^. routePathName)
+        path = Path (swagRoute ^. routePathSummary) (swagRoute ^. routeParams)
+                 [(200, Response "Success" (swagModel ^. swagModelName) (swagRoute ^. routeRespHeaders) False)]
+                   (toSwaggerAcceptTypes (Proxy :: Proxy xs)) (swagRoute ^. routeConsumes)
+                       (getTag $ swagRoute ^. routePathName)
     in SwaggerAPI (swagRoute ^. routeSwagInfo) (swagRoute ^. routeSwagSchemes) 
       [(swagRoute ^. routePathName, swagPath)] newModels (getTag $ swagRoute ^. routePathName)
       where
@@ -136,9 +163,15 @@ instance (ToSwaggerDescription sym, KnownSymbol sym, HasSwagger rest) =>
         newSwagRoute = swagRoute & routeParams %~ (:) newParam
 
 ------------------------------------------------------------------------------
--- | Swagger doesn't support matrix params, bypass
-instance (ToSwaggerDescription typ, ToSwaggerParamType typ, HasSwagger rest) =>
-  HasSwagger (MatrixParam typ :> rest) where
+-- | Raw holds no verb / body information
+instance HasSwagger Raw where
+  toSwaggerDocs Proxy swagRoute =
+    SwaggerAPI (swagRoute ^. routeSwagInfo) (swagRoute ^. routeSwagSchemes) 
+      [(swagRoute ^. routePathName, mempty )] [] (getTag $ swagRoute ^. routePathName)
+
+------------------------------------------------------------------------------
+-- | Swagger doesn't support Raw, bypass
+instance HasSwagger rest => HasSwagger (MatrixParam typ :> rest) where
     toSwaggerDocs Proxy swagRoute = toSwaggerDocs (Proxy :: Proxy rest) swagRoute
 
 ------------------------------------------------------------------------------
@@ -160,23 +193,11 @@ instance (KnownSymbol sym, ToSwaggerDescription typ, ToSwaggerParamType typ, Has
         newParams = Param Servant.Swagger.Internal.Header pName (Just typ) Nothing pDesc False True Nothing
 
 ------------------------------------------------------------------------------
--- | Swagger Response Headers
--- instance (ToSwaggerDescription typ, ToSwaggerParamType typ, HasSwagger rest) =>
---   HasSwagger (Headers xs typ :> rest) where
---     toSwaggerDocs Proxy swagRoute = toSwaggerDocs (Proxy :: Proxy rest) newSwagRoute
---       where
---         newSwagRoute = swagRoute & routeParams %~ (:) newParams
---         pName = T.pack $ symbolVal (Proxy :: Proxy sym) 
---         pDesc = toSwaggerDescription (Proxy :: Proxy typ) 
---         typ = toSwaggerParamType (Proxy :: Proxy typ) 
---         newParams = Param Servant.Swagger.Internal.Header pName (Just typ) Nothing pDesc False True Nothing
-
-------------------------------------------------------------------------------
 -- | ReqBody
 instance (SwaggerAcceptTypes ctypes, ToSwaggerModel model, HasSwagger rest) =>
   HasSwagger (ReqBody ctypes model :> rest) where
     toSwaggerDocs Proxy swagRoute = toSwaggerDocs (Proxy :: Proxy rest) newSwagRoute
-       where
+      where
          SwaggerModel {..} = toSwagModel (Proxy :: Proxy model)
          newSwagRoute =
            swagRoute & routeModels %~ (maybe (<> mempty)
@@ -198,12 +219,19 @@ instance ToSwaggerParamType B8.ByteString where toSwaggerParamType = const Strin
 instance ToSwaggerParamType Double where toSwaggerParamType = const NumberSwagParam
 instance ToSwaggerParamType Float where toSwaggerParamType = const NumberSwagParam
 instance ToSwaggerParamType Bool where toSwaggerParamType Proxy = BooleanSwagParam
+instance ToSwaggerParamType a => ToSwaggerParamType [a] where toSwaggerParamType Proxy = ArraySwagParam
 
 instance ToSwaggerDescription String where toSwaggerDescription _ = "foo header"
 instance ToSwaggerDescription Int where toSwaggerDescription = const "UserId of User"
 instance ToSwaggerDescription "foo" where toSwaggerDescription = const "foo flag"
 
 instance ToSwaggerModel () where toSwagModel Proxy = SwaggerModel Nothing [] Nothing
+instance ToSwaggerModel a => ToSwaggerModel [a]  where toSwagModel Proxy = toSwagModel (Proxy :: Proxy a)
+
+data User = User {
+    firstName :: String
+  , age :: Int    
+  } deriving (Show, Eq)
 
 instance ToSwaggerModel User where
   toSwagModel Proxy =
@@ -215,20 +243,7 @@ instance ToSwaggerModel User where
       , _swagDescription = Just $ Description "User's first name"
       }
 
-newtype DOB = DOB Int deriving (Num, Show)
-
-data User = User {
-    firstName :: String
-  , age :: Integer
-  , dob :: DOB
-  } deriving (Typeable, Show)
-
-type API = "user" :> "cat" :> Post '[JSON] User
-      :<|> "user" :> Capture "userid" Int :> "happy" :> QueryParam "huh" Int :> Get '[JSON] ()
-      :<|> "user" :> Capture "userid" Int :> ReqBody '[JSON] User :> QueryFlag "foo" :> Delete '[JSON] ()
-      :<|> "user" :> Capture "userid" Int :> Header "foo" String :> Put '[JSON] ()
-      :<|> "car" :> Capture "userid" Int :> Header "foo" String :> Post '[JSON] ()
-      :<|> "post" :> Capture "userid" Int :> Header "foo" String :> Post '[JSON] ()
+type API = "user" :> "cat" :> Post '[JSON] [User]
 
 go :: IO ()
 go = do

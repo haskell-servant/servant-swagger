@@ -44,7 +44,7 @@ main =
     ps = SwaggerPath [(Get, xs)]
     xs = Path {
            _params = [
-              Param Query "foo" (Just StringSwagParam) Nothing "Foo query param" True True Nothing
+              Param Query "foo" (Just StringSwagParam) Nothing "Foo query param" True True Nothing False
            ]
          , _summary   = "Get some dogs"
          , _responses = [(200, Response "success" Nothing [] False)]
@@ -62,8 +62,6 @@ newtype APIDescription =  APIDescription { _unApiDesc :: Text }
 newtype APITermsOfService = APITermsOfService { _unAPITermsOfService :: Text }
    deriving (Show, Eq, ToJSON)
 
-class ToResponseHeader a where toResponseHeader :: Proxy a -> ResponseHeader
-class ToResponseHeaders as where toResponseHeaders :: Proxy as -> [ ResponseHeader ]
 
 instance ToJSON ResponseHeader where
   toJSON ResponseHeader{..} = 
@@ -78,11 +76,6 @@ data ResponseHeader = ResponseHeader {
   , responseHeaderName :: Text
   } deriving (Show, Eq)
 
-instance ToResponseHeaders '[] where toResponseHeaders Proxy = []
-
-instance (ToResponseHeader x, ToResponseHeaders xs) => ToResponseHeaders (x ': xs) where
-   toResponseHeaders Proxy =
-     toResponseHeader (Proxy :: Proxy x) : toResponseHeaders (Proxy :: Proxy xs)
 
 data Response = Response {
      _description :: Text
@@ -231,6 +224,7 @@ data Param = Param {
   , _allowEmptyValue  :: Bool
   , _required         :: Bool
   , _default          :: Maybe Value
+  , _isArray          :: Bool
   } deriving Show
 
 data ItemObject = ItemObject {
@@ -248,26 +242,24 @@ instance ToJSON PathName where
 newtype ModelName = ModelName { unModelName :: Text } deriving (Show, Eq, Hashable)
 newtype Description = Description { unDescription :: Text } deriving (Show, Eq, ToJSON)
 
-class ToSwaggerParamType a where toSwaggerParamType :: Proxy a -> SwaggerParamType
-
-class ToSwaggerDescription a where toSwaggerDescription :: Proxy a -> Text
-
 data SwaggerModel = SwaggerModel {
      _swagModelName :: Maybe ModelName
    , _swagProperties :: [(Text, SwaggerType)]
    , _swagDescription :: Maybe Description
+   , _swagModelExample :: Maybe Value
    } deriving Show
 
 instance ToJSON SwaggerModel where
-  toJSON SwaggerModel{..} = object [
+  toJSON SwaggerModel{..} =
+    object $ [
         "type" .= ("object" :: Text)
       , "properties" .= H.fromList _swagProperties
       , "description" .= _swagDescription
-      ]
+      ] ++ maybeExample
+    where
+      maybeExample = maybe [] (\x -> [ "example" .= x ]) _swagModelExample
 
 $(makeLenses ''SwaggerModel)
-
-class ToSwaggerModel a where toSwagModel  :: Proxy a -> SwaggerModel
 
 instance ToJSON SwaggerAPI where
   toJSON SwaggerAPI{..} =
@@ -332,10 +324,18 @@ instance ToJSON Param where
     where
       maybeSchema =
         case _in of
-          Body -> [ "schema" .= object [
-                         "$ref" .= ("#/definitions/" <> _name)
-                       ]
-                    ]
+          Body -> [ "schema" .=
+                      case _isArray of
+                        False ->
+                         object [ "$ref" .= ("#/definitions/" <> _name) ]
+                        True ->
+                          object [ 
+                              "type" .= ("array" :: Text)
+                             , "items" .= object [ 
+                                 "$ref" .= ("#/definitions/" <> _name ) 
+                               ]
+                             ]
+                         ]
           _ -> [] 
       maybeType =
         case _type of

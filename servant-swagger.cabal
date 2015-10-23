@@ -15,6 +15,21 @@ library
   ghc-options:         -Wall
   exposed-modules:     Servant.Swagger
   other-modules:       Servant.Swagger.Internal
+  default-extensions:
+             FlexibleContexts           
+           , DeriveGeneric              
+           , DeriveDataTypeable         
+           , GeneralizedNewtypeDeriving 
+           , RecordWildCards            
+           , FlexibleInstances          
+           , OverloadedLists            
+           , PolyKinds                  
+           , OverloadedStrings          
+           , TypeFamilies               
+           , KindSignatures             
+           , TypeOperators              
+           , CPP                        
+           , DataKinds                  
   hs-source-dirs:      src
   build-depends:       aeson
                      , base >=4.7 && <5

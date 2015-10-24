@@ -1,7 +1,7 @@
 name:                servant-swagger
 version:             0.1.0.0
-synopsis:            Swagger 
-description:         Swagger 
+synopsis:            Swagger
+description:         Swagger
 license:             BSD3
 license-file:        LICENSE
 author:              David Johnson
@@ -10,26 +10,27 @@ copyright:           David Johnson (c) 2015-2016
 category:            Web
 build-type:          Simple
 cabal-version:       >=1.10
-                     
+
+
 library
   ghc-options:         -Wall
   exposed-modules:     Servant.Swagger
   other-modules:       Servant.Swagger.Internal
   default-extensions:
-             FlexibleContexts           
-           , DeriveGeneric              
-           , DeriveDataTypeable         
-           , GeneralizedNewtypeDeriving 
-           , RecordWildCards            
-           , FlexibleInstances          
-           , OverloadedLists            
-           , PolyKinds                  
-           , OverloadedStrings          
-           , TypeFamilies               
-           , KindSignatures             
-           , TypeOperators              
-           , CPP                        
-           , DataKinds                  
+             FlexibleContexts
+           , DeriveGeneric
+           , DeriveDataTypeable
+           , GeneralizedNewtypeDeriving
+           , RecordWildCards
+           , FlexibleInstances
+           , OverloadedLists
+           , PolyKinds
+           , OverloadedStrings
+           , TypeFamilies
+           , KindSignatures
+           , TypeOperators
+           , CPP
+           , DataKinds
   hs-source-dirs:      src
   build-depends:       aeson
                      , base >=4.7 && <5

@@ -52,7 +52,18 @@ swagDoc = swagger (Proxy :: Proxy API) (BasePath "/") info
 
 -- Documentation and annotations
 instance ToSwaggerParamType TodoId where toSwaggerParamType = const StringSwagParam  
-instance ToSwaggerDescription TodoId where toSwaggerDescription = const "TodoId param" 
+instance ToSwaggerDescription TodoId where toSwaggerDescription = const "TodoId param"
+instance ToSwaggerModel Todo where
+  toSwagModel Proxy =
+    SwaggerModel {
+        _swagModelName = (ModelName "Todo")
+      , _swagProperties = [ ("created", IntegerSwag)
+                          , ("description", StringSwag)
+                          ]
+      , _swagDescription = Just $ Description "This is some real Todo"
+      , _swagModelExample = Just $ toJSON $ Todo 100 "get milk"
+      , _swagModelRequired = ["description"]
+      }
 
 -- Main, create swaggger.json
 main :: IO ()

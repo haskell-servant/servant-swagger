@@ -67,7 +67,7 @@ instance ToSwaggerModel Todo where
 
 -- Main, create swaggger.json
 main :: IO ()
-main = BL8.writeFile "swagger.json" (encode swagDog)
+main = BL8.writeFile "swagger.json" (encode swagDoc)
 ```
 
 ### Output
@@ -142,6 +142,8 @@ main = BL8.writeFile "swagger.json" (encode swagDog)
     "tags": []
 }
 ```
+## Try it out
+ - All generated swagger docs can be interactively viewed on <a href="http://editor.swagger.io/">Swagger Editor</a>
 
 ## Limitations
  - Quite a few, TODO: add this

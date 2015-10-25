@@ -16,7 +16,7 @@
 
 Given the following `servant` API, `servant-swagger` generates the following json.
 
-# Input 
+### Input 
 
 ```haskell
 import Servant.API
@@ -59,7 +59,7 @@ main :: IO ()
 main = BL8.writeFile "swagger.json" (encode swagDog)
 ```
 
-# Output - `swagger.json`
+### Output
 
 ```json
 {

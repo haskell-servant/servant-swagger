@@ -47,7 +47,7 @@ swagDoc = swagger (Proxy :: Proxy API) (BasePath "/") info
     info =
       Info
        (APITitle "Todo API") (APIVersion "1.0")
-       (APIDescription "This is a an API that tests servant-swagger support for a Todo
+       (APIDescription "This is a an API that tests servant-swagger support for a Todo")
        (Just license')
 
 -- Documentation and annotations

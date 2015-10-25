@@ -5,7 +5,7 @@
 </h1>
 
 <p align="center">
-  This project converts <a href="">servant</a> APIs into Swagger 2.0 conforming JSON.
+  This project converts <a href="https://github.com/haskell-servant/servant">servant</a> APIs into Swagger 2.0 conforming JSON.
 </p>
 
 <p align="center">

@@ -55,9 +55,7 @@ data SwagRoute = SwagRoute {
   } deriving Show
 
 defSwagRoute :: SwagRoute
-defSwagRoute =
-  SwagRoute (PathName "") [] [] []
-    Get mempty [] 
+defSwagRoute = SwagRoute (PathName "") [] [] [] Get mempty [] 
 
 defSwaggerInfo :: Info
 defSwaggerInfo =
@@ -87,12 +85,12 @@ newtype Tag = Tag Text
   deriving (Show, Eq, IsString, Ord, ToJSON, FromJSON)
 
 data SwaggerAPI = SwaggerAPI {
-     _swaggerInfo  :: Info
-  ,  _swaggerSchemes :: [Scheme]
-  ,  _swaggerPaths :: H.HashMap PathName SwaggerPath
-  ,  _swaggerDefinitions  :: H.HashMap ModelName SwaggerModel
-  ,  _swaggerTags :: [Tag]
-  ,  _swaggerBasePath :: BasePath
+     _swaggerInfo        :: Info
+  ,  _swaggerSchemes     :: [Scheme]
+  ,  _swaggerPaths       :: H.HashMap PathName SwaggerPath
+  ,  _swaggerDefinitions :: H.HashMap ModelName SwaggerModel
+  ,  _swaggerTags        :: [Tag]
+  ,  _swaggerBasePath    :: BasePath
   } deriving Show
 
 newtype BasePath = BasePath Text
@@ -115,7 +113,7 @@ data SwaggerPath = SwaggerPath {
   } deriving Show
 
 data SwagResult = SwagResult {
-    _resultPaths :: H.HashMap PathName SwaggerPath
+    _resultPaths  :: H.HashMap PathName SwaggerPath
   , _resultModels :: H.HashMap ModelName SwaggerModel
   } deriving (Show)
 
@@ -226,7 +224,7 @@ instance ToResponseHeaders '[] where toResponseHeaders Proxy = []
 ------------------------------------------------------------------------------
 instance (HasSwagger rest, KnownSymbol sym) => HasSwagger (sym :> rest) where
   toSwaggerDocs Proxy swagRoute =
-     toSwaggerDocs (Proxy :: Proxy rest) $ swagRoute & routePathName %~ (<>) path
+     toSwaggerDocs (Proxy :: Proxy rest) $ swagRoute & routePathName %~ flip (<>) path
    where path = PathName $ "/" <> T.pack (symbolVal (Proxy :: Proxy sym))
 
 instance (HasSwagger left, HasSwagger right) => HasSwagger (left :<|> right) where
@@ -271,7 +269,8 @@ instance SwaggerAccept 'OctetStream where toSwaggerAccept Proxy = OctetStream
 class SwaggerAcceptTypes (xs :: [*]) where toSwaggerAcceptTypes :: Proxy xs -> [ContentType]
 instance SwaggerAcceptTypes '[] where toSwaggerAcceptTypes Proxy = []
 instance (SwaggerAccept x, SwaggerAcceptTypes xs) => SwaggerAcceptTypes (x ': xs) where
-  toSwaggerAcceptTypes Proxy = toSwaggerAccept (Proxy :: Proxy x) : toSwaggerAcceptTypes (Proxy :: Proxy xs)
+  toSwaggerAcceptTypes Proxy =
+    toSwaggerAccept (Proxy :: Proxy x) : toSwaggerAcceptTypes (Proxy :: Proxy xs)
 ------------------------------------------------------------------------------
 class ToVerb a where toVerb :: Proxy a -> Verb
 instance ToVerb Get where toVerb Proxy   = Get
@@ -286,11 +285,6 @@ instance ToVerb 'Post where toVerb Proxy  = Post
 instance ToVerb Delete where toVerb Proxy  = Delete
 instance ToVerb 'Delete where toVerb Proxy  = Delete
 instance ToVerb 'Options where toVerb Proxy  = Options
-
-getTag :: PathName -> [Tag]
-getTag (PathName path) = do
-  let xs = T.takeWhile (/='/') (T.drop 1 path)
-  bool [Tag xs] [] $ T.any (=='{') xs
 
 class ToSwaggerPathSummary a where
   toSwaggerPathSummary :: Proxy a -> PathSummary
@@ -316,8 +310,7 @@ instance
     let swagPath = SwaggerPath [(toVerb (Proxy :: Proxy verb), path)]
         path = Path (swagRoute ^. routePathSummary) (swagRoute ^. routeParams)
             [(200, Response "OK" (swagModel ^. swagModelName) (swagRoute ^. routeRespHeaders) False)]
-               (toSwaggerAcceptTypes (Proxy :: Proxy xs)) (swagRoute ^. routeConsumes)
-                   (getTag $ swagRoute ^. routePathName)
+               (toSwaggerAcceptTypes (Proxy :: Proxy xs)) (swagRoute ^. routeConsumes) []
     in SwagResult [(pathName, swagPath)] newModels
       where
         pathName = if (swagRoute ^. routePathName) == PathName ""
@@ -331,14 +324,14 @@ instance
 #if MIN_VERSION_base(4,8,0)
    {-# OVERLAPPING #-}
 #endif
- (ToSwaggerModel returnType, ToVerb verb, SwaggerAcceptTypes xs) => HasSwagger (verb xs [returnType]) where
+ (ToSwaggerModel returnType, ToVerb verb, SwaggerAcceptTypes xs)
+    => HasSwagger (verb xs [returnType]) where
   toSwaggerDocs Proxy swagRoute =
     let swagPath = SwaggerPath [(toVerb (Proxy :: Proxy verb), path)]
         path = Path (swagRoute ^. routePathSummary) (swagRoute ^. routeParams)
             [(200, Response "OK" (swagModel ^. swagModelName) (swagRoute ^. routeRespHeaders) True)]
-               (toSwaggerAcceptTypes (Proxy :: Proxy xs)) (swagRoute ^. routeConsumes)
-                   (getTag $ swagRoute ^. routePathName)
-    in SwagResult [(swagRoute ^. routePathName, swagPath)] newModels 
+               (toSwaggerAcceptTypes (Proxy :: Proxy xs)) (swagRoute ^. routeConsumes) []
+    in SwagResult [(swagRoute ^. routePathName, swagPath)] newModels
       where
         swagModel@SwaggerModel{..} = toSwagModel (Proxy :: Proxy returnType)
         newModels = bool (swagRoute ^. routeModels)
@@ -564,7 +557,6 @@ setPath :: BasePath -> BasePath
 setPath (BasePath "") = BasePath "/"
 setPath (BasePath x) = BasePath x
 
-
 instance ToJSON SwaggerAPI where
   toJSON SwaggerAPI{..} =
     object [
@@ -661,4 +653,5 @@ instance ToJSON Info where
 toTxt :: Show a => a -> Text
 toTxt = T.pack . show
 
+-- Add Path Summaries, and tags
 

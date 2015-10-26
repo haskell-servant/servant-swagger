@@ -16,11 +16,27 @@ import Network.Wai.Handler.Warp
 import Control.Monad.Trans.Either
 
 -- Test API
-type TodoAPI = Get '[JSON] SwaggerAPI
-  :<|> "todo" :> Capture "id" TodoId :> Delete '[JSON] ()
+type TodoAPI = "todo" :> Capture "id" TodoId :> Get '[JSON] Todo
   :<|> "todo" :> Capture "id" TodoId :> ReqBody '[JSON] Todo :> Put '[JSON] (Maybe Todo)
   :<|> "todo" :> "count" :> Get '[JSON] Todo
   :<|> "todo" :> ReqBody '[JSON] Todo :> Post '[JSON] Todo
+
+type TestAPI = "todo" :> Capture "id" TodoId :> Get '[JSON] Todo
+
+swagDoc :: SwaggerAPI
+swagDoc = swagger (Proxy :: Proxy TestAPI) (BasePath "/") info schemes
+  where
+    schemes = [ Http ]
+    license' = APILicense "MIT" (Just "http://mit.com")
+    info =
+      Info
+       (APITitle "Todo API") (APIVersion "1.0")
+       (APIDescription "This is a an API that tests servant-swagger support for a Todo API")
+       (Just license')
+
+type DocsAPI = Get '[JSON] SwaggerAPI
+
+type API = DocsAPI :<|> TodoAPI
 
 -- Data
 data Todo = Todo { created :: Int, description :: String }
@@ -40,7 +56,7 @@ api = Proxy
 main :: IO ()
 main = do
   putStrLn "Running on port 8000"
-  run 8000 $ serve (Proxy :: Proxy TodoAPI) endpoints
+  run 8000 $ serve (Proxy :: Proxy API) endpoints
   where
     endpoints = swagHandler :<|> undefined
                   undefined :<|> undefined :<|> undefined
@@ -81,7 +97,3 @@ instance ToSwaggerDescription TodoId where
 
 instance ToSwaggerDescription Completed where
   toSwaggerDescription = const "Completed param"
-
-
-
-

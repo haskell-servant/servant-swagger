@@ -36,7 +36,13 @@ module Servant.Swagger
 import Servant.Swagger.Internal
 import Data.Proxy
 
-swagger :: HasSwagger swagger => Proxy swagger -> BasePath -> Info -> [Scheme] -> SwaggerAPI
+swagger
+  :: HasSwagger swagger
+  => Proxy swagger
+  -> BasePath
+  -> Info
+  -> [Scheme]
+  -> SwaggerAPI
 swagger proxy basePath info schemes =
   let SwagResult{..} = toSwaggerDocs proxy defSwagRoute
   in SwaggerAPI info schemes _resultPaths _resultModels [] (setPath basePath)

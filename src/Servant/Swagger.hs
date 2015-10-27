@@ -7,9 +7,14 @@ module Servant.Swagger
   , ToSwaggerParamType   (..)
   , SwaggerParamType     (..)
   , ToSwaggerModel       (..)
+  , ToHeaderDescription  (..)
   , ToModelExample       (..)
   -- * Types
   , APIDescription       (..)
+  , Contact              (..)
+  , ContactName          (..)
+  , ContactURL           (..)
+  , ContactEmail         (..)
   , APITermsOfService    (..)
   , SwaggerAPI           (..)
   , SwaggerPath          (..)
@@ -30,6 +35,8 @@ module Servant.Swagger
   , Description          (..)
   , BasePath             (..)
   , Response             (..)
+  , ModelSwag            (..)
+  , SwaggerHeader        (..)
   , responseDescription
   , responseModelName
   , responseHeaders

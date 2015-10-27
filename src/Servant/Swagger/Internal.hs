@@ -68,19 +68,28 @@ defSwaggerRoute = SwaggerRoute (PathName "") [] [] [] Get mempty [] []
 defSwaggerInfo :: Info
 defSwaggerInfo =
   Info (APITitle mempty)
-    (APIVersion "2.0") (APIDescription mempty) Nothing
+    (APIVersion "2.0") (APIDescription mempty) Nothing Nothing
+
+newtype ContactName = ContactName Text
+  deriving (Show, Eq, ToJSON, FromJSON, Ord)
+
+newtype ContactURL = ContactURL Text
+  deriving (Show, Eq, ToJSON, FromJSON, Ord)
+
+newtype ContactEmail = ContactEmail Text
+  deriving (Show, Eq, ToJSON, FromJSON, Ord)
 
 data Contact = Contact {
-    _contactName :: Text
-  , _contactURL :: Text
-  , _contactEmail :: Text
+    _contactName :: ContactName
+  , _contactURL :: ContactURL
+  , _contactEmail :: ContactEmail
   } deriving (Show, Eq, Ord)
 
 instance ToJSON Contact where
   toJSON Contact{..} =
     object [
-        "name" .= _contactName
-      , "url" .= _contactURL
+        "name"  .= _contactName
+      , "url"   .= _contactURL
       , "email" .= _contactEmail
       ]
 
@@ -105,7 +114,7 @@ data Response = Response {
   } deriving (Show, Eq)
 
 defResponse :: Response
-defResponse = Response mempty (ModelName mempty) mempty False (Code 201)
+defResponse = Response mempty (ModelName mempty) mempty False (Code 200)
 
 newtype TagName = TagName Text deriving (Show, Eq, Ord, ToJSON, FromJSON)
 newtype TagDescription = TagDescription Text deriving (Show, Eq, Ord, ToJSON, FromJSON)
@@ -137,6 +146,7 @@ data Info = Info {
   , _swaggerVersion        :: APIVersion
   , _swaggerAPIDescription :: APIDescription
   , _license               :: Maybe APILicense
+  , _contact               :: Maybe Contact
   } deriving (Show, Eq)
 
 data APILicense = APILicense {
@@ -180,7 +190,7 @@ data SwaggerParamType =
   | NumberSwagParam
   | IntegerSwagParam
   | BooleanSwagParam
-  | ArraySwagParam
+  | ArraySwagParam 
   | FileSwagParam
   deriving (Show, Eq)
 
@@ -231,8 +241,11 @@ newtype APITitle = APITitle Text deriving (Show, Eq, ToJSON)
 newtype PathName = PathName { unPathName :: Text }
   deriving (Show, Eq, Hashable, Monoid)
 
-newtype ModelName = ModelName { unModelName :: Text } deriving (Show, Eq, Hashable, Monoid)
-newtype Description = Description { unDescription :: Text } deriving (Show, Eq, ToJSON, Monoid)
+newtype ModelName = ModelName { unModelName :: Text }
+   deriving (Show, Eq, Hashable, Monoid)
+
+newtype Description =
+  Description { unDescription :: Text } deriving (Show, Eq, ToJSON, Monoid)
 
 data SwaggerModel = SwaggerModel {
      _swagModelName    :: ModelName
@@ -263,6 +276,7 @@ $(makeLenses ''SwagResult)
 $(makeLenses ''SwaggerRoute)
 $(makeLenses ''SwaggerAPI)
 $(makeLenses ''Info)
+$(makeLenses ''Contact)
 $(makeLenses ''APILicense)
 $(makeLenses ''Path)
 $(makeLenses ''Tag)
@@ -311,8 +325,10 @@ instance ToSwaggerParamType B8.ByteString where toSwaggerParamType = const Strin
 instance ToSwaggerParamType Double where toSwaggerParamType = const NumberSwagParam
 instance ToSwaggerParamType Float where toSwaggerParamType = const NumberSwagParam
 instance ToSwaggerParamType Bool where toSwaggerParamType Proxy = BooleanSwagParam
-instance ToSwaggerParamType a => ToSwaggerParamType [a] where
-  toSwaggerParamType Proxy = ArraySwagParam
+
+instance
+  ToSwaggerParamType a => ToSwaggerParamType [a] where
+    toSwaggerParamType p = ArraySwagParam
 
 class ToHeaderDescription a where
   toHeaderDescription :: Proxy a -> Text
@@ -488,9 +504,10 @@ instance (ToSwaggerDescription typ, ToSwaggerParamType typ, KnownSymbol sym, Has
   HasSwagger (QueryParams sym typ :> rest) where
     toSwaggerDocs Proxy swagRoute = toSwaggerDocs (Proxy :: Proxy rest) newSwaggerRoute
       where
+        ptyp = toSwaggerParamType (Proxy :: Proxy typ)
         pName = T.pack $ symbolVal (Proxy :: Proxy sym)
         newParam = Param Query pName
-                     (Just ArraySwagParam) (Just $ ItemObject (toSwaggerParamType (Proxy :: Proxy typ)))
+                     (Just ArraySwagParam) (Just $ ItemObject ptyp)
                        (toSwaggerDescription (Proxy :: Proxy typ)) True False Nothing True
         newSwaggerRoute = swagRoute & routeParams %~ (:) newParam
 
@@ -510,7 +527,7 @@ instance (ToSwaggerDescription sym, KnownSymbol sym, HasSwagger rest) =>
 -- | Raw holds no verb / body information
 instance HasSwagger Raw where
   toSwaggerDocs Proxy swagRoute =
-    SwagResult [(swagRoute ^. routePathName, mempty)] [] 
+    SwagResult [(swagRoute ^. routePathName, mempty)] []
 
 ------------------------------------------------------------------------------
 -- | Swagger doesn't support Raw, bypass
@@ -609,7 +626,7 @@ instance ToJSON SwaggerParamType where
   toJSON NumberSwagParam = String "number"
   toJSON IntegerSwagParam = String "integer"
   toJSON BooleanSwagParam = String "boolean"
-  toJSON ArraySwagParam = String "array"
+  toJSON ArraySwagParam   = String "array"
   toJSON FileSwagParam = String "file"
 
 instance ToJSON SwaggerType where
@@ -672,6 +689,7 @@ instance ToJSON SwaggerModel where
     object $ [
         "type" .= ("object" :: Text)
       , "properties" .= HM.fromList _swagProperties
+      , "required" .= _swagModelRequired
       ] ++ maybeExample ++ maybeDescription
     where
       maybeDescription = maybe [] (\(Description x) -> [ "description" .= x ]) _swagDescription
@@ -740,7 +758,7 @@ instance ToJSON Param where
       , "name"        .= _name
       , "description" .= _paramDescription
       , "required"    .= _required
-      ]  ++ maybeType ++ maybeSchema
+      ]  ++ maybeSchema ++ [ "type" .= _type | isJust _type ]
     where
       maybeSchema =
         case _in of
@@ -757,10 +775,6 @@ instance ToJSON Param where
                              ]
                          ]
           _ -> []
-      maybeType =
-        case _type of
-          Nothing -> []
-          Just pType -> [ "type" .= pType ]
 
 instance ToSwaggerModel a => ToSwaggerModel (Maybe a) where
   toSwagModel _ = toSwagModel (Proxy :: Proxy a)
@@ -771,7 +785,8 @@ instance ToJSON Info where
         "title"   .= _swaggerInfoTitle
       , "version" .= _swaggerVersion
       , "description" .= _swaggerAPIDescription
-      ] ++ (maybe [] (pure .  ("license" .=)) _license)
+      ] ++ [ "license" .=  _license | isJust _license ]
+        ++ [ "contact" .=  _contact | isJust _contact ]
 
 toTxt :: Show a => a -> Text
 toTxt = T.pack . show
@@ -809,7 +824,8 @@ swaggerPathInfo
   -> SwaggerRouteInfo layout
 swaggerPathInfo pEndpoint pLayout SwaggerRouteDescription{..} = swagResult
   where
-    f [(pName, SwaggerPath swagPath)] = [(pName, SwaggerPath $ HM.fromList . g . HM.toList $ swagPath)]
+    f [(pName, SwaggerPath swagPath)] =
+        [(pName, SwaggerPath $ HM.fromList . g . HM.toList $ swagPath)]
     f _ = error "Route non-existant, impossible" 
     g [(verb, path)] = [(verb, newPath path)] 
     g _ = error "Route non-existant, impossible" 

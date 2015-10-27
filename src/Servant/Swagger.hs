@@ -56,6 +56,10 @@ module Servant.Swagger
   , swagRouteSummary
   , swagRouteResponses
   , swagRouteModels
+  , PathDescription (..)
+  , swagRouteDescription
+  , OperationId (..)
+  , swagRouteOperationId
   , defSwaggerInfo
   ) where
 

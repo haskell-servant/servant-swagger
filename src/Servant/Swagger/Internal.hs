@@ -30,6 +30,7 @@ import           Data.Text                  (Text, pack, unpack)
 import           Data.Aeson
 import           Data.Aeson.Types ( typeMismatch )
 import           Data.Hashable
+import           Data.List
 import           Data.Maybe
 import           Data.Data
 import qualified Data.ByteString.Lazy.Char8 as BL8
@@ -165,7 +166,12 @@ data Path = Path {
    , _produces  :: [ContentType]
    , _consumes  :: [ContentType]
    , _tags      :: [Tag]
+   , _operationId :: OperationId
+   , _description :: PathDescription
   } deriving Show
+
+newtype OperationId = OperationId Text deriving (Show, Eq, ToJSON, Monoid)
+newtype PathDescription = PathDescription Text deriving (Show, Eq, ToJSON, Monoid)
 
 newtype Code = Code Int deriving (Show, Eq, Ord, ToJSON, Hashable, Num)
 
@@ -244,10 +250,12 @@ data SwaggerRouteDescription = SwaggerRouteDescription {
   , _swagRouteSummary   :: PathSummary -- ^ Description of this endpoint
   , _swagRouteResponses :: HM.HashMap Code Response  -- ^ Additional responses for this endpoint
   , _swagRouteModels    :: HM.HashMap ModelName SwaggerModel
+  , _swagRouteOperationId :: OperationId
+  , _swagRouteDescription :: PathDescription
   } deriving Show
 
 emptyRouteDescription :: SwaggerRouteDescription
-emptyRouteDescription = SwaggerRouteDescription mempty mempty mempty mempty
+emptyRouteDescription = SwaggerRouteDescription mempty mempty mempty mempty mempty mempty
 
 $(makeLenses ''SwaggerModel)
 $(makeLenses ''SwaggerRouteDescription)
@@ -274,7 +282,6 @@ instance (ToHeader x, ToResponseHeaders xs) => ToResponseHeaders (x ': xs)  wher
   toResponseHeaders Proxy = HM.union header' (toResponseHeaders (Proxy :: Proxy xs))
     where
       header' = transHeader (toHeader (Proxy :: Proxy x))
-
 
 transHeader :: SwaggerHeader -> HM.HashMap Text SwaggerHeader
 transHeader r@SwaggerHeader{..} = HM.fromList [(headerName, r)]
@@ -322,12 +329,11 @@ instance ( ToSwaggerParamType headerType
 
 class SwaggerAccept a where toSwaggerAccept :: Proxy a -> ContentType
 instance SwaggerAccept JSON where toSwaggerAccept Proxy = JSON
-instance SwaggerAccept 'JSON where toSwaggerAccept Proxy = JSON
-instance SwaggerAccept 'HTML where toSwaggerAccept Proxy = HTML
-instance SwaggerAccept 'XML where toSwaggerAccept Proxy = XML
-instance SwaggerAccept 'FormUrlEncoded where toSwaggerAccept Proxy = FormUrlEncoded
-instance SwaggerAccept 'PlainText where toSwaggerAccept Proxy = PlainText
-instance SwaggerAccept 'OctetStream where toSwaggerAccept Proxy = OctetStream
+instance SwaggerAccept HTML where toSwaggerAccept Proxy = HTML
+instance SwaggerAccept XML where toSwaggerAccept Proxy = XML
+instance SwaggerAccept FormUrlEncoded where toSwaggerAccept Proxy = FormUrlEncoded
+instance SwaggerAccept PlainText where toSwaggerAccept Proxy = PlainText
+instance SwaggerAccept OctetStream where toSwaggerAccept Proxy = OctetStream
 ------------------------------------------------------------------------------
 class SwaggerAcceptTypes (xs :: [*]) where toSwaggerAcceptTypes :: Proxy xs -> [ContentType]
 instance SwaggerAcceptTypes '[] where toSwaggerAcceptTypes Proxy = []
@@ -337,17 +343,11 @@ instance (SwaggerAccept x, SwaggerAcceptTypes xs) => SwaggerAcceptTypes (x ': xs
 ------------------------------------------------------------------------------
 class ToVerb a where toVerb :: Proxy a -> Verb
 instance ToVerb Get where toVerb Proxy   = Get
-instance ToVerb 'Get where toVerb Proxy   = Get
 instance ToVerb Put where toVerb Proxy   = Put
-instance ToVerb 'Put where toVerb Proxy   = Put
 instance ToVerb Patch where toVerb Proxy = Patch
-instance ToVerb 'Patch where toVerb Proxy = Patch
-instance ToVerb 'Head where toVerb Proxy  = Head
 instance ToVerb Post where toVerb Proxy  = Post
-instance ToVerb 'Post where toVerb Proxy  = Post
 instance ToVerb Delete where toVerb Proxy  = Delete
-instance ToVerb 'Delete where toVerb Proxy  = Delete
-instance ToVerb 'Options where toVerb Proxy  = Options
+instance ToVerb Options where toVerb Proxy  = Options
 
 class ToSwaggerModel a where
   toSwagModel  :: Proxy a -> SwaggerModel
@@ -379,6 +379,8 @@ instance
                     (toSwaggerAcceptTypes (Proxy :: Proxy xs))
                     (swagRoute ^. routeConsumes)
                     []
+                    mempty
+                    mempty
     in SwagResult [(pathName, swagPath)] newModels
       where
         response = Response "OK" (swagModel ^. swagModelName) [] False 200
@@ -402,7 +404,7 @@ instance
                     [(_responseCode response, response)]
                     (toSwaggerAcceptTypes (Proxy :: Proxy xs))
                     (swagRoute ^. routeConsumes)
-                    []
+                    [] mempty mempty
     in SwagResult [(pathName, swagPath)] newModels
       where
         response = Response "OK" (swagModel ^. swagModelName) [] False 200
@@ -427,7 +429,7 @@ instance
                     [(_responseCode response, response)]
                     (toSwaggerAcceptTypes (Proxy :: Proxy xs))
                     (swagRoute ^. routeConsumes)
-                    []
+                    mempty mempty mempty
     in SwagResult [(swagRoute ^. routePathName, swagPath)] newModels
       where
         response = Response "OK" (swagModel ^. swagModelName)
@@ -450,7 +452,7 @@ instance
                     [(_responseCode response, response)]
                     (toSwaggerAcceptTypes (Proxy :: Proxy xs))
                     (swagRoute ^. routeConsumes)
-                    []
+                    [] mempty mempty
     in SwagResult [(swagRoute ^. routePathName, swagPath)] newModels
       where
         response = Response "OK" (swagModel ^. swagModelName) rspHeaders False 200
@@ -695,19 +697,21 @@ instance ToJSON SwaggerAPI where
       g (ModelName modelName, model) = (modelName, toJSON model)
 
 instance ToJSON SwaggerPath where
-  toJSON (SwaggerPath paths) = 
+  toJSON (SwaggerPath paths) =
      Object . HM.fromList . map f . HM.toList $ paths
     where
       f (verb, sp) = (T.toLower $ toTxt verb, toJSON sp)
 
 instance ToJSON Path where
   toJSON Path {..} =
-    object [  "parameters" .= _params
-            , "responses"  .= (Object . HM.fromList . map f . HM.toList $ _responses)
-            , "produces"   .= _produces
-            , "consumes"   .= _consumes
-            , "summary"    .= _summary
-            , "tags"       .=  map _tagName _tags
+    object [  "parameters"  .= _params
+            , "responses"   .= (Object . HM.fromList . map f . HM.toList $ _responses)
+            , "produces"    .= _produces
+            , "consumes"    .= _consumes
+            , "summary"     .= _summary
+            , "tags"        .=  map _tagName _tags
+            , "operationId" .= _operationId
+            , "description" .= _description
             ] 
     where f (Code x, resp) = (toTxt x, toJSON resp)
   
@@ -790,6 +794,12 @@ instance Monoid SwagResult where
           p1 & summary .~ (if p1 ^. summary == PathSummary "" then p2 ^. summary else p1 ^. summary)
              & responses %~ HM.union (p2 ^. responses)
              & tags %~ (++) (p2 ^. tags)
+             & operationId .~ (if p1 ^. operationId == OperationId ""
+                              then p2 ^. operationId
+                              else p1 ^. operationId)
+             & description .~ (if p1 ^. description == PathDescription ""
+                              then p2 ^. description
+                              else p1 ^. description)
 
 swaggerPathInfo
   :: ( IsElem endpoint layout, HasLink endpoint, HasSwagger endpoint, HasSwagger layout )
@@ -804,6 +814,8 @@ swaggerPathInfo pEndpoint pLayout SwaggerRouteDescription{..} = swagResult
     g [(verb, path)] = [(verb, newPath path)] 
     g _ = error "Route non-existant, impossible" 
     newPath p = p & summary .~ _swagRouteSummary
+                  & operationId .~  _swagRouteOperationId
+                  & description .~  _swagRouteDescription
                   & responses %~ HM.union _swagRouteResponses
                   & tags %~ (++) _swagRouteTags
     swagResult =
@@ -815,4 +827,4 @@ swaggerPathInfo pEndpoint pLayout SwaggerRouteDescription{..} = swagResult
       in SwaggerRouteInfo (finalDocs <> pathDocs)
 
 getAllTags :: SwagResult -> [Tag]
-getAllTags (SwagResult paths _) =  _tags =<< HM.elems =<< _paths <$> HM.elems paths
+getAllTags (SwagResult paths _) =  nub . _tags =<< HM.elems =<< _paths <$> HM.elems paths

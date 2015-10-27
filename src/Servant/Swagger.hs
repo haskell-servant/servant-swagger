@@ -3,7 +3,7 @@ module Servant.Swagger
   -- * Classes
     HasSwagger           (..)
   , ToSwaggerDescription (..)
-  , ToResponseHeader     (..)
+  , ToHeader             (..)
   , ToSwaggerParamType   (..)
   , SwaggerParamType     (..)
   , ToSwaggerModel       (..)
@@ -13,6 +13,7 @@ module Servant.Swagger
   , APITermsOfService    (..)
   , SwaggerAPI           (..)
   , SwaggerPath          (..)
+  , SwaggerRouteInfo     (..)
   , Path                 (..)
   , Code                 (..)
   , Verb                 (..)
@@ -28,24 +29,51 @@ module Servant.Swagger
   , Scheme               (..)
   , Description          (..)
   , BasePath             (..)
+  , Response             (..)
+  , responseDescription
+  , responseModelName
+  , responseHeaders
+  , responseIsArray
+  , responseCode
+  , defResponse
+  , Tag                  (..)
+  , TagName              (..)
+  , TagDescription       (..)
+  , tagName
+  , tagDescription
   -- * Swaggadelic
   , swagger
-  , emptySwaggerModel
+  , emptyModel
+  , swaggerPathInfo
+  , emptyRouteDescription
+  -- * Lenses
+  , swagModelName
+  , swagModelExample
+  , swagProperties
+  , swagModelRequired
+  , swagDescription
+  , swagRouteTags
+  , swagRouteSummary
+  , swagRouteResponses
+  , swagRouteModels
+  , defSwaggerInfo
   ) where
 
 import Servant.Swagger.Internal
 import Data.Proxy
+import Data.Monoid
 
 swagger
   :: HasSwagger swagger
   => Proxy swagger
+  -> SwaggerRouteInfo swagger
   -> BasePath
   -> Info
   -> [Scheme]
   -> SwaggerAPI
-swagger proxy basePath info schemes =
-  let SwagResult{..} = toSwaggerDocs proxy defSwagRoute
-  in SwaggerAPI info schemes _resultPaths _resultModels [] (setPath basePath)
+swagger proxy (SwaggerRouteInfo routeInfo) basePath info schemes = do
+  let result@SwagResult{..} = routeInfo <> toSwaggerDocs proxy defSwaggerRoute
+  SwaggerAPI info schemes _resultPaths _resultModels (getAllTags result) (setPath basePath)
 
 
 

@@ -19,7 +19,6 @@
 #if !MIN_VERSION_base(4,8,0)
 {-# LANGUAGE OverlappingInstances       #-}
 #endif
-
 ------------------------------------------------------------------------------
 module Servant.Swagger.Internal  where
 ------------------------------------------------------------------------------
@@ -46,6 +45,7 @@ import qualified Data.Text.Lazy as L
 import           GHC.TypeLits
 import           Servant.API hiding (Header)
 import qualified Servant.API.Header as H
+import qualified Data.UUID as UUID
 
 -- | Type used to accumulate information of a Servant path
 data SwaggerRoute = SwaggerRoute {
@@ -68,7 +68,7 @@ defSwaggerRoute = SwaggerRoute (PathName "") [] [] [] Get mempty [] []
 defSwaggerInfo :: Info
 defSwaggerInfo =
   Info (APITitle mempty)
-    (APIVersion "2.0") (APIDescription mempty) Nothing Nothing
+    (APIVersion "2.0") (APIDescription mempty) Nothing Nothing Nothing
 
 newtype ContactName = ContactName Text
   deriving (Show, Eq, ToJSON, FromJSON, Ord)
@@ -96,7 +96,7 @@ instance ToJSON Contact where
 newtype APIDescription = APIDescription { _unApiDesc :: Text }
    deriving (Show, Eq, ToJSON)
 
-newtype APITermsOfService = APITermsOfService { _unAPITermsOfService :: Text }
+newtype TermsOfService = TermsOfService Text
    deriving (Show, Eq, ToJSON)
 
 data SwaggerHeader = SwaggerHeader {
@@ -136,7 +136,42 @@ data SwaggerAPI = SwaggerAPI {
   ,  _swaggerDefinitions :: HM.HashMap ModelName SwaggerModel
   ,  _swaggerTags        :: [Tag]
   ,  _swaggerBasePath    :: BasePath
+  ,  _swaggerHostName    :: Maybe HostName
+  ,  _swaggerSecurityDefintions :: [SecurityDefinition]
   } deriving Show
+
+data SecurityDefinition = OAuthDef OAuth | APIKeyDef APIKey | BasicAuthDef BasicAuth
+  deriving Show
+
+data BasicAuth = BasicAuth deriving Show
+
+data OAuthFlow = OAuthFlow deriving (Show) 
+data OAuthURL = OAuthURL deriving (Show) 
+data TokenURL = TokenURL deriving (Show) 
+data Scopes = Scopes deriving (Show) 
+
+data OAuth = OAuth {
+    oauthDescription :: Maybe Description
+  , oauthFlow :: OAuthFlow
+  , oauthURL :: OAuthURL
+  , oauthTokenURL :: TokenURL
+  , scopes :: Scopes
+  } deriving Show
+
+newtype APIKeyName = APIKeyName Text deriving (Show, Eq)
+data APIKeyIn = APIKeyQueryParam | APIKeyHeader deriving (Show, Eq)
+
+data APIKey = APIKey {
+    apiKeyDescription :: Maybe Description
+  , apiKeyName :: APIKeyName
+  , apiKeyIn :: APIKeyIn
+  } deriving Show
+
+instance ToJSON APIKey where
+  toJSON APIKey{..} =
+    object [ "api_key" .= ([] :: [Int]) ]
+
+newtype HostName = HostName Text deriving (Show, Eq, IsString, ToJSON, FromJSON)
 
 newtype BasePath = BasePath Text
    deriving (Show, Eq, ToJSON, FromJSON)
@@ -147,6 +182,7 @@ data Info = Info {
   , _swaggerAPIDescription :: APIDescription
   , _license               :: Maybe APILicense
   , _contact               :: Maybe Contact
+  , _termsOfService        :: Maybe TermsOfService
   } deriving (Show, Eq)
 
 data APILicense = APILicense {
@@ -176,9 +212,12 @@ data Path = Path {
    , _produces  :: [ContentType]
    , _consumes  :: [ContentType]
    , _tags      :: [Tag]
-   , _operationId :: OperationId
+   , _operationId :: Maybe OperationId
    , _description :: PathDescription
+   , _deprecated :: Maybe Deprecated
   } deriving Show
+
+newtype Deprecated = Deprecated Bool deriving (Show, Eq, ToJSON)
 
 newtype OperationId = OperationId Text deriving (Show, Eq, ToJSON, Monoid)
 newtype PathDescription = PathDescription Text deriving (Show, Eq, ToJSON, Monoid)
@@ -263,7 +302,7 @@ data SwaggerRouteDescription = SwaggerRouteDescription {
   , _swagRouteSummary   :: PathSummary -- ^ Description of this endpoint
   , _swagRouteResponses :: HM.HashMap Code Response  -- ^ Additional responses for this endpoint
   , _swagRouteModels    :: HM.HashMap ModelName SwaggerModel
-  , _swagRouteOperationId :: OperationId
+  , _swagRouteOperationId :: Maybe OperationId
   , _swagRouteDescription :: PathDescription
   } deriving Show
 
@@ -317,6 +356,8 @@ instance (HasSwagger left, HasSwagger right) => HasSwagger (left :<|> right) whe
 
 class ToSwaggerParamType a where toSwaggerParamType :: Proxy a -> SwaggerParamType
 instance ToSwaggerParamType Int where toSwaggerParamType = const IntegerSwagParam
+instance ToSwaggerParamType Integer where toSwaggerParamType = const IntegerSwagParam
+instance ToSwaggerParamType UUID.UUID where toSwaggerParamType = const StringSwagParam
 instance ToSwaggerParamType String where toSwaggerParamType = const StringSwagParam
 instance ToSwaggerParamType Text where toSwaggerParamType = const StringSwagParam
 instance ToSwaggerParamType L.Text where toSwaggerParamType = const StringSwagParam
@@ -328,7 +369,7 @@ instance ToSwaggerParamType Bool where toSwaggerParamType Proxy = BooleanSwagPar
 
 instance
   ToSwaggerParamType a => ToSwaggerParamType [a] where
-    toSwaggerParamType p = ArraySwagParam
+    toSwaggerParamType _ = ArraySwagParam
 
 class ToHeaderDescription a where
   toHeaderDescription :: Proxy a -> Text
@@ -341,7 +382,7 @@ instance ( ToSwaggerParamType headerType
       where
         desc = T.pack . symbolVal $ (Proxy :: Proxy headerName)
         hn = T.pack . symbolVal $ (Proxy :: Proxy headerName)
-        ht = toSwaggerParamType (Proxy :: Proxy headerType)  
+        ht = toSwaggerParamType (Proxy :: Proxy headerType)
 
 class SwaggerAccept a where toSwaggerAccept :: Proxy a -> ContentType
 instance SwaggerAccept JSON where toSwaggerAccept Proxy = JSON
@@ -397,6 +438,8 @@ instance
                     []
                     mempty
                     mempty
+                    Nothing
+
     in SwagResult [(pathName, swagPath)] newModels
       where
         response = Response "OK" (swagModel ^. swagModelName) [] False 200
@@ -420,7 +463,7 @@ instance
                     [(_responseCode response, response)]
                     (toSwaggerAcceptTypes (Proxy :: Proxy xs))
                     (swagRoute ^. routeConsumes)
-                    [] mempty mempty
+                    [] mempty mempty Nothing
     in SwagResult [(pathName, swagPath)] newModels
       where
         response = Response "OK" (swagModel ^. swagModelName) [] False 200
@@ -445,7 +488,7 @@ instance
                     [(_responseCode response, response)]
                     (toSwaggerAcceptTypes (Proxy :: Proxy xs))
                     (swagRoute ^. routeConsumes)
-                    mempty mempty mempty
+                    mempty mempty mempty Nothing
     in SwagResult [(swagRoute ^. routePathName, swagPath)] newModels
       where
         response = Response "OK" (swagModel ^. swagModelName)
@@ -468,7 +511,7 @@ instance
                     [(_responseCode response, response)]
                     (toSwaggerAcceptTypes (Proxy :: Proxy xs))
                     (swagRoute ^. routeConsumes)
-                    [] mempty mempty
+                    [] mempty mempty Nothing
     in SwagResult [(swagRoute ^. routePathName, swagPath)] newModels
       where
         response = Response "OK" (swagModel ^. swagModelName) rspHeaders False 200
@@ -689,9 +732,9 @@ instance ToJSON SwaggerModel where
     object $ [
         "type" .= ("object" :: Text)
       , "properties" .= HM.fromList _swagProperties
-      , "required" .= _swagModelRequired
-      ] ++ maybeExample ++ maybeDescription
+      ] ++ maybeExample ++ maybeDescription ++ requiredList
     where
+      requiredList = [ "required" .= _swagModelRequired | not (null _swagModelRequired) ]
       maybeDescription = maybe [] (\(Description x) -> [ "description" .= x ]) _swagDescription
       maybeExample = maybe [] (\x -> [ "example" .= x ]) _swagModelExample
 
@@ -701,7 +744,7 @@ setPath (BasePath x) = BasePath x
 
 instance ToJSON SwaggerAPI where
   toJSON SwaggerAPI{..} =
-    object [
+    object $ [
         "swagger"     .= ("2.0" :: Text)
       , "schemes"     .= _swaggerSchemes
       , "basePath"    .= _swaggerBasePath
@@ -709,7 +752,7 @@ instance ToJSON SwaggerAPI where
       , "paths"       .= Object (HM.fromList $ map f $ HM.toList _swaggerPaths)
       , "definitions" .= Object (HM.fromList $ map g $ HM.toList _swaggerDefinitions)
       , "tags" .=  _swaggerTags
-      ]
+      ] ++ [ "hostname" .= _swaggerHostName | isJust _swaggerHostName ]
     where
       f (PathName pathName, sp) = (T.toLower pathName, toJSON sp)
       g (ModelName modelName, model) = (modelName, toJSON model)
@@ -722,17 +765,17 @@ instance ToJSON SwaggerPath where
 
 instance ToJSON Path where
   toJSON Path {..} =
-    object [  "parameters"  .= _params
-            , "responses"   .= (Object . HM.fromList . map f . HM.toList $ _responses)
-            , "produces"    .= _produces
-            , "consumes"    .= _consumes
-            , "summary"     .= _summary
-            , "tags"        .=  map _tagName _tags
-            , "operationId" .= _operationId
-            , "description" .= _description
-            ] 
+    object $ [ "parameters"  .= _params
+             , "responses"   .= (Object . HM.fromList . map f . HM.toList $ _responses)
+             , "produces"    .= _produces
+             , "consumes"    .= _consumes
+             , "summary"     .= _summary
+             , "tags"        .=  map _tagName _tags
+             , "description" .= _description
+             ] ++ [ "deprecated" .= _deprecated | isJust _deprecated ]
+               ++ [ "operationId" .= _operationId | isJust _operationId ]
     where f (Code x, resp) = (toTxt x, toJSON resp)
-  
+
 instance ToJSON Response where
   toJSON Response {..} = object $ [
       "description" .= _responseDescription
@@ -787,6 +830,7 @@ instance ToJSON Info where
       , "description" .= _swaggerAPIDescription
       ] ++ [ "license" .=  _license | isJust _license ]
         ++ [ "contact" .=  _contact | isJust _contact ]
+        ++ [ "termsOfService" .=  _termsOfService | isJust _termsOfService ]
 
 toTxt :: Show a => a -> Text
 toTxt = T.pack . show
@@ -809,12 +853,8 @@ instance Monoid SwagResult where
           p1 & summary .~ (if p1 ^. summary == PathSummary "" then p2 ^. summary else p1 ^. summary)
              & responses %~ HM.union (p2 ^. responses)
              & tags %~ (++) (p2 ^. tags)
-             & operationId .~ (if p1 ^. operationId == OperationId ""
-                              then p2 ^. operationId
-                              else p1 ^. operationId)
-             & description .~ (if p1 ^. description == PathDescription ""
-                              then p2 ^. description
-                              else p1 ^. description)
+             & operationId .~ p1 ^. operationId <> p2 ^. operationId
+             & description .~ p1 ^. description <> p2 ^. description
 
 swaggerPathInfo
   :: ( IsElem endpoint layout, HasLink endpoint, HasSwagger endpoint, HasSwagger layout )

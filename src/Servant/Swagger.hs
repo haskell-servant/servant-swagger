@@ -15,7 +15,7 @@ module Servant.Swagger
   , ContactName          (..)
   , ContactURL           (..)
   , ContactEmail         (..)
-  , APITermsOfService    (..)
+  , TermsOfService       (..)
   , SwaggerAPI           (..)
   , SwaggerPath          (..)
   , SwaggerRouteInfo     (..)
@@ -81,10 +81,13 @@ swagger
   -> BasePath
   -> Info
   -> [Scheme]
+  -> Maybe HostName
+  -> [SecurityDefinition]
   -> SwaggerAPI
-swagger proxy (SwaggerRouteInfo routeInfo) basePath info schemes = do
+swagger proxy (SwaggerRouteInfo routeInfo) basePath info schemes hostName secDefs = do
   let result@SwagResult{..} = routeInfo <> toSwaggerDocs proxy defSwaggerRoute
-  SwaggerAPI info schemes _resultPaths _resultModels (getAllTags result) (setPath basePath)
+  SwaggerAPI info schemes _resultPaths _resultModels
+    (getAllTags result) (setPath basePath) hostName secDefs
 
 
 

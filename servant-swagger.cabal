@@ -1,5 +1,5 @@
 name:                servant-swagger
-version:             0.1.0.0
+version:             0.0.0.0
 synopsis:            Swagger
 description:         Swagger
 license:             BSD3
@@ -10,6 +10,7 @@ copyright:           David Johnson (c) 2015-2016
 category:            Web
 build-type:          Simple
 cabal-version:       >=1.10
+description:         This is an experimental release, this API is subject to change at any moment.
 
 
 library
@@ -35,9 +36,11 @@ library
   build-depends:       aeson
                      , base >=4.7 && <5
                      , bytestring
+                     , containers
                      , hashable
                      , lens
                      , text
+                     , uuid
                      , servant
                      , unordered-containers
   default-language:    Haskell2010

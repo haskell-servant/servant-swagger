@@ -17,9 +17,9 @@ module Servant.Swagger
   , ContactEmail         (..)
   , TermsOfService       (..)
   , SwaggerAPI           (..)
-  , SwaggerPath          (..)
+  , SwaggerOperation     (..)
   , SwaggerRouteInfo     (..)
-  , Path                 (..)
+  , Operation            (..)
   , Code                 (..)
   , Verb                 (..)
   , PathSummary          (..)
@@ -68,11 +68,13 @@ module Servant.Swagger
   , OperationId (..)
   , swagRouteOperationId
   , defSwaggerInfo
+  , createSwaggerJson
   ) where
 
 import Servant.Swagger.Internal
 import Data.Proxy
 import Data.Monoid
+import Control.Lens
 
 swagger
   :: HasSwagger swagger
@@ -86,8 +88,14 @@ swagger
   -> SwaggerAPI
 swagger proxy (SwaggerRouteInfo routeInfo) basePath info schemes hostName secDefs = do
   let result@SwagResult{..} = routeInfo <> toSwaggerDocs proxy defSwaggerRoute
-  SwaggerAPI info schemes _resultPaths _resultModels
-    (getAllTags result) (setPath basePath) hostName secDefs
+  defSwaggerAPI info
+     & swaggerPaths .~ _resultPaths
+     & swaggerSchemes ?~ schemes
+     & swaggerDefinitions .~ _resultModels
+     & swaggerTags ?~ getAllTags result
+     & swaggerBasePath ?~ basePath
+     & swaggerHostName .~ hostName
+     & swaggerSecurityDefintions ?~ secDefs
 
 
 

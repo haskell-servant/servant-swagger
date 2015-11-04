@@ -62,8 +62,8 @@ instance ToSwaggerModel Todo where
                           , ("description", StringSwag)
                           , ("extraTodos", Model $ ModelSwag (ModelName "Todo") False)
                           ]
-      & swagDescription .~ Just (Description "This is some real Todo right here")
-      & swagModelExample .~ Just (toJSON $ Todo 100 "get milk")
+      & swagDescription .?~ Description "This is some real Todo right here"
+      & swagModelExample .?~ toJSON $ Todo 100 "get milk"
       & swagModelRequired .~ ["description"]
 
 -- Main, create swaggger.json

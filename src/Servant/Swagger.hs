@@ -69,6 +69,12 @@ module Servant.Swagger
   , swagRouteOperationId
   , defSwaggerInfo
   , createSwaggerJson
+  , swaggerInfoTitle
+  , swaggerVersion
+  , swaggerAPIDescription
+  , license
+  , contact
+  , termsOfService
   ) where
 
 import Servant.Swagger.Internal

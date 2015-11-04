@@ -12,6 +12,9 @@ build-type:          Simple
 cabal-version:       >=1.10
 description:         This is an experimental release, this API is subject to change at any moment.
 
+source-repository head
+  type:     git
+  location: git://github.com/dmjio/servant-swagger.git
 
 library
   ghc-options:         -Wall

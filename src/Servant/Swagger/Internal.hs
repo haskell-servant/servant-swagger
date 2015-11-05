@@ -138,15 +138,15 @@ defSwaggerInfo =
 
 -- | Contact name of `Contact` object
 newtype ContactName = ContactName Text
-  deriving (Show, Eq, ToJSON, FromJSON, Ord)
+  deriving (Show, Eq, ToJSON, FromJSON, Ord, Monoid)
 
 -- | Contact URL of `Contact` object
 newtype ContactURL = ContactURL Text
-  deriving (Show, Eq, ToJSON, FromJSON, Ord)
+  deriving (Show, Eq, ToJSON, FromJSON, Ord, Monoid)
 
 -- | Contact Email of `Contact` object
 newtype ContactEmail = ContactEmail Text
-  deriving (Show, Eq, ToJSON, FromJSON, Ord)
+  deriving (Show, Eq, ToJSON, FromJSON, Ord, Monoid)
 
 -- | Contact Object
 data Contact = Contact {
@@ -154,6 +154,11 @@ data Contact = Contact {
   , _contactURL :: ContactURL
   , _contactEmail :: ContactEmail
   } deriving (Show, Eq, Ord)
+
+instance Monoid Contact where
+  mempty = Contact mempty mempty mempty
+  (Contact a1 b1 c1) `mappend` (Contact a2 b2 c2) =
+     Contact (a1 <> a2) (b1 <> b2) (c1 <> c2)
 
 -- | Contact Object
 instance ToJSON Contact where
@@ -166,11 +171,11 @@ instance ToJSON Contact where
 
 -- | Description of API
 newtype APIDescription = APIDescription { _unApiDesc :: Text }
-   deriving (Show, Eq, ToJSON)
+   deriving (Show, Eq, ToJSON, Monoid)
 
 -- | Terms of Service of API located in `Info`
 newtype TermsOfService = TermsOfService Text
-   deriving (Show, Eq, ToJSON)
+   deriving (Show, Eq, ToJSON, Monoid)
 
 -- | A Swagger metadata for a Servant header
 data SwaggerHeader = SwaggerHeader {
@@ -277,10 +282,19 @@ data Info = Info {
   , _termsOfService        :: Maybe TermsOfService
   } deriving (Show, Eq)
 
+instance Monoid Info where
+  mempty = Info mempty mempty mempty mempty mempty mempty 
+  (Info a1 b1 c1 d1 e1 f1) `mappend` (Info a2 b2 c2 d2 e2 f2)
+    = Info (a1 <> a2) (b1 <> b2) (c1 <> c2) (d1 <> d2) (e1 <> e2) (f1 <> f2)
+
 data APILicense = APILicense {
      _licenseName :: Text
   ,  _licenseUrl  :: Maybe Text
   } deriving (Show, Eq)
+
+instance Monoid APILicense where
+  mempty = APILicense mempty mempty
+  (APILicense a1 b1) `mappend` (APILicense a2 b2) = APILicense (a1 <> a2) (b1 <> b2)
 
 data SwaggerOperation = SwaggerOperation {
      _paths :: HM.HashMap Verb Operation
@@ -310,9 +324,19 @@ data Operation = Operation {
   } deriving Show
 
 instance Monoid Operation where
-  mempty = Operation mempty mempty mempty mempty mempty mempty mempty mempty Nothing
+  mempty = Operation mempty mempty mempty mempty mempty mempty mempty mempty mempty
+  (Operation a1 b1 c1 d1 e1 f1 g1 h1 i1) `mappend` 
+    (Operation a2 b2 c2 d2 e2 f2 g2 h2 i2) =
+       Operation (a1 <> a2) (b1 <> b2) (c1 <> c2) (d1 <> d2) (e1 <> e2) (f1 <> f2) (g1 <> g2)
+          (h1 <> h2) (i1 <> i2) 
 
 newtype Deprecated = Deprecated Bool deriving (Show, Eq, ToJSON)
+
+instance Monoid Deprecated where
+  mempty = Deprecated False
+  (Deprecated False) `mappend` (Deprecated False) = Deprecated False
+  _ `mappend` _ = Deprecated True
+
 newtype OperationId = OperationId Text deriving (Show, Eq, ToJSON, Monoid)
 newtype PathDescription = PathDescription Text deriving (Show, Eq, ToJSON, Monoid)
 
@@ -369,8 +393,8 @@ data ItemObject = ItemObject {
      _itemsType :: SwaggerParamType
   } deriving Show
 
-newtype APIVersion = APIVersion Text deriving (Show, Eq, ToJSON)
-newtype APITitle = APITitle Text deriving (Show, Eq, ToJSON)
+newtype APIVersion = APIVersion Text deriving (Show, Eq, ToJSON, Monoid)
+newtype APITitle = APITitle Text deriving (Show, Eq, ToJSON, Monoid)
 newtype PathName = PathName { unPathName :: Text }
   deriving (Show, Eq, Hashable, Monoid)
 

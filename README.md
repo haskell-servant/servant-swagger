@@ -2,6 +2,10 @@
     <a href="https://github.com/dmjio/servant-swagger">
         servant-swagger
     </a>
+    <br/>
+    <a href="http://hackage.haskell.org/package/servant-swagger">
+      <img alt="Hackage" src="https://img.shields.io/hackage/v/servant-swagger.svg" />
+    </a>
 </h1>
 
 <p align="center">

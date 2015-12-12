@@ -1,4 +1,4 @@
-module Servant.Swagger 
+module Servant.Swagger
   (
   -- * Classes
     HasSwagger           (..)
@@ -102,7 +102,3 @@ swagger proxy (SwaggerRouteInfo routeInfo) basePath info schemes hostName secDef
      & swaggerBasePath ?~ basePath
      & swaggerHostName .~ hostName
      & swaggerSecurityDefintions ?~ secDefs
-
-
-
-

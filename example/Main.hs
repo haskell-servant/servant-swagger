@@ -24,7 +24,7 @@ type TodoAPI = "todo" :> Capture "id" TodoId :> Get '[JSON] Todo
 type TestAPI = "todo" :> Capture "id" TodoId :> Get '[JSON] Todo
 
 swagDoc :: SwaggerAPI
-swagDoc = swagger (Proxy :: Proxy TestAPI) (BasePath "/") info schemes
+swagDoc = swagger (Proxy :: Proxy TestAPI) mempty (BasePath "/") info schemes Nothing []
   where
     schemes = [ Http ]
     license' = APILicense "MIT" (Just "http://mit.com")
@@ -33,6 +33,9 @@ swagDoc = swagger (Proxy :: Proxy TestAPI) (BasePath "/") info schemes
        (APITitle "Todo API") (APIVersion "1.0")
        (APIDescription "This is a an API that tests servant-swagger support for a Todo API")
        (Just license')
+       Nothing
+       Nothing
+
 
 type DocsAPI = Get '[JSON] SwaggerAPI
 
@@ -63,7 +66,7 @@ main = do
                   undefined :<|> undefined
 
 swagHandler :: EitherT ServantErr IO SwaggerAPI
-swagHandler = pure $ swagger api (BasePath "/") info schemes 
+swagHandler = pure $ swagger api mempty (BasePath "/") info schemes Nothing []
   where
     schemes = [ Http ]
     license' = APILicense "MIT" (Just "http://mit.com")
@@ -72,6 +75,8 @@ swagHandler = pure $ swagger api (BasePath "/") info schemes
        (APITitle "Servant Swagger API") (APIVersion "2.0")
        (APIDescription "This is a an API that tests swagger integration")
        (Just license')
+       Nothing
+       Nothing
 
 -- Instances
 instance ToSwaggerModel Todo where

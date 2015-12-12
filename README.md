@@ -20,31 +20,41 @@
 
 Given the following `servant` API, `servant-swagger` generates the following json.
 
-### Input 
-
+### [Input](example/File.hs)
 ```haskell
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE DataKinds                  #-}
+module Main where
+
 import Servant.API
+import Servant.Server
 import Servant.Swagger
+import Data.Proxy
 import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as BL8
+import GHC.Generics
+import Control.Lens
 
 -- Types
-data Todo = Todo { 
+data Todo = Todo {
     created :: Int
-  , description :: String 
+  , description :: String
   } deriving (Show, Eq, Generic)
 
 instance ToJSON Todo
 instance FromJSON Todo
-                                                                                                                                                                                  
-newtype TodoId = TodoId String deriving (FromText) 
+
+newtype TodoId = TodoId String deriving (FromText)
 
 -- API
-type API = "todo" :> Capture "id" TodoId :> Get '[JSON] Todo  
+type API = "todo" :> Capture "id" TodoId :> Get '[JSON] Todo
 
 -- Swagger Doc
 swagDoc :: SwaggerAPI
-swagDoc = swagger (Proxy :: Proxy API) (BasePath "/") info
+swagDoc = swagger (Proxy :: Proxy API) mempty (BasePath "/") info schemes Nothing []
   where
     schemes = [ Http ]
     license' = APILicense "MIT" (Just "http://mit.com")
@@ -53,9 +63,11 @@ swagDoc = swagger (Proxy :: Proxy API) (BasePath "/") info
        (APITitle "Todo API") (APIVersion "1.0")
        (APIDescription "This is a an API that tests servant-swagger support for a Todo")
        (Just license')
+       Nothing
+       Nothing
 
 -- Documentation and annotations
-instance ToSwaggerParamType TodoId where toSwaggerParamType = const StringSwagParam  
+instance ToSwaggerParamType TodoId where toSwaggerParamType = const StringSwagParam
 instance ToSwaggerDescription TodoId where toSwaggerDescription = const "TodoId param"
 
 instance ToSwaggerModel Todo where
@@ -66,8 +78,8 @@ instance ToSwaggerModel Todo where
                           , ("description", StringSwag)
                           , ("extraTodos", Model $ ModelSwag (ModelName "Todo") False)
                           ]
-      & swagDescription .?~ Description "This is some real Todo right here"
-      & swagModelExample .?~ toJSON $ Todo 100 "get milk"
+      & swagDescription ?~ Description "This is some real Todo right here"
+      & swagModelExample ?~ toJSON (Todo 100 "get milk")
       & swagModelRequired .~ ["description"]
 
 -- Main, create swaggger.json
@@ -78,73 +90,86 @@ main = BL8.writeFile "swagger.json" (encode swagDoc)
 ### Output
 
 ```json
-{
-    "swagger": "2.0",
-    "basePath": "/",
-    "schemes": [
-        "http"
-    ],
-    "info": {
-        "version": "1.0",
-        "title": "Todo API",
-        "license": {
-            "url": "http://mit.com",
-            "name": "MIT"
-        },
-        "description": "This is a an API that tests servant-swagger support for a Todo API"
-    },
-    "definitions": {
-        "Todo": {
-            "example": {
-                "created": 100,
-                "description": "get milk"
+{  
+   "swagger":"2.0",
+   "basePath":"/",
+   "schemes":[  
+      "http"
+   ],
+   "info":{  
+      "version":"1.0",
+      "title":"Todo API",
+      "license":{  
+         "url":"http://mit.com",
+         "name":"MIT"
+      },
+      "description":"This is a an API that tests servant-swagger support for a Todo"
+   },
+   "definitions":{  
+      "Todo":{  
+         "example":{  
+            "created":100,
+            "description":"get milk"
+         },
+         "required":[  
+            "description"
+         ],
+         "type":"object",
+         "description":"This is some real Todo right here",
+         "properties":{  
+            "created":{  
+               "format":"int32",
+               "type":"integer"
             },
-            "type": "object",
-            "description": "This is some real Todo right here",
-            "properties": {
-                "created": {
-                    "format": "int32",
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                }
+            "description":{  
+               "type":"string"
+            },
+            "extraTodos":{  
+               "$ref":"#/definitions/Todo"
             }
-        }
-    },
-    "paths": {
-        "/todo/{id}": {
-            "get": {
-                "summary": "",
-                "consumes": [],
-                "responses": {
-                    "200": {
-                        "schema": {
-                            "$ref": "#/definitions/Todo"
-                        },
-                        "headers": {},
-                        "description": "OK"
-                    }
-                },
-                "produces": [
-                    "application/json"
-                ],
-                "parameters": [
-                    {
-                        "required": true,
-                        "in": "path",
-                        "name": "id",
-                        "type": "string",
-                        "description": "TodoId param"
-                    }
-                ],
-                "tags": [
-                    "todo"
-                ]
-            }
-        }
-    },
-    "tags": []
+         }
+      }
+   },
+   "paths":{  
+      "/todo/{id}":{  
+         "get":{  
+            "summary":"",
+            "consumes":[  
+
+            ],
+            "responses":{  
+               "200":{  
+                  "schema":{  
+                     "$ref":"#/definitions/Todo"
+                  },
+                  "headers":{  
+
+                  },
+                  "description":"OK"
+               }
+            },
+            "produces":[  
+               "application/json"
+            ],
+            "parameters":[  
+               {  
+                  "required":true,
+                  "in":"path",
+                  "name":"id",
+                  "type":"string",
+                  "description":"TodoId param"
+               }
+            ],
+            "description":"",
+            "tags":[  
+
+            ]
+         }
+      }
+   },
+   "tags":[  
+
+   ]
 }
 ```
 ## Try it out

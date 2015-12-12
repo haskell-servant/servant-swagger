@@ -56,18 +56,18 @@ createSwaggerJson = BL8.writeFile "swagger.json" . encode
 data SwaggerAPI = SwaggerAPI {
      _swaggerInfo               :: Info -- ^ Required, provides metadata about the API
   ,  _swaggerPaths              :: HM.HashMap PathName SwaggerOperation -- ^ Required
-  ,  _swaggerSchemes            :: Maybe [Scheme] -- ^ Schemes for this API (i.e HTTP/HTTPS) 
-  ,  _swaggerDefinitions        :: HM.HashMap ModelName SwaggerModel -- ^ 
+  ,  _swaggerSchemes            :: Maybe [Scheme] -- ^ Schemes for this API (i.e HTTP/HTTPS)
+  ,  _swaggerDefinitions        :: HM.HashMap ModelName SwaggerModel -- ^
   ,  _swaggerTags               :: Maybe [Tag] -- ^ A list of tags that provide additional metadat
-  ,  _swaggerBasePath           :: Maybe BasePath -- ^ The base path upon which this API is served 
-  ,  _swaggerHostName           :: Maybe HostName -- ^ Host name or IP 
-  ,  _swaggerSecurityDefintions :: Maybe [SecurityDefinition] 
+  ,  _swaggerBasePath           :: Maybe BasePath -- ^ The base path upon which this API is served
+  ,  _swaggerHostName           :: Maybe HostName -- ^ Host name or IP
+  ,  _swaggerSecurityDefintions :: Maybe [SecurityDefinition]
      -- ^ Security scheme definitions that can be used across the specification.
-  ,  _swaggerExternalDocs       :: Maybe ExternalDocs 
+  ,  _swaggerExternalDocs       :: Maybe ExternalDocs
   } deriving Show
 
 -- | Smart Constructor for `SwaggerAPI`
-defSwaggerAPI :: Info -> SwaggerAPI 
+defSwaggerAPI :: Info -> SwaggerAPI
 defSwaggerAPI info = SwaggerAPI info mempty mempty mempty mempty mempty mempty mempty mempty
 
 -- | `ToJSON` for `SwaggerAPI`
@@ -129,7 +129,7 @@ data SwaggerRoute = SwaggerRoute {
 defSwaggerRoute :: SwaggerRoute
 defSwaggerRoute = SwaggerRoute mempty [] [] [] Get mempty [] []
 
--- | Default 
+-- | Default
 -- <http://swagger.io/specification/#contactObject contact>
 defSwaggerInfo :: Info
 defSwaggerInfo =
@@ -184,7 +184,7 @@ data SwaggerHeader = SwaggerHeader {
   , headerName :: Text   -- ^ Name of Header
   } deriving (Show, Eq)
 
--- | A container for the expected responses of an operation. 
+-- | A container for the expected responses of an operation.
 data Response = Response {
     _responseDescription :: Text -- ^ Description of Response
   , _responseModelName :: ModelName  -- ^ `Model` this Response returns
@@ -220,7 +220,7 @@ instance FromJSON Tag where
 
 -- | A declaration of the security schemes available to be used in the specification
 data SecurityDefinition =
-    OAuthDef OAuth -- ^ OAuth 
+    OAuthDef OAuth -- ^ OAuth
   | APIKeyDef APIKey -- ^ APIKey
   | BasicAuthDef BasicAuth  -- ^ BasicAuth
   deriving Show
@@ -229,11 +229,11 @@ data SecurityDefinition =
 data BasicAuth = BasicAuth deriving Show
 
 -- ^ OAuth Flow
-data OAuthFlow = Implicit | Password | Application | AccessCode deriving (Show) 
+data OAuthFlow = Implicit | Password | Application | AccessCode deriving (Show)
 -- ^ OAuth URL
-data OAuthURL = OAuthURL deriving (Show) 
-data TokenURL = TokenURL deriving (Show) 
-data Scopes = Scopes deriving (Show) 
+data OAuthURL = OAuthURL deriving (Show)
+data TokenURL = TokenURL deriving (Show)
+data Scopes = Scopes deriving (Show)
 
 -- | OAuth Authentication
 data OAuth = OAuth {
@@ -264,15 +264,15 @@ instance ToJSON APIKey where
   toJSON APIKey{..} =
     object [ "api_key" .= ([] :: [Int]) ]
 
--- | HostName 
+-- | HostName
 newtype HostName = HostName Text
   deriving (Show, Eq, IsString, ToJSON, FromJSON, Monoid)
 
--- | BasePath 
+-- | BasePath
 newtype BasePath = BasePath Text
    deriving (Show, Eq, ToJSON, FromJSON, Monoid)
 
--- | Info Objet 
+-- | Info Objet
 data Info = Info {
     _swaggerInfoTitle      :: APITitle -- ^ API Title
   , _swaggerVersion        :: APIVersion -- ^ API Version
@@ -283,7 +283,7 @@ data Info = Info {
   } deriving (Show, Eq)
 
 instance Monoid Info where
-  mempty = Info mempty mempty mempty mempty mempty mempty 
+  mempty = Info mempty mempty mempty mempty mempty mempty
   (Info a1 b1 c1 d1 e1 f1) `mappend` (Info a2 b2 c2 d2 e2 f2)
     = Info (a1 <> a2) (b1 <> b2) (c1 <> c2) (d1 <> d2) (e1 <> e2) (f1 <> f2)
 
@@ -325,10 +325,10 @@ data Operation = Operation {
 
 instance Monoid Operation where
   mempty = Operation mempty mempty mempty mempty mempty mempty mempty mempty mempty
-  (Operation a1 b1 c1 d1 e1 f1 g1 h1 i1) `mappend` 
+  (Operation a1 b1 c1 d1 e1 f1 g1 h1 i1) `mappend`
     (Operation a2 b2 c2 d2 e2 f2 g2 h2 i2) =
        Operation (a1 <> a2) (b1 <> b2) (c1 <> c2) (d1 <> d2) (e1 <> e2) (f1 <> f2) (g1 <> g2)
-          (h1 <> h2) (i1 <> i2) 
+          (h1 <> h2) (i1 <> i2)
 
 newtype Deprecated = Deprecated Bool deriving (Show, Eq, ToJSON)
 
@@ -347,7 +347,7 @@ data SwaggerParamType =
   | NumberSwagParam
   | IntegerSwagParam
   | BooleanSwagParam
-  | ArraySwagParam 
+  | ArraySwagParam
   | FileSwagParam
   deriving (Show, Eq)
 
@@ -536,7 +536,7 @@ class ToSwaggerModel a where
   toSwagModel = undefined
 
 class GToSwaggerModel a where
-  gToSwaggerModel :: Proxy a -> f a -> SwaggerModel 
+  gToSwaggerModel :: Proxy a -> f a -> SwaggerModel
 
 instance ToSwaggerModel () where
   toSwagModel Proxy = emptyModel
@@ -571,7 +571,7 @@ instance
 #if MIN_VERSION_base(4,8,0)
   {-# OVERLAPPABLe #-}
 #endif
-  (ToSwaggerModel returnType, ToVerb verb, SwaggerAcceptTypes xs) 
+  (ToSwaggerModel returnType, ToVerb verb, SwaggerAcceptTypes xs)
       => HasSwagger (verb xs [returnType]) where
   toSwaggerDocs Proxy swagRoute =
     let swagPath = SwaggerOperation [(toVerb (Proxy :: Proxy verb), path)]
@@ -758,7 +758,7 @@ instance
 class ToModelExample model where toExample :: Proxy model -> Maybe Value
 
 instance ToJSON SwaggerHeader where
-  toJSON SwaggerHeader{..} = 
+  toJSON SwaggerHeader{..} =
     object [
          "type" .= headerType
       ,  "description" .= headerDescription
@@ -803,7 +803,7 @@ instance ToJSON SwaggerType where
       DateSwag -> f "string" (Just "date")
       DateTimeSwag -> f "string" (Just "date-time")
       PasswordSwag -> f "string" (Just "password")
-      Model ModelSwag{..} -> 
+      Model ModelSwag{..} ->
          case modelSwagIsArray of
               True ->
                 object [ "type" .= ("array" :: Text)
@@ -889,12 +889,12 @@ instance ToJSON Response where
               True -> [ "schema" .= object [
                            "type" .= ("array" :: Text)
                            , "items" .= object [
-                              "$ref" .= ("#/definitions/" <> name) 
+                              "$ref" .= ("#/definitions/" <> name)
                        ]]]
               False -> ["schema".=object["$ref".=("#/definitions/"<> name)]]
 
 instance ToJSON Param where
-  toJSON Param{..} = 
+  toJSON Param{..} =
     object $ [
         "in"          .= _in
       , "name"        .= _name
@@ -964,9 +964,9 @@ swaggerPathInfo pEndpoint pLayout SwaggerRouteDescription{..} = swagResult
   where
     f [(pName, SwaggerOperation swagPath)] =
         [(pName, SwaggerOperation $ HM.fromList . g . HM.toList $ swagPath)]
-    f _ = error "Route non-existant, impossible" 
-    g [(verb, path)] = [(verb, newPath path)] 
-    g _ = error "Route non-existant, impossible" 
+    f _ = error "Route non-existant, impossible"
+    g [(verb, path)] = [(verb, newPath path)]
+    g _ = error "Route non-existant, impossible"
     newPath p = p & summary .~ _swagRouteSummary
                   & operationId .~  _swagRouteOperationId
                   & description .~  _swagRouteDescription
@@ -975,7 +975,7 @@ swaggerPathInfo pEndpoint pLayout SwaggerRouteDescription{..} = swagResult
     swagResult =
       let finalDocs = toSwaggerDocs pLayout defSwaggerRoute
           SwagResult paths models = toSwaggerDocs pEndpoint defSwaggerRoute
-          newModels = _swagRouteModels `HM.union` models 
+          newModels = _swagRouteModels `HM.union` models
           newPaths = HM.fromList . f . HM.toList $ paths
           pathDocs = SwagResult newPaths newModels
       in SwaggerRouteInfo (finalDocs <> pathDocs)

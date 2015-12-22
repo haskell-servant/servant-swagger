@@ -56,6 +56,10 @@ prependPath path spec = spec & paths.pathsMap %~ f
 addParam :: Param -> Swagger -> Swagger
 addParam param spec = spec & template.operationParameters %~ (Inline param :)
 
+-- | Add accepted content types to every operation in the spec.
+addConsumes :: [MediaType] -> Swagger -> Swagger
+addConsumes cs spec = spec & template.operationConsumes %~ (<> Just (MimeList cs))
+
 instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Post cs a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Post cs (Headers '[] a)))
 
@@ -137,6 +141,15 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Heade
         & paramSchema .~ ParamOther (mempty
             & paramOtherSchemaIn .~ ParamHeader
             & parameterSchema .~ toParamSchema (Proxy :: Proxy Bool))
+
+instance (ToSchema a, AllAccept cs, HasSwagger sub) => HasSwagger (ReqBody cs a :> sub) where
+  toSwagger _ = toSwagger (Proxy :: Proxy sub)
+    & addParam param
+    & addConsumes (allContentType (Proxy :: Proxy cs))
+    & definitions %~ (<> defs)
+    where
+      (defs, ref) = runDeclare (declareSchemaRef (Proxy :: Proxy a)) mempty
+      param = mempty & paramSchema .~ ParamBody ref
 
 -- =======================================================================
 -- Below are the definitions that should be in Servant.API.ContentTypes

@@ -6,9 +6,11 @@
 {-# LANGUAGE TypeOperators #-}
 module Servant.Swagger.Internal where
 
+import Control.Arrow (first)
 import Control.Lens
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HashMap
+import Data.Monoid
 import Data.Proxy
 import qualified Data.Swagger as Swagger
 import Data.Swagger hiding (Header)
@@ -42,11 +44,25 @@ mkEndpoint path verb code _ = mempty
   where
     (defs, aref) = runDeclare (declareSchemaRef (Proxy :: Proxy a)) mempty
 
+-- | Prepend path to all API endpoints.
+prependPath :: FilePath -> Swagger -> Swagger
+prependPath path spec = spec & paths.pathsMap %~ f
+  where
+    f = HashMap.fromList . map (first (path <>)) . HashMap.toList
+
 instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Post cs a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Post cs (Headers '[] a)))
 
 instance {-# OVERLAPPING #-} (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Post cs (Headers hs a)) where
   toSwagger = mkEndpoint "/" pathItemPost 201
+
+instance (HasSwagger a, HasSwagger b) => HasSwagger (a :<|> b) where
+  toSwagger _ = toSwagger (Proxy :: Proxy a) <> toSwagger (Proxy :: Proxy b)
+
+instance (KnownSymbol sym, HasSwagger sub) => HasSwagger (sym :> sub) where
+  toSwagger _ = prependPath piece (toSwagger (Proxy :: Proxy sub))
+    where
+      piece = "/" <> symbolVal (Proxy :: Proxy sym)
 
 -- =======================================================================
 -- Below are the definitions that should be in Servant.API.ContentTypes

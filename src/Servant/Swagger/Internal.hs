@@ -8,6 +8,7 @@ module Servant.Swagger.Internal where
 
 import Control.Arrow (first)
 import Control.Lens
+import Data.Data.Lens (template)
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HashMap
 import Data.Monoid
@@ -50,6 +51,10 @@ prependPath path spec = spec & paths.pathsMap %~ f
   where
     f = HashMap.fromList . map (first (path <>)) . HashMap.toList
 
+-- | Add parameter to every operation in the spec.
+addParam :: Param -> Swagger -> Swagger
+addParam param spec = spec & template.operationParameters %~ (Inline param :)
+
 instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Post cs a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Post cs (Headers '[] a)))
 
@@ -63,6 +68,20 @@ instance (KnownSymbol sym, HasSwagger sub) => HasSwagger (sym :> sub) where
   toSwagger _ = prependPath piece (toSwagger (Proxy :: Proxy sub))
     where
       piece = "/" <> symbolVal (Proxy :: Proxy sym)
+
+instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Capture sym a :> sub) where
+  toSwagger _ = toSwagger (Proxy :: Proxy sub)
+    & addParam param
+    & prependPath capture
+    where
+      name = symbolVal (Proxy :: Proxy sym)
+      capture = "/{" <> name <> "}"
+      param = mempty
+        & paramName .~ Text.pack name
+        & paramRequired ?~ True
+        & paramSchema .~ ParamOther (mempty
+            & paramOtherSchemaIn .~ ParamPath
+            & parameterSchema .~ toParamSchema (Proxy :: Proxy a))
 
 -- =======================================================================
 -- Below are the definitions that should be in Servant.API.ContentTypes

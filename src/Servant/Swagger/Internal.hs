@@ -194,3 +194,6 @@ instance (ToResponseHeader h, AllToResponseHeader hs) => AllToResponseHeader (h 
       (name, header) = toResponseHeader (Proxy :: Proxy h)
       headers = toAllResponseHeaders (Proxy :: Proxy hs)
 
+instance AllToResponseHeader hs => AllToResponseHeader (HList hs) where
+  toAllResponseHeaders _ = toAllResponseHeaders (Proxy :: Proxy hs)
+

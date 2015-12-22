@@ -43,17 +43,34 @@ mkEndpoint :: forall a cs hs proxy _verb. (ToSchema a, AllAccept cs, AllToRespon
   -> Int
   -> proxy (_verb cs (Headers hs a))
   -> Swagger
-mkEndpoint path verb code _ = mempty
-  & definitions .~ defs
+mkEndpoint path verb code proxy
+  = mkEndpointWithSchemaRef (Just ref) path verb code proxy
+      & definitions .~ defs
+  where
+    (defs, ref) = runDeclare (declareSchemaRef (Proxy :: Proxy a)) mempty
+
+noContentEndpoint :: forall cs proxy verb. (AllAccept cs)
+  => FilePath
+  -> Lens' PathItem (Maybe Operation)
+  -> proxy (verb cs ())
+  -> Swagger
+noContentEndpoint path verb _ = mkEndpointWithSchemaRef Nothing path verb 204 (Proxy :: Proxy (verb cs (Headers '[] ())))
+
+mkEndpointWithSchemaRef :: forall cs hs proxy verb a. (AllAccept cs, AllToResponseHeader hs)
+  => Maybe (Referenced Schema)
+  -> FilePath
+  -> Lens' PathItem (Maybe Operation)
+  -> Int
+  -> proxy (verb cs (Headers hs a))
+  -> Swagger
+mkEndpointWithSchemaRef mref path verb code _ = mempty
   & paths.pathsMap.at path ?~
     (mempty & verb ?~ (mempty
       & operationProduces ?~ MimeList (allContentType (Proxy :: Proxy cs))
       & operationResponses .~ (mempty
         & responsesResponses . at code ?~ Inline (mempty
-            & responseSchema ?~ aref
+            & responseSchema  .~ mref
             & responseHeaders .~ toAllResponseHeaders (Proxy :: Proxy hs)))))
-  where
-    (defs, aref) = runDeclare (declareSchemaRef (Proxy :: Proxy a)) mempty
 
 -- | Prepend path to all API endpoints.
 prependPath :: FilePath -> Swagger -> Swagger
@@ -69,17 +86,71 @@ addParam param spec = spec & template.operationParameters %~ (Inline param :)
 addConsumes :: [MediaType] -> Swagger -> Swagger
 addConsumes cs spec = spec & template.operationConsumes %~ (<> Just (MimeList cs))
 
-instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Post cs a) where
-  toSwagger _ = toSwagger (Proxy :: Proxy (Post cs (Headers '[] a)))
+-- -----------------------------------------------------------------------
+-- DELETE
+-- -----------------------------------------------------------------------
 
-instance {-# OVERLAPPING #-} (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Post cs (Headers hs a)) where
-  toSwagger = mkEndpoint "/" pathItemPost 201
+instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Delete cs a) where
+  toSwagger _ = toSwagger (Proxy :: Proxy (Delete cs (Headers '[] a)))
+
+instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Delete cs (Headers hs a)) where
+  toSwagger = mkEndpoint "/" pathItemDelete 200
+
+instance AllAccept cs => HasSwagger (Delete cs ()) where
+  toSwagger = noContentEndpoint "/" pathItemDelete
+
+-- -----------------------------------------------------------------------
+-- GET
+-- -----------------------------------------------------------------------
 
 instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Get cs a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Get cs (Headers '[] a)))
 
-instance {-# OVERLAPPING #-} (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Get cs (Headers hs a)) where
+instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Get cs (Headers hs a)) where
   toSwagger = mkEndpoint "/" pathItemGet 200
+
+instance AllAccept cs => HasSwagger (Get cs ()) where
+  toSwagger = noContentEndpoint "/" pathItemGet
+
+-- -----------------------------------------------------------------------
+-- PATCH
+-- -----------------------------------------------------------------------
+
+instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Patch cs a) where
+  toSwagger _ = toSwagger (Proxy :: Proxy (Patch cs (Headers '[] a)))
+
+instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Patch cs (Headers hs a)) where
+  toSwagger = mkEndpoint "/" pathItemPatch 200
+
+instance AllAccept cs => HasSwagger (Patch cs ()) where
+  toSwagger = noContentEndpoint "/" pathItemPatch
+
+-- -----------------------------------------------------------------------
+-- PUT
+-- -----------------------------------------------------------------------
+
+instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Put cs a) where
+  toSwagger _ = toSwagger (Proxy :: Proxy (Put cs (Headers '[] a)))
+
+instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Put cs (Headers hs a)) where
+  toSwagger = mkEndpoint "/" pathItemPut 200
+
+instance AllAccept cs => HasSwagger (Put cs ()) where
+  toSwagger = noContentEndpoint "/" pathItemPut
+
+-- -----------------------------------------------------------------------
+-- POST
+-- -----------------------------------------------------------------------
+
+instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Post cs a) where
+  toSwagger _ = toSwagger (Proxy :: Proxy (Post cs (Headers '[] a)))
+
+instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Post cs (Headers hs a)) where
+  toSwagger = mkEndpoint "/" pathItemPost 201
+
+instance AllAccept cs => HasSwagger (Post cs ()) where
+  toSwagger = noContentEndpoint "/" pathItemPost
+
 
 instance (HasSwagger a, HasSwagger b) => HasSwagger (a :<|> b) where
   toSwagger _ = toSwagger (Proxy :: Proxy a) <> toSwagger (Proxy :: Proxy b)

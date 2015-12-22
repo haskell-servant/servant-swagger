@@ -12,6 +12,7 @@ import Data.Aeson
 import Data.Data.Lens (template)
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HashMap
+import Data.List (dropWhileEnd)
 import Data.Monoid
 import Data.Proxy
 import qualified Data.Swagger as Swagger
@@ -27,6 +28,13 @@ class HasSwagger api where
   toSwagger :: Proxy api -> Swagger
 
 instance HasSwagger Raw where toSwagger _ = mempty
+
+(</>) :: FilePath -> FilePath -> FilePath
+x </> y = case trim y of
+  "" -> "/" <> trim x
+  y' -> "/" <> trim x <> "/" <> y'
+  where
+    trim = dropWhile (== '/') . dropWhileEnd (== '/')
 
 mkEndpoint :: forall a cs hs proxy _verb. (ToSchema a, AllAccept cs, AllToResponseHeader hs)
   => FilePath
@@ -50,7 +58,7 @@ mkEndpoint path verb code _ = mempty
 prependPath :: FilePath -> Swagger -> Swagger
 prependPath path spec = spec & paths.pathsMap %~ f
   where
-    f = HashMap.fromList . map (first (path <>)) . HashMap.toList
+    f = HashMap.fromList . map (first (path </>)) . HashMap.toList
 
 -- | Add parameter to every operation in the spec.
 addParam :: Param -> Swagger -> Swagger
@@ -72,7 +80,7 @@ instance (HasSwagger a, HasSwagger b) => HasSwagger (a :<|> b) where
 instance (KnownSymbol sym, HasSwagger sub) => HasSwagger (sym :> sub) where
   toSwagger _ = prependPath piece (toSwagger (Proxy :: Proxy sub))
     where
-      piece = "/" <> symbolVal (Proxy :: Proxy sym)
+      piece = symbolVal (Proxy :: Proxy sym)
 
 instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Capture sym a :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
@@ -80,7 +88,7 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Captu
     & prependPath capture
     where
       name = symbolVal (Proxy :: Proxy sym)
-      capture = "/{" <> name <> "}"
+      capture = "{" <> name <> "}"
       param = mempty
         & paramName .~ Text.pack name
         & paramRequired ?~ True

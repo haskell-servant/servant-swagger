@@ -25,30 +25,14 @@ library
   exposed-modules:
     Servant.Swagger
     Servant.Swagger.Internal
-  default-extensions:
-             FlexibleContexts
-           , DeriveGeneric
-           , DeriveDataTypeable
-           , GeneralizedNewtypeDeriving
-           , RecordWildCards
-           , FlexibleInstances
-           , OverloadedLists
-           , PolyKinds
-           , OverloadedStrings
-           , TypeFamilies
-           , KindSignatures
-           , TypeOperators
-           , CPP
-           , DataKinds
   hs-source-dirs:      src
   build-depends:       aeson
                      , base >=4.7 && <5
                      , bytestring
-                     , containers
-                     , hashable
+                     , http-media
                      , lens
-                     , text
-                     , uuid
                      , servant
+                     , swagger2
+                     , text
                      , unordered-containers
   default-language:    Haskell2010

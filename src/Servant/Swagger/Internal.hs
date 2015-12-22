@@ -83,6 +83,16 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Captu
             & paramOtherSchemaIn .~ ParamPath
             & parameterSchema .~ toParamSchema (Proxy :: Proxy a))
 
+instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (QueryParam sym a :> sub) where
+  toSwagger _ = addParam param $ toSwagger (Proxy :: Proxy sub)
+    where
+      name = symbolVal (Proxy :: Proxy sym)
+      param = mempty
+        & paramName .~ Text.pack name
+        & paramSchema .~ ParamOther (mempty
+            & paramOtherSchemaIn .~ ParamQuery
+            & parameterSchema .~ toParamSchema (Proxy :: Proxy a))
+
 -- =======================================================================
 -- Below are the definitions that should be in Servant.API.ContentTypes
 -- =======================================================================

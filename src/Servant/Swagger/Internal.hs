@@ -8,6 +8,7 @@ module Servant.Swagger.Internal where
 
 import Control.Arrow (first)
 import Control.Lens
+import Data.Aeson
 import Data.Data.Lens (template)
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HashMap
@@ -105,6 +106,18 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Query
             & parameterSchema .~ (mempty
                 & schemaType .~ SwaggerArray
                 & schemaItems ?~ SwaggerItemsPrimitive (Items Nothing (toParamSchema (Proxy :: Proxy a)))))
+
+instance (KnownSymbol sym, HasSwagger sub) => HasSwagger (QueryFlag sym :> sub) where
+  toSwagger _ = addParam param $ toSwagger (Proxy :: Proxy sub)
+    where
+      name = symbolVal (Proxy :: Proxy sym)
+      param = mempty
+        & paramName .~ Text.pack name
+        & paramSchema .~ ParamOther (mempty
+            & paramOtherSchemaIn .~ ParamQuery
+            & paramOtherSchemaAllowEmptyValue ?~ True
+            & parameterSchema .~ (toParamSchema (Proxy :: Proxy Bool)
+                & schemaDefault ?~ toJSON False))
 
 -- =======================================================================
 -- Below are the definitions that should be in Servant.API.ContentTypes

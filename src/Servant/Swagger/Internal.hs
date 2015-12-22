@@ -75,6 +75,12 @@ instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Post cs 
 instance {-# OVERLAPPING #-} (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Post cs (Headers hs a)) where
   toSwagger = mkEndpoint "/" pathItemPost 201
 
+instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Get cs a) where
+  toSwagger _ = toSwagger (Proxy :: Proxy (Get cs (Headers '[] a)))
+
+instance {-# OVERLAPPING #-} (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Get cs (Headers hs a)) where
+  toSwagger = mkEndpoint "/" pathItemGet 200
+
 instance (HasSwagger a, HasSwagger b) => HasSwagger (a :<|> b) where
   toSwagger _ = toSwagger (Proxy :: Proxy a) <> toSwagger (Proxy :: Proxy b)
 

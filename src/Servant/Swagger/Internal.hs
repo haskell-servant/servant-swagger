@@ -27,7 +27,8 @@ import Servant.API
 class HasSwagger api where
   toSwagger :: Proxy api -> Swagger
 
-instance HasSwagger Raw where toSwagger _ = mempty
+instance HasSwagger Raw where
+  toSwagger _ = mempty & paths.pathsMap.at "/" ?~ mempty
 
 (</>) :: FilePath -> FilePath -> FilePath
 x </> y = case trim y of

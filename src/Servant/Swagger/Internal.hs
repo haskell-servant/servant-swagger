@@ -112,6 +112,13 @@ addDefaultResponse404 name = addResponseWith (\old _new -> alter404 old) 404 res
     alter404 = description %~ ((name <> " or ") <>)
     response404 = mempty & description .~ description404
 
+addDefaultResponse400 :: ParamName -> Swagger -> Swagger
+addDefaultResponse400 name = addResponseWith (\old _new -> alter400 old) 400 response400
+  where
+    description400 = "Invalid " <> name
+    alter400 = description %~ (<> (" or " <> name))
+    response400 = mempty & description .~ description400
+
 -- -----------------------------------------------------------------------
 -- DELETE
 -- -----------------------------------------------------------------------
@@ -202,7 +209,9 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Captu
             & parameterSchema .~ toParamSchema (Proxy :: Proxy a))
 
 instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (QueryParam sym a :> sub) where
-  toSwagger _ = addParam param $ toSwagger (Proxy :: Proxy sub)
+  toSwagger _ = toSwagger (Proxy :: Proxy sub)
+    & addParam param
+    & addDefaultResponse400 (Text.pack name)
     where
       name = symbolVal (Proxy :: Proxy sym)
       param = mempty
@@ -212,7 +221,9 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Query
             & parameterSchema .~ toParamSchema (Proxy :: Proxy a))
 
 instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (QueryParams sym a :> sub) where
-  toSwagger _ = addParam param $ toSwagger (Proxy :: Proxy sub)
+  toSwagger _ = toSwagger (Proxy :: Proxy sub)
+    & addParam param
+    & addDefaultResponse400 (Text.pack name)
     where
       name = symbolVal (Proxy :: Proxy sym)
       param = mempty
@@ -225,7 +236,9 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Query
                 & schemaItems ?~ SwaggerItemsPrimitive (Items Nothing (toParamSchema (Proxy :: Proxy a)))))
 
 instance (KnownSymbol sym, HasSwagger sub) => HasSwagger (QueryFlag sym :> sub) where
-  toSwagger _ = addParam param $ toSwagger (Proxy :: Proxy sub)
+  toSwagger _ = toSwagger (Proxy :: Proxy sub)
+    & addParam param
+    & addDefaultResponse400 (Text.pack name)
     where
       name = symbolVal (Proxy :: Proxy sym)
       param = mempty
@@ -237,7 +250,9 @@ instance (KnownSymbol sym, HasSwagger sub) => HasSwagger (QueryFlag sym :> sub) 
                 & schemaDefault ?~ toJSON False))
 
 instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Header sym a :> sub) where
-  toSwagger _ = addParam param $ toSwagger (Proxy :: Proxy sub)
+  toSwagger _ = toSwagger (Proxy :: Proxy sub)
+    & addParam param
+    & addDefaultResponse400 (Text.pack name)
     where
       name = symbolVal (Proxy :: Proxy sym)
       param = mempty
@@ -250,10 +265,14 @@ instance (ToSchema a, AllAccept cs, HasSwagger sub) => HasSwagger (ReqBody cs a 
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
     & addParam param
     & addConsumes (allContentType (Proxy :: Proxy cs))
+    & addDefaultResponse400 name
     & definitions %~ (<> defs)
     where
+      name = "body"
       (defs, ref) = runDeclare (declareSchemaRef (Proxy :: Proxy a)) mempty
-      param = mempty & paramSchema .~ ParamBody ref
+      param = mempty
+        & paramName   .~ "body"
+        & paramSchema .~ ParamBody ref
 
 -- =======================================================================
 -- Below are the definitions that should be in Servant.API.ContentTypes

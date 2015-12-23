@@ -209,15 +209,6 @@ instance (KnownSymbol sym, HasSwagger sub) => HasSwagger (QueryFlag sym :> sub) 
             & parameterSchema .~ (toParamSchema (Proxy :: Proxy Bool)
                 & schemaDefault ?~ toJSON False))
 
-instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (MatrixParam sym a :> sub) where
-  toSwagger _ = toSwagger (Proxy :: Proxy (QueryParam sym a :> sub))
-
-instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (MatrixParams sym a :> sub) where
-  toSwagger _ = toSwagger (Proxy :: Proxy (QueryParams sym a :> sub))
-
-instance (KnownSymbol sym, HasSwagger sub) => HasSwagger (MatrixFlag sym :> sub) where
-  toSwagger _ = toSwagger (Proxy :: Proxy (QueryFlag sym :> sub))
-
 instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Header sym a :> sub) where
   toSwagger _ = addParam param $ toSwagger (Proxy :: Proxy sub)
     where

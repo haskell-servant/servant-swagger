@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -89,6 +90,28 @@ addParam param spec = spec & template.operationParameters %~ (Inline param :)
 addConsumes :: [MediaType] -> Swagger -> Swagger
 addConsumes cs spec = spec & template.operationConsumes %~ (<> Just (MimeList cs))
 
+-- | Add/modify response for every operation in the spec.
+addResponseWith :: (Response -> Response -> Response) -> HttpStatusCode -> Response -> Swagger -> Swagger
+addResponseWith f code new spec = spec
+  & paths.template.responsesResponses . at code %~ Just . Inline . combine
+  where
+    combine (Just (Ref (Reference name))) = case spec ^. responses.at name of
+      Just old -> f old new
+      Nothing  -> new -- FIXME: what is the right choice here?
+    combine (Just (Inline old)) = f old new
+    combine Nothing = new
+
+-- | Add/overwrite response for every operation in the spec.
+addResponse :: HttpStatusCode -> Response -> Swagger -> Swagger
+addResponse = addResponseWith (\_old new -> new)
+
+addDefaultResponse404 :: ParamName -> Swagger -> Swagger
+addDefaultResponse404 name = addResponseWith (\old _new -> alter404 old) 404 response404
+  where
+    description404 = name <> " not found"
+    alter404 = description %~ ((name <> " or ") <>)
+    response404 = mempty & description .~ description404
+
 -- -----------------------------------------------------------------------
 -- DELETE
 -- -----------------------------------------------------------------------
@@ -167,6 +190,7 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Captu
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
     & addParam param
     & prependPath capture
+    & addDefaultResponse404 (Text.pack name)
     where
       name = symbolVal (Proxy :: Proxy sym)
       capture = "{" <> name <> "}"

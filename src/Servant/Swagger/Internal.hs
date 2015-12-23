@@ -24,6 +24,9 @@ import GHC.TypeLits
 import Network.HTTP.Media (MediaType)
 import Servant.API
 
+type HeaderName = Text
+type HttpStatusCode = Int
+
 class HasSwagger api where
   toSwagger :: Proxy api -> Swagger
 
@@ -40,7 +43,7 @@ x </> y = case trim y of
 mkEndpoint :: forall a cs hs proxy _verb. (ToSchema a, AllAccept cs, AllToResponseHeader hs)
   => FilePath
   -> Lens' PathItem (Maybe Operation)
-  -> Int
+  -> HttpStatusCode
   -> proxy (_verb cs (Headers hs a))
   -> Swagger
 mkEndpoint path verb code proxy
@@ -60,7 +63,7 @@ mkEndpointWithSchemaRef :: forall cs hs proxy verb a. (AllAccept cs, AllToRespon
   => Maybe (Referenced Schema)
   -> FilePath
   -> Lens' PathItem (Maybe Operation)
-  -> Int
+  -> HttpStatusCode
   -> proxy (verb cs (Headers hs a))
   -> Swagger
 mkEndpointWithSchemaRef mref path verb code _ = mempty
@@ -242,7 +245,7 @@ instance (Accept c, AllAccept cs) => AllAccept (c ': cs) where
   allContentType _ = contentType (Proxy :: Proxy c) : allContentType (Proxy :: Proxy cs)
 
 class ToResponseHeader h where
-  toResponseHeader :: Proxy h -> (Text, Swagger.Header)
+  toResponseHeader :: Proxy h -> (HeaderName, Swagger.Header)
 
 instance (KnownSymbol sym, ToParamSchema a) => ToResponseHeader (Header sym a) where
   toResponseHeader _ = (hname, Swagger.Header Nothing Nothing schema)
@@ -251,7 +254,7 @@ instance (KnownSymbol sym, ToParamSchema a) => ToResponseHeader (Header sym a) w
       schema = toParamSchema (Proxy :: Proxy a)
 
 class AllToResponseHeader hs where
-  toAllResponseHeaders :: Proxy hs -> HashMap Text Swagger.Header
+  toAllResponseHeaders :: Proxy hs -> HashMap HeaderName Swagger.Header
 
 instance AllToResponseHeader '[] where
   toAllResponseHeaders _ = mempty

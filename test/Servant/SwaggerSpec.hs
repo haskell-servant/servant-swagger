@@ -7,8 +7,9 @@ module Servant.SwaggerSpec where
 
 import Data.Aeson
 import Data.Aeson.QQ
+import Data.Char (toLower)
 import Data.Proxy
-import Data.Swagger
+import Data.Swagger hiding (Tag(..))
 import Data.Time
 import GHC.Generics
 import Servant.API
@@ -79,7 +80,8 @@ todoAPI = [aesonQQ|
                     {
                       "schema": { "$ref":"#/definitions/Todo" },
                       "description": ""
-                    }
+                    },
+                  "404": { "description": "id not found" }
                 },
               "produces": [ "application/json" ],
               "parameters":
@@ -96,5 +98,4 @@ todoAPI = [aesonQQ|
     }
 }
 |]
-
 

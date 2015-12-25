@@ -46,9 +46,11 @@ test-suite spec
                   , aeson
                   , aeson-qq
                   , hspec
+                  , lens
                   , servant
                   , servant-swagger
                   , swagger2
+                  , text
                   , time
   other-modules:
     Servant.SwaggerSpec

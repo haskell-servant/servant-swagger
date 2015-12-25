@@ -5,6 +5,10 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
+
+
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Servant.Swagger.Internal where
 
 import Control.Arrow (first)
@@ -22,9 +26,11 @@ import Data.Swagger.Declare
 import Data.Text (Text)
 import qualified Data.Text as Text
 import GHC.TypeLits
+import GHC.Exts
 import Network.HTTP.Media (MediaType)
 import Servant.API
 
+type TagName = Text
 type HeaderName = Text
 type HttpStatusCode = Int
 
@@ -33,6 +39,12 @@ class HasSwagger api where
 
 instance HasSwagger Raw where
   toSwagger _ = mempty & paths.pathsMap.at "/" ?~ mempty
+
+-- | Tag sub API.
+addTag :: forall sub api. (IsSubAPI sub api, HasSwagger sub) => TagName -> Proxy sub -> Proxy api -> Swagger -> Swagger
+addTag tag sub _ = paths.pathsMap.itraversed.indices (`elem` ps).template.operationTags %~ (tag:)
+  where
+    ps = toSwagger sub ^. paths.pathsMap.to HashMap.keys
 
 (</>) :: FilePath -> FilePath -> FilePath
 x </> y = case trim y of
@@ -310,4 +322,29 @@ instance (ToResponseHeader h, AllToResponseHeader hs) => AllToResponseHeader (h 
 
 instance AllToResponseHeader hs => AllToResponseHeader (HList hs) where
   toAllResponseHeaders _ = toAllResponseHeaders (Proxy :: Proxy hs)
+
+-- | Check that every element of @xs@ is an endpoint of @api@.
+type family AllIsElem xs api :: Constraint where
+  AllIsElem '[] api = ()
+  AllIsElem (x ': xs) api = (IsElem x api, AllIsElem xs api)
+
+-- | Apply @(e :>)@ to every API in @xs@.
+type family MapSub e xs where
+  MapSub e '[] = '[]
+  MapSub e (x ': xs) = (e :> x) ': MapSub e xs
+
+-- | Append two type-level lists.
+type family AppendList xs ys where
+  AppendList '[]       ys = ys
+  AppendList (x ': xs) ys = x ': AppendList xs ys
+
+-- | Build a list of endpoints from an API.
+type family EndpointsList api where
+  EndpointsList (a :<|> b) = AppendList (EndpointsList a) (EndpointsList b)
+  EndpointsList (e :> a)   = MapSub e (EndpointsList a)
+  EndpointsList a = '[a]
+
+-- | Check whether @sub@ is a sub API of @api@.
+type family IsSubAPI sub api :: Constraint where
+  IsSubAPI sub api = AllIsElem (EndpointsList sub) api
 

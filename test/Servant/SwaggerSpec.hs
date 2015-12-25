@@ -13,6 +13,7 @@ import Data.Char (toLower)
 import Data.Proxy
 import Data.Swagger
 import Data.Text (Text)
+import qualified Data.Text as Text
 import Data.Time
 import GHC.Generics
 import Servant.API
@@ -23,7 +24,7 @@ checkAPI :: HasSwagger api => Proxy api -> Value -> IO ()
 checkAPI proxy = checkSwagger (toSwagger proxy)
 
 checkSwagger :: Swagger -> Value -> IO ()
-checkSwagger spec js = toJSON spec `shouldBe` js
+checkSwagger swag js = toJSON swag `shouldBe` js
 
 spec :: Spec
 spec = describe "HasSwagger" $ do
@@ -43,7 +44,7 @@ data Todo = Todo
   , description :: Maybe String
   } deriving (Generic, FromJSON, ToSchema)
 
-newtype TodoId = TodoId String deriving (Generic, FromText, ToParamSchema)
+newtype TodoId = TodoId String deriving (Generic, ToParamSchema)
 
 type TodoAPI = "todo" :> Capture "id" TodoId :> Get '[JSON] Todo
 
@@ -126,7 +127,11 @@ type Username = Text
 data UserSummary = UserSummary
   { summaryUsername :: Username
   , summaryUserid   :: Int
-  } deriving (Eq, Show, Generic, ToSchema)
+  } deriving (Eq, Show, Generic)
+
+instance ToSchema UserSummary where
+  declareNamedSchema = genericDeclareNamedSchema defaultSchemaOptions
+    { fieldLabelModifier = map toLower . drop (Text.length "summary") }
 
 type Group = Text
 
@@ -141,6 +146,7 @@ newtype Package = Package { packageName :: Text }
 
 hackageSwaggerWithTags :: Swagger
 hackageSwaggerWithTags = toSwagger (Proxy :: Proxy HackageAPI)
+  & host ?~ Host "hackage.haskell.org" Nothing
   & addTag "users"    (Proxy :: Proxy HackageUserAPI)     (Proxy :: Proxy HackageAPI)
   & addTag "packages" (Proxy :: Proxy HackagePackagesAPI) (Proxy :: Proxy HackageAPI)
   & tags .~
@@ -152,6 +158,7 @@ hackageAPI :: Value
 hackageAPI = [aesonQQ|
 {
    "swagger":"2.0",
+   "host":"hackage.haskell.org",
    "info":{
       "version":"",
       "title":""
@@ -194,15 +201,15 @@ hackageAPI = [aesonQQ|
       },
       "UserSummary":{
          "required":[
-            "summaryUsername",
-            "summaryUserid"
+            "username",
+            "userid"
          ],
          "type":"object",
          "properties":{
-            "summaryUsername":{
+            "username":{
                "type":"string"
             },
-            "summaryUserid":{
+            "userid":{
                "maximum":9223372036854775807,
                "minimum":-9223372036854775808,
                "type":"integer"

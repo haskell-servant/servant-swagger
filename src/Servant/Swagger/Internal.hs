@@ -46,9 +46,9 @@ subOperations sub _ = paths.pathsMap.itraversed.indices (`elem` ps).template
   where
     ps = toSwagger sub ^. paths.pathsMap.to HashMap.keys
 
--- | Tag sub API.
-addTag :: (IsSubAPI sub api, HasSwagger sub) => TagName -> Proxy sub -> Proxy api -> Swagger -> Swagger
-addTag tag sub api = subOperations sub api.operationTags %~ (tag:)
+-- | Tag an operation.
+addTag :: TagName -> Operation -> Operation
+addTag tag = operationTags %~ (tag:)
 
 (</>) :: FilePath -> FilePath -> FilePath
 x </> y = case trim y of

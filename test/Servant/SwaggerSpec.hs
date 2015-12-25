@@ -147,12 +147,15 @@ newtype Package = Package { packageName :: Text }
 hackageSwaggerWithTags :: Swagger
 hackageSwaggerWithTags = toSwagger (Proxy :: Proxy HackageAPI)
   & host ?~ Host "hackage.haskell.org" Nothing
-  & addTag "users"    (Proxy :: Proxy HackageUserAPI)     (Proxy :: Proxy HackageAPI)
-  & addTag "packages" (Proxy :: Proxy HackagePackagesAPI) (Proxy :: Proxy HackageAPI)
+  & usersOps    %~ addTag "users"
+  & packagesOps %~ addTag "packages"
   & tags .~
       [ Tag "users" (Just "Operations about user") Nothing
       , Tag "packages" (Just "Query packages") Nothing
       ]
+  where
+    usersOps    = subOperations (Proxy :: Proxy HackageUserAPI)     (Proxy :: Proxy HackageAPI)
+    packagesOps = subOperations (Proxy :: Proxy HackagePackagesAPI) (Proxy :: Proxy HackageAPI)
 
 hackageAPI :: Value
 hackageAPI = [aesonQQ|

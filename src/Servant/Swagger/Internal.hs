@@ -1,13 +1,12 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeOperators #-}
-
-
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 module Servant.Swagger.Internal where
 
@@ -40,11 +39,16 @@ class HasSwagger api where
 instance HasSwagger Raw where
   toSwagger _ = mempty & paths.pathsMap.at "/" ?~ mempty
 
--- | Tag sub API.
-addTag :: forall sub api. (IsSubAPI sub api, HasSwagger sub) => TagName -> Proxy sub -> Proxy api -> Swagger -> Swagger
-addTag tag sub _ = paths.pathsMap.itraversed.indices (`elem` ps).template.operationTags %~ (tag:)
+-- | All operations of sub API.
+subOperations :: forall sub api. (IsSubAPI sub api, HasSwagger sub) =>
+  Proxy sub -> Proxy api -> Traversal' Swagger Operation
+subOperations sub _ = paths.pathsMap.itraversed.indices (`elem` ps).template
   where
     ps = toSwagger sub ^. paths.pathsMap.to HashMap.keys
+
+-- | Tag sub API.
+addTag :: (IsSubAPI sub api, HasSwagger sub) => TagName -> Proxy sub -> Proxy api -> Swagger -> Swagger
+addTag tag sub api = subOperations sub api.operationTags %~ (tag:)
 
 (</>) :: FilePath -> FilePath -> FilePath
 x </> y = case trim y of

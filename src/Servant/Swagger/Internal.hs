@@ -330,7 +330,7 @@ instance AllToResponseHeader hs => AllToResponseHeader (HList hs) where
 -- | Check that every element of @xs@ is an endpoint of @api@.
 type family AllIsElem xs api :: Constraint where
   AllIsElem '[] api = ()
-  AllIsElem (x ': xs) api = (IsElem x api, AllIsElem xs api)
+  AllIsElem (x ': xs) api = (IsIn x api, AllIsElem xs api)
 
 -- | Apply @(e :>)@ to every API in @xs@.
 type family MapSub e xs where
@@ -351,4 +351,13 @@ type family EndpointsList api where
 -- | Check whether @sub@ is a sub API of @api@.
 type family IsSubAPI sub api :: Constraint where
   IsSubAPI sub api = AllIsElem (EndpointsList sub) api
+
+type family Or (a :: Constraint) (b :: Constraint) :: Constraint where
+  Or () b = ()
+  Or a () = ()
+
+type family IsIn sub api :: Constraint where
+  IsIn e (a :<|> b) = Or (IsIn e a) (IsIn e b)
+  IsIn (e :> a) (e :> b) = IsIn a b
+  IsIn e e = ()
 

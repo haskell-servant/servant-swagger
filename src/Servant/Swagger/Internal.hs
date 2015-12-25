@@ -50,6 +50,10 @@ subOperations sub _ = paths.pathsMap.itraversed.indices (`elem` ps).template
 addTag :: TagName -> Operation -> Operation
 addTag tag = operationTags %~ (tag:)
 
+-- | Set a response for an operation.
+setResponse :: HttpStatusCode -> Response -> Operation -> Operation
+setResponse code res = operationResponses.responsesResponses.at code ?~ Inline res
+
 (</>) :: FilePath -> FilePath -> FilePath
 x </> y = case trim y of
   "" -> "/" <> trim x

@@ -3,6 +3,7 @@ module Servant.Swagger (
 
   addTag,
   subOperations,
+  setResponse,
 
   ToResponseHeader(..),
   AllAccept,

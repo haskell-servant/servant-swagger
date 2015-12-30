@@ -29,10 +29,6 @@ import GHC.Exts
 import Network.HTTP.Media (MediaType)
 import Servant.API
 
-type TagName = Text
-type HeaderName = Text
-type HttpStatusCode = Int
-
 class HasSwagger api where
   toSwagger :: Proxy api -> Swagger
 
@@ -250,10 +246,9 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Query
         & paramName .~ Text.pack name
         & paramSchema .~ ParamOther (mempty
             & paramOtherSchemaIn .~ ParamQuery
-            & paramOtherSchemaCollectionFormat ?~ CollectionMulti
             & parameterSchema .~ (mempty
                 & schemaType .~ SwaggerArray
-                & schemaItems ?~ SwaggerItemsPrimitive (Items Nothing (toParamSchema (Proxy :: Proxy a)))))
+                & schemaItems ?~ SwaggerItemsPrimitive (Just CollectionMulti) (toParamSchema (Proxy :: Proxy a))))
 
 instance (KnownSymbol sym, HasSwagger sub) => HasSwagger (QueryFlag sym :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
@@ -311,7 +306,7 @@ class ToResponseHeader h where
   toResponseHeader :: Proxy h -> (HeaderName, Swagger.Header)
 
 instance (KnownSymbol sym, ToParamSchema a) => ToResponseHeader (Header sym a) where
-  toResponseHeader _ = (hname, Swagger.Header Nothing Nothing schema)
+  toResponseHeader _ = (hname, Swagger.Header Nothing schema)
     where
       hname = Text.pack (symbolVal (Proxy :: Proxy sym))
       schema = toParamSchema (Proxy :: Proxy a)

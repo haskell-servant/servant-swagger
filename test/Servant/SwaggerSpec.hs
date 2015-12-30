@@ -8,6 +8,7 @@ module Servant.SwaggerSpec where
 
 import Control.Lens
 import Data.Aeson
+import qualified Data.Aeson.Types as JSON
 import Data.Aeson.QQ
 import Data.Char (toLower)
 import Data.Proxy
@@ -129,9 +130,19 @@ data UserSummary = UserSummary
   , summaryUserid   :: Int
   } deriving (Eq, Show, Generic)
 
+lowerCutPrefix :: String -> String -> String
+lowerCutPrefix s = map toLower . drop (length s)
+
+instance ToJSON UserSummary where
+  toJSON = genericToJSON JSON.defaultOptions { JSON.fieldLabelModifier = lowerCutPrefix "summary" }
+
 instance ToSchema UserSummary where
-  declareNamedSchema = genericDeclareNamedSchema defaultSchemaOptions
-    { fieldLabelModifier = map toLower . drop (Text.length "summary") }
+  declareNamedSchema proxy = do
+    (name, schema) <- genericDeclareNamedSchema defaultSchemaOptions { fieldLabelModifier = lowerCutPrefix "summary" } proxy
+    return (name, schema
+      & schemaExample ?~ toJSON UserSummary
+         { summaryUsername = "JohnDoe"
+         , summaryUserid   = 123 })
 
 type Group = Text
 
@@ -217,6 +228,10 @@ hackageAPI = [aesonQQ|
                "minimum":-9223372036854775808,
                "type":"integer"
             }
+         },
+         "example":{
+            "username": "JohnDoe",
+            "userid": 123
          }
       }
    },

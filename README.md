@@ -21,6 +21,7 @@
 Given the following `servant` API, `servant-swagger` generates the following json.
 
 ### [Input](example/File.hs)
+
 ```haskell
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -142,12 +143,24 @@ main = BL8.writeFile "swagger.json" (encode swagDoc)
    }
 }
 ```
-## Try it out
- - All generated swagger docs can be interactively viewed on <a href="http://editor.swagger.io/">Swagger Editor</a>
 
-## Limitations
- - Quite a few, TODO: add this
+## Try it out
+
+All generated swagger specifications can be interactively viewed on [Swagger Editor](http://editor.swagger.io/).
+
+Ready-to-use specification can be served as JSON and interactive API documentation
+can be displayed using [Swagger UI](https://github.com/swagger-api/swagger-ui).
+
+Many Swagger tools, including server and client code generation for many languages, can be found on
+[Swagger's Tools and Integrations page](http://swagger.io/open-source-integrations/).
 
 ## FAQ
 - Q: How is this project different from the `swagger` package on `hackage` ?
   - A: This package is based on the latest Swagger 2.0 API
+
+## Contributing
+
+We are happy to receive bug reports, fixes, documentation enhancements, and other improvements.
+
+Please report bugs via the [github issue tracker](https://github.com/dmjio/servant-swagger/issues).
+

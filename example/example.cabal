@@ -21,6 +21,7 @@ executable swagger-server
                 , either
                 , servant-server
                 , servant-swagger
+                , swagger2
                 , lens
                 , wai
                 , warp
@@ -33,6 +34,7 @@ executable swagger-file
                 , aeson
                 , bytestring == 0.10.*
                 , servant
+                , swagger2
                 , either
                 , servant-server
                 , servant-swagger

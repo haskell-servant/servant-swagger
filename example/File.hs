@@ -1,63 +1,51 @@
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE TypeOperators              #-}
 module Main where
 
-import Servant.API
-import Servant.Server
-import Servant.Swagger
-import Data.Proxy
+import Control.Lens
 import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as BL8
+import Data.Proxy
+import Data.Swagger
 import GHC.Generics
-import Control.Lens
+import Servant
+import Servant.Swagger
 
 -- Types
-data Todo = Todo {
-    created :: Int
+data Todo = Todo
+  { created     :: Int
   , description :: String
   } deriving (Show, Eq, Generic)
 
 instance ToJSON Todo
-instance FromJSON Todo
 
-newtype TodoId = TodoId String deriving (FromText)
+newtype TodoId = TodoId String deriving (FromText, Generic)
 
 -- API
 type API = "todo" :> Capture "id" TodoId :> Get '[JSON] Todo
 
 -- Swagger Doc
-swagDoc :: SwaggerAPI
-swagDoc = swagger (Proxy :: Proxy API) mempty (BasePath "/") info schemes Nothing []
-  where
-    schemes = [ Http ]
-    license' = APILicense "MIT" (Just "http://mit.com")
-    info =
-      Info
-       (APITitle "Todo API") (APIVersion "1.0")
-       (APIDescription "This is a an API that tests servant-swagger support for a Todo")
-       (Just license')
-       Nothing
-       Nothing
+swagDoc :: Swagger
+swagDoc = toSwagger (Proxy :: Proxy API)
+  & info.infoTitle   .~ "Todo API"
+  & info.infoVersion .~ "1.0"
+  & info.infoDescription ?~ "This is an API that tests servant-swagger support for a Todo"
+  & info.infoLicense ?~ License "MIT" (Just (URL "http://mit.com"))
 
 -- Documentation and annotations
-instance ToSwaggerParamType TodoId where toSwaggerParamType = const StringSwagParam
-instance ToSwaggerDescription TodoId where toSwaggerDescription = const "TodoId param"
+instance ToParamSchema TodoId
 
-instance ToSwaggerModel Todo where
-  toSwagModel Proxy =
-    emptyModel
-      & swagModelName .~ ModelName "Todo"
-      & swagProperties .~ [ ("created", IntegerSwag)
-                          , ("description", StringSwag)
-                          , ("extraTodos", Model $ ModelSwag (ModelName "Todo") False)
-                          ]
-      & swagDescription ?~ Description "This is some real Todo right here"
-      & swagModelExample ?~ toJSON (Todo 100 "get milk")
-      & swagModelRequired .~ ["description"]
+instance ToSchema Todo where
+  declareNamedSchema proxy = do
+    (name, schema) <- genericDeclareNamedSchema defaultSchemaOptions proxy
+    return (name, schema
+      & schemaDescription ?~ "This is some real Todo right here"
+      & schemaExample ?~ toJSON (Todo 100 "get milk"))
 
 -- Main, create swaggger.json
 main :: IO ()
 main = BL8.writeFile "swagger.json" (encode swagDoc)
+

@@ -14,7 +14,8 @@ build-type:          Simple
 cabal-version:       >=1.10
 extra-source-files:
     README.md
-  , example/Main.hs
+  , example/*.hs
+  , example/*.cabal
 
 source-repository head
   type:     git

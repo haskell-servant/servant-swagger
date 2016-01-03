@@ -17,7 +17,7 @@ executable swagger-server
                     base
                 , aeson
                 , bytestring == 0.10.*
-                , servant
+                , servant >= 0.5
                 , either
                 , servant-server
                 , servant-swagger
@@ -25,6 +25,8 @@ executable swagger-server
                 , lens
                 , wai
                 , warp
+                , transformers
+                , http-api-data
   default-language: Haskell2010
 
 executable swagger-file
@@ -39,4 +41,5 @@ executable swagger-file
                 , servant-server
                 , servant-swagger
                 , lens
+                , http-api-data
   default-language: Haskell2010

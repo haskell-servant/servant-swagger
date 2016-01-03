@@ -6,7 +6,7 @@
 module Main where
 
 import Control.Lens
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Except
 import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as BL8
 import Data.Proxy
@@ -15,6 +15,7 @@ import GHC.Generics
 import Network.Wai.Handler.Warp
 import Servant
 import Servant.Swagger
+import Web.HttpApiData
 
 -- Test API
 type TodoAPI
@@ -43,9 +44,9 @@ data Todo = Todo { created :: Int, description :: String }
 instance ToJSON Todo
 instance FromJSON Todo
 
-newtype TodoId = TodoId String deriving (FromText, Generic)
-newtype TodoCount = TodoCount Int deriving (FromText, Generic)
-newtype Completed = Completed Bool deriving (FromText, Generic)
+newtype TodoId = TodoId String deriving (Generic,FromHttpApiData)
+newtype TodoCount = TodoCount Int deriving (Generic,FromHttpApiData)
+newtype Completed = Completed Bool deriving (Generic,FromHttpApiData)
 
 api :: Proxy TodoAPI
 api = Proxy
@@ -60,7 +61,7 @@ main = do
                   undefined :<|> undefined :<|> undefined
                   undefined :<|> undefined
 
-swagHandler :: EitherT ServantErr IO Swagger
+swagHandler :: ExceptT ServantErr IO Swagger
 swagHandler = pure $ toSwagger api
   & info.infoTitle   .~ "Todo API"
   & info.infoVersion .~ "1.0"

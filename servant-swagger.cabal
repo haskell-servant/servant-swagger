@@ -32,7 +32,7 @@ library
                      , bytestring
                      , http-media
                      , lens
-                     , servant
+                     , servant >= 0.5
                      , swagger2
                      , text
                      , unordered-containers

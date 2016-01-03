@@ -13,6 +13,7 @@ import Data.Swagger
 import GHC.Generics
 import Servant
 import Servant.Swagger
+import Web.HttpApiData
 
 -- Types
 data Todo = Todo
@@ -22,7 +23,7 @@ data Todo = Todo
 
 instance ToJSON Todo
 
-newtype TodoId = TodoId String deriving (FromText, Generic)
+newtype TodoId = TodoId String deriving (Generic,FromHttpApiData)
 
 -- API
 type API = "todo" :> Capture "id" TodoId :> Get '[JSON] Todo

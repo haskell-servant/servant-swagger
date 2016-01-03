@@ -7,10 +7,23 @@ resolver: lts-3.11
 packages:
 - '.'
 - example/
+- '../servant/servant/'
+- '../servant/servant-blaze/'
+- '../servant/servant-cassava/'
+- '../servant/servant-client/'
+- '../servant/servant-docs/'
+- '../servant/servant-examples/'
+- '../servant/servant-foreign/'
+- '../servant/servant-js/'
+- '../servant/servant-lucid/'
+- '../servant/servant-mock/'
+- '../servant/servant-server/'
 
 # Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
 extra-deps:
 - swagger2-1.1.1
+- control-monad-omega-0.3.1
+- engine-io-wai-1.0.5
 
 # Override default flag values for local packages and extra-deps
 flags: {}

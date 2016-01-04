@@ -17,7 +17,7 @@ executable swagger-server
                     base
                 , aeson
                 , bytestring == 0.10.*
-                , servant >= 0.5
+                , servant
                 , either
                 , servant-server
                 , servant-swagger

@@ -1,0 +1,27 @@
+sudo: false
+
+addons:
+  apt:
+    packages:
+      - libgmp-dev
+
+env:
+  - STACK_YAML=stack.yaml
+
+before_install:
+  # Download and unpack the stack executable
+  - mkdir -p ~/.local/bin
+  - export PATH=$HOME/.local/bin:$PATH
+  - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+  - export PATH=~/.local/bin:$PATH
+  - stack --version
+
+install:
+  - stack setup
+
+script:
+  - stack --no-terminal build --test
+
+cache:
+  directories:
+    - $HOME/.stack

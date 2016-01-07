@@ -56,4 +56,3 @@ test-suite spec
   other-modules:
     Servant.SwaggerSpec
   default-language: Haskell2010
-

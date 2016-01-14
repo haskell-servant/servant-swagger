@@ -6,6 +6,9 @@
     <a href="http://hackage.haskell.org/package/servant-swagger">
       <img alt="Hackage" src="https://img.shields.io/hackage/v/servant-swagger.svg" />
     </a>
+    <a href="https://travis-ci.org/haskell-servant/servant-swagger">
+      <img alt="Hackage" src="https://travis-ci.org/haskell-servant/servant-swagger.svg?branch=master" />
+    </a>
 </h1>
 
 <p align="center">

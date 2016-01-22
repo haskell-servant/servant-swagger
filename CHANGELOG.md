@@ -1,3 +1,10 @@
+0.1.1
+---
+
+* Fixes:
+    * Fix `subOperations` to filter endpoints also by method (see [#18](https://github.com/haskell-servant/servant-swagger/issues/18));
+    * Fix response schema in `ToSwagger` instance for `Header` (see [b59e557](https://github.com/haskell-servant/servant-swagger/commit/b59e557a05bc2669332c52b397879e7598747b82)).
+
 0.1
 ---
 * Major changes

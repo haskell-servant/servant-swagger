@@ -31,6 +31,7 @@ spec :: Spec
 spec = describe "HasSwagger" $ do
   it "Todo API" $ checkAPI (Proxy :: Proxy TodoAPI) todoAPI
   it "Hackage API (with tags)" $ checkSwagger hackageSwaggerWithTags hackageAPI
+  it "GetPost API (test subOperations)" $ checkSwagger getPostSwagger getPostAPI
 
 main :: IO ()
 main = hspec spec
@@ -316,6 +317,65 @@ hackageAPI = [aesonQQ|
       {
          "name":"packages",
          "description":"Query packages"
+      }
+   ]
+}
+|]
+
+
+-- =======================================================================
+-- Get/Post API (test for subOperations)
+-- =======================================================================
+
+type GetPostAPI = Get '[JSON] String :<|> Post '[JSON] String
+
+getPostSwagger :: Swagger
+getPostSwagger = toSwagger (Proxy :: Proxy GetPostAPI)
+  & getOps %~ addTag "get"
+  & tags .~
+      [ Tag "get" (Just "GET operations") Nothing ]
+  where
+    getOps = subOperations (Proxy :: Proxy (Get '[JSON] String)) (Proxy :: Proxy GetPostAPI)
+
+getPostAPI :: Value
+getPostAPI = [aesonQQ|
+{
+   "swagger":"2.0",
+   "info":{
+      "version":"",
+      "title":""
+   },
+   "paths":{
+      "/":{
+         "post":{
+            "responses":{
+               "201":{
+                  "schema":{
+                     "type":"string"
+                  },
+                  "description":""
+               }
+            },
+            "produces":[ "application/json" ]
+         },
+         "get":{
+            "responses":{
+               "200":{
+                  "schema":{
+                     "type":"string"
+                  },
+                  "description":""
+               }
+            },
+            "produces":[ "application/json" ],
+            "tags":[ "get" ]
+         }
+      }
+   },
+   "tags":[
+      {
+         "name":"get",
+         "description":"GET operations"
       }
    ]
 }

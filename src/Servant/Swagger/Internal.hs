@@ -139,16 +139,22 @@ addResponseWith f code new spec = spec
 addResponse :: HttpStatusCode -> Response -> Swagger -> Swagger
 addResponse = addResponseWith (\_old new -> new)
 
+-- | Format given text as inline code in Markdown.
+markdownCode :: Text -> Text
+markdownCode s = "`" <> s <> "`"
+
 addDefaultResponse404 :: ParamName -> Swagger -> Swagger
-addDefaultResponse404 name = addResponseWith (\old _new -> alter404 old) 404 response404
+addDefaultResponse404 pname = addResponseWith (\old _new -> alter404 old) 404 response404
   where
+    name = markdownCode pname
     description404 = name <> " not found"
     alter404 = description %~ ((name <> " or ") <>)
     response404 = mempty & description .~ description404
 
 addDefaultResponse400 :: ParamName -> Swagger -> Swagger
-addDefaultResponse400 name = addResponseWith (\old _new -> alter400 old) 400 response400
+addDefaultResponse400 pname = addResponseWith (\old _new -> alter400 old) 400 response400
   where
+    name = markdownCode pname
     description400 = "Invalid " <> name
     alter400 = description %~ (<> (" or " <> name))
     response400 = mempty & description .~ description400

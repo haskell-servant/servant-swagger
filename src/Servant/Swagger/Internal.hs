@@ -292,7 +292,7 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Heade
         & paramName .~ Text.pack name
         & paramSchema .~ ParamOther (mempty
             & paramOtherSchemaIn .~ ParamHeader
-            & parameterSchema .~ toParamSchema (Proxy :: Proxy Bool))
+            & parameterSchema .~ toParamSchema (Proxy :: Proxy a))
 
 instance (ToSchema a, AllAccept cs, HasSwagger sub) => HasSwagger (ReqBody cs a :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)

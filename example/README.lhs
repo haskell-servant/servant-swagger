@@ -1,23 +1,13 @@
-<h1 align="center">
-    <a href="https://github.com/dmjio/servant-swagger">
-        servant-swagger
-    </a>
-    <br/>
-    <a href="http://hackage.haskell.org/package/servant-swagger">
-      <img alt="Hackage" src="https://img.shields.io/hackage/v/servant-swagger.svg" />
-    </a>
-    <a href="https://travis-ci.org/haskell-servant/servant-swagger">
-      <img alt="Hackage" src="https://travis-ci.org/haskell-servant/servant-swagger.svg?branch=master" />
-    </a>
-</h1>
+# servant-swagger
 
-<p align="center">
-  This project converts <a href="https://github.com/haskell-servant/servant">servant</a> APIs into Swagger 2.0 conforming JSON.
-</p>
+[![Build Status](https://travis-ci.org/haskell-servant/servant-swagger.svg?branch=master)](https://travis-ci.org/haskell-servant/servant-swagger)
+[![Hackage](https://img.shields.io/hackage/v/servant-swagger.svg)](http://hackage.haskell.org/package/servant-swagger)
+[![Stackage LTS](http://stackage.org/package/servant-swagger/badge/lts)](http://stackage.org/lts/package/servant-swagger)
+[![Stackage Nightly](http://stackage.org/package/servant-swagger/badge/nightly)](http://stackage.org/nightly/package/servant-swagger)
 
-<p align="center">
-  <img src="http://s16.postimg.org/rndz1wbyt/servant.png" />
-</p>
+This project converts [servant](https://github.com/haskell-servant/servant) APIs into Swagger 2.0 specification.
+
+![servant-swagger robot](http://s16.postimg.org/rndz1wbyt/servant.png)
 
 <hr>
 
@@ -156,10 +146,6 @@ can be displayed using [Swagger UI](https://github.com/swagger-api/swagger-ui).
 
 Many Swagger tools, including server and client code generation for many languages, can be found on
 [Swagger's Tools and Integrations page](http://swagger.io/open-source-integrations/).
-
-## FAQ
-- Q: How is this project different from the `swagger` package on `hackage` ?
-  - A: This package is based on the latest Swagger 2.0 API
 
 ## Contributing
 

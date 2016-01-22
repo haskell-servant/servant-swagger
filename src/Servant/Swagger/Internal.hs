@@ -17,6 +17,7 @@ import Data.Data.Lens (template)
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HashMap
 import Data.List (dropWhileEnd)
+import Data.Maybe (mapMaybe)
 import Data.Monoid
 import Data.Proxy
 import qualified Data.Swagger as Swagger
@@ -24,6 +25,7 @@ import Data.Swagger hiding (Header)
 import Data.Swagger.Declare
 import Data.Text (Text)
 import qualified Data.Text as Text
+import Data.Traversable (sequenceA)
 import GHC.TypeLits
 import GHC.Exts
 import Network.HTTP.Media (MediaType)
@@ -38,9 +40,25 @@ instance HasSwagger Raw where
 -- | All operations of sub API.
 subOperations :: forall sub api. (IsSubAPI sub api, HasSwagger sub) =>
   Proxy sub -> Proxy api -> Traversal' Swagger Operation
-subOperations sub _ = paths.pathsMap.itraversed.indices (`elem` ps).template
+subOperations sub _ = paths.pathsMap.itraversed.withIndex.subops
   where
-    ps = toSwagger sub ^. paths.pathsMap.to HashMap.keys
+    -- | Traverse operations that correspond to paths and methods of the sub API.
+    subops :: Traversal' (FilePath, PathItem) Operation
+    subops f (path, item) = case HashMap.lookup path subpaths of
+      Just subitem -> (,) path <$> methodsOf subitem f item
+      Nothing      -> pure (path, item)
+
+    -- | Paths of the sub API.
+    subpaths :: HashMap FilePath PathItem
+    subpaths = toSwagger sub ^. paths.pathsMap
+
+    -- | Traverse operations that exist in a given @'PathItem'@
+    -- This is used to traverse only the operations that exist in sub API.
+    methodsOf :: PathItem -> Traversal' PathItem Operation
+    methodsOf pathItem = partsOf template . itraversed . indices (`elem` ns) . _Just
+      where
+        ops = pathItem ^.. template :: [Maybe Operation]
+        ns = mapMaybe (fmap fst . sequenceA) $ zip [0..] ops
 
 -- | Tag an operation.
 addTag :: TagName -> Operation -> Operation

@@ -5,7 +5,7 @@
 [![Stackage LTS](http://stackage.org/package/servant-swagger/badge/lts)](http://stackage.org/lts/package/servant-swagger)
 [![Stackage Nightly](http://stackage.org/package/servant-swagger/badge/nightly)](http://stackage.org/nightly/package/servant-swagger)
 
-This project converts [servant](https://github.com/haskell-servant/servant) APIs into Swagger 2.0 specification.
+This project converts [servant](https://github.com/haskell-servant/servant) APIs into Swagger 2.0 conforming json.
 
 ![servant-swagger robot](http://s16.postimg.org/rndz1wbyt/servant.png)
 

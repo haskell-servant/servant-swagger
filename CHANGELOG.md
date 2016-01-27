@@ -1,3 +1,10 @@
+0.1.2
+---
+
+* Fixes:
+    * Fix default spec for `ReqBody` param to be required (see [#22](https://github.com/haskell-servant/servant-swagger/issues/22));
+    * Set version bounds for `swagger2`.
+
 0.1.1
 ---
 

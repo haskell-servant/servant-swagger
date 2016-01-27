@@ -111,7 +111,7 @@ main = BL8.writeFile "swagger.json" (encode swagDoc)
          "get":{
             "responses":{
                "404":{
-                  "description":"id not found"
+                  "description":"`id` not found"
                },
                "200":{
                   "schema":{

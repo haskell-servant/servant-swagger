@@ -310,8 +310,9 @@ instance (ToSchema a, AllAccept cs, HasSwagger sub) => HasSwagger (ReqBody cs a 
       name = "body"
       (defs, ref) = runDeclare (declareSchemaRef (Proxy :: Proxy a)) mempty
       param = mempty
-        & paramName   .~ "body"
-        & paramSchema .~ ParamBody ref
+        & paramName     .~ "body"
+        & paramRequired ?~ True
+        & paramSchema   .~ ParamBody ref
 
 -- =======================================================================
 -- Below are the definitions that should be in Servant.API.ContentTypes

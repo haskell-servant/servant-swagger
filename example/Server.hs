@@ -27,17 +27,17 @@ type TestAPI = "todo" :> Capture "id" TodoId :> Get '[JSON] Todo
 
 swagDoc :: Swagger
 swagDoc = toSwagger (Proxy :: Proxy TestAPI)
-  & info.infoTitle   .~ "Todo API"
-  & info.infoVersion .~ "1.0"
-  & info.infoDescription ?~ "This is an API that tests servant-swagger support for a Todo"
-  & info.infoLicense ?~ License "MIT" (Just (URL "http://mit.com"))
+  & info.title   .~ "Todo API"
+  & info.version .~ "1.0"
+  & info.description ?~ "This is an API that tests servant-swagger support for a Todo"
+  & info.license ?~ ("MIT" & url ?~ URL "http://mit.com")
 
 type DocsAPI = Get '[JSON] Swagger
 
 type API = DocsAPI :<|> TodoAPI
 
 -- Data
-data Todo = Todo { created :: Int, description :: String }
+data Todo = Todo { created :: Int, summary :: String }
      deriving (Show, Eq, Generic)
 
 instance ToJSON Todo
@@ -62,18 +62,15 @@ main = do
 
 swagHandler :: EitherT ServantErr IO Swagger
 swagHandler = pure $ toSwagger api
-  & info.infoTitle   .~ "Todo API"
-  & info.infoVersion .~ "1.0"
-  & info.infoDescription ?~ "This is an API that tests swagger integration"
-  & info.infoLicense ?~ License "MIT" (Just (URL "http://mit.com"))
+  & info.title   .~ "Todo API"
+  & info.version .~ "1.0"
+  & info.description ?~ "This is an API that tests swagger integration"
+  & info.license ?~ ("MIT" & url ?~ URL "http://mit.com")
 
--- Instances
 instance ToSchema Todo where
-  declareNamedSchema proxy = do
-    (name, schema) <- genericDeclareNamedSchema defaultSchemaOptions proxy
-    return (name, schema
-      & schemaDescription ?~ "This is some real Todo right here"
-      & schemaExample ?~ toJSON (Todo 100 "get milk"))
+  declareNamedSchema proxy = genericDeclareNamedSchema defaultSchemaOptions proxy
+    & mapped.schema.description ?~ "This is some real Todo right here"
+    & mapped.schema.example ?~ toJSON (Todo 100 "get milk")
 
 instance ToParamSchema TodoId
 

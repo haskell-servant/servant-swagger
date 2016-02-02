@@ -10,22 +10,18 @@
 {-# LANGUAGE UndecidableInstances #-}
 module Servant.Swagger.Internal where
 
-import Control.Arrow (first)
 import Control.Lens
 import Data.Aeson
-import Data.Data.Lens (template)
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HashMap
-import Data.List (dropWhileEnd)
-import Data.Maybe (mapMaybe)
 import Data.Monoid
 import Data.Proxy
 import qualified Data.Swagger as Swagger
 import Data.Swagger hiding (Header)
 import Data.Swagger.Declare
+import Data.Swagger.Operation
 import Data.Text (Text)
 import qualified Data.Text as Text
-import Data.Traversable (sequenceA)
 import GHC.TypeLits
 import GHC.Exts
 import Network.HTTP.Media (MediaType)
@@ -35,45 +31,11 @@ class HasSwagger api where
   toSwagger :: Proxy api -> Swagger
 
 instance HasSwagger Raw where
-  toSwagger _ = mempty & paths.pathsMap.at "/" ?~ mempty
+  toSwagger _ = mempty & paths . at "/" ?~ mempty
 
 -- | All operations of sub API.
-subOperations :: forall sub api. (IsSubAPI sub api, HasSwagger sub) =>
-  Proxy sub -> Proxy api -> Traversal' Swagger Operation
-subOperations sub _ = paths.pathsMap.itraversed.withIndex.subops
-  where
-    -- | Traverse operations that correspond to paths and methods of the sub API.
-    subops :: Traversal' (FilePath, PathItem) Operation
-    subops f (path, item) = case HashMap.lookup path subpaths of
-      Just subitem -> (,) path <$> methodsOf subitem f item
-      Nothing      -> pure (path, item)
-
-    -- | Paths of the sub API.
-    subpaths :: HashMap FilePath PathItem
-    subpaths = toSwagger sub ^. paths.pathsMap
-
-    -- | Traverse operations that exist in a given @'PathItem'@
-    -- This is used to traverse only the operations that exist in sub API.
-    methodsOf :: PathItem -> Traversal' PathItem Operation
-    methodsOf pathItem = partsOf template . itraversed . indices (`elem` ns) . _Just
-      where
-        ops = pathItem ^.. template :: [Maybe Operation]
-        ns = mapMaybe (fmap fst . sequenceA) $ zip [0..] ops
-
--- | Tag an operation.
-addTag :: TagName -> Operation -> Operation
-addTag tag = operationTags %~ (tag:)
-
--- | Set a response for an operation.
-setResponse :: HttpStatusCode -> Response -> Operation -> Operation
-setResponse code res = operationResponses.responsesResponses.at code ?~ Inline res
-
-(</>) :: FilePath -> FilePath -> FilePath
-x </> y = case trim y of
-  "" -> "/" <> trim x
-  y' -> "/" <> trim x <> "/" <> y'
-  where
-    trim = dropWhile (== '/') . dropWhileEnd (== '/')
+subOperations :: (IsSubAPI sub api, HasSwagger sub) => Proxy sub -> Proxy api -> Traversal' Swagger Operation
+subOperations sub _ = operationsOf (toSwagger sub)
 
 mkEndpoint :: forall a cs hs proxy _verb. (ToSchema a, AllAccept cs, AllToResponseHeader hs)
   => FilePath
@@ -102,61 +64,39 @@ mkEndpointWithSchemaRef :: forall cs hs proxy verb a. (AllAccept cs, AllToRespon
   -> proxy (verb cs (Headers hs a))
   -> Swagger
 mkEndpointWithSchemaRef mref path verb code _ = mempty
-  & paths.pathsMap.at path ?~
+  & paths.at path ?~
     (mempty & verb ?~ (mempty
-      & operationProduces ?~ MimeList (allContentType (Proxy :: Proxy cs))
-      & operationResponses .~ (mempty
-        & responsesResponses . at code ?~ Inline (mempty
-            & responseSchema  .~ mref
-            & responseHeaders .~ toAllResponseHeaders (Proxy :: Proxy hs)))))
-
--- | Prepend path to all API endpoints.
-prependPath :: FilePath -> Swagger -> Swagger
-prependPath path spec = spec & paths.pathsMap %~ f
-  where
-    f = HashMap.fromList . map (first (path </>)) . HashMap.toList
+      & produces ?~ MimeList (allContentType (Proxy :: Proxy cs))
+      & at code ?~ Inline (mempty
+            & schema  .~ mref
+            & headers .~ toAllResponseHeaders (Proxy :: Proxy hs))))
 
 -- | Add parameter to every operation in the spec.
 addParam :: Param -> Swagger -> Swagger
-addParam param spec = spec & template.operationParameters %~ (Inline param :)
+addParam param = allOperations.parameters %~ (Inline param :)
 
 -- | Add accepted content types to every operation in the spec.
 addConsumes :: [MediaType] -> Swagger -> Swagger
-addConsumes cs spec = spec & template.operationConsumes %~ (<> Just (MimeList cs))
-
--- | Add/modify response for every operation in the spec.
-addResponseWith :: (Response -> Response -> Response) -> HttpStatusCode -> Response -> Swagger -> Swagger
-addResponseWith f code new spec = spec
-  & paths.template.responsesResponses . at code %~ Just . Inline . combine
-  where
-    combine (Just (Ref (Reference name))) = case spec ^. responses.at name of
-      Just old -> f old new
-      Nothing  -> new -- FIXME: what is the right choice here?
-    combine (Just (Inline old)) = f old new
-    combine Nothing = new
-
--- | Add/overwrite response for every operation in the spec.
-addResponse :: HttpStatusCode -> Response -> Swagger -> Swagger
-addResponse = addResponseWith (\_old new -> new)
+addConsumes cs = allOperations.consumes %~ (<> Just (MimeList cs))
 
 -- | Format given text as inline code in Markdown.
 markdownCode :: Text -> Text
 markdownCode s = "`" <> s <> "`"
 
 addDefaultResponse404 :: ParamName -> Swagger -> Swagger
-addDefaultResponse404 pname = addResponseWith (\old _new -> alter404 old) 404 response404
+addDefaultResponse404 pname = setResponseWith (\old _new -> alter404 old) 404 (pure response404)
   where
-    name = markdownCode pname
-    description404 = name <> " not found"
-    alter404 = description %~ ((name <> " or ") <>)
+    sname = markdownCode pname
+    description404 = sname <> " not found"
+    alter404 = description %~ ((sname <> " or ") <>)
     response404 = mempty & description .~ description404
 
 addDefaultResponse400 :: ParamName -> Swagger -> Swagger
-addDefaultResponse400 pname = addResponseWith (\old _new -> alter400 old) 400 response400
+addDefaultResponse400 pname = setResponseWith (\old _new -> alter400 old) 400 (pure response400)
   where
-    name = markdownCode pname
-    description400 = "Invalid " <> name
-    alter400 = description %~ (<> (" or " <> name))
+    sname = markdownCode pname
+    description400 = "Invalid " <> sname
+    alter400 = description %~ (<> (" or " <> sname))
     response400 = mempty & description .~ description400
 
 -- -----------------------------------------------------------------------
@@ -167,10 +107,10 @@ instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Delete c
   toSwagger _ = toSwagger (Proxy :: Proxy (Delete cs (Headers '[] a)))
 
 instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Delete cs (Headers hs a)) where
-  toSwagger = mkEndpoint "/" pathItemDelete 200
+  toSwagger = mkEndpoint "/" delete 200
 
 instance AllAccept cs => HasSwagger (Delete cs ()) where
-  toSwagger = noContentEndpoint "/" pathItemDelete
+  toSwagger = noContentEndpoint "/" delete
 
 -- -----------------------------------------------------------------------
 -- GET
@@ -180,10 +120,10 @@ instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Get cs a
   toSwagger _ = toSwagger (Proxy :: Proxy (Get cs (Headers '[] a)))
 
 instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Get cs (Headers hs a)) where
-  toSwagger = mkEndpoint "/" pathItemGet 200
+  toSwagger = mkEndpoint "/" get 200
 
 instance AllAccept cs => HasSwagger (Get cs ()) where
-  toSwagger = noContentEndpoint "/" pathItemGet
+  toSwagger = noContentEndpoint "/" get
 
 -- -----------------------------------------------------------------------
 -- PATCH
@@ -193,10 +133,10 @@ instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Patch cs
   toSwagger _ = toSwagger (Proxy :: Proxy (Patch cs (Headers '[] a)))
 
 instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Patch cs (Headers hs a)) where
-  toSwagger = mkEndpoint "/" pathItemPatch 200
+  toSwagger = mkEndpoint "/" patch 200
 
 instance AllAccept cs => HasSwagger (Patch cs ()) where
-  toSwagger = noContentEndpoint "/" pathItemPatch
+  toSwagger = noContentEndpoint "/" patch
 
 -- -----------------------------------------------------------------------
 -- PUT
@@ -206,10 +146,10 @@ instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Put cs a
   toSwagger _ = toSwagger (Proxy :: Proxy (Put cs (Headers '[] a)))
 
 instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Put cs (Headers hs a)) where
-  toSwagger = mkEndpoint "/" pathItemPut 200
+  toSwagger = mkEndpoint "/" put 200
 
 instance AllAccept cs => HasSwagger (Put cs ()) where
-  toSwagger = noContentEndpoint "/" pathItemPut
+  toSwagger = noContentEndpoint "/" put
 
 -- -----------------------------------------------------------------------
 -- POST
@@ -219,11 +159,10 @@ instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Post cs 
   toSwagger _ = toSwagger (Proxy :: Proxy (Post cs (Headers '[] a)))
 
 instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Post cs (Headers hs a)) where
-  toSwagger = mkEndpoint "/" pathItemPost 201
+  toSwagger = mkEndpoint "/" post 201
 
 instance AllAccept cs => HasSwagger (Post cs ()) where
-  toSwagger = noContentEndpoint "/" pathItemPost
-
+  toSwagger = noContentEndpoint "/" post
 
 instance (HasSwagger a, HasSwagger b) => HasSwagger (a :<|> b) where
   toSwagger _ = toSwagger (Proxy :: Proxy a) <> toSwagger (Proxy :: Proxy b)
@@ -237,82 +176,83 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Captu
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
     & addParam param
     & prependPath capture
-    & addDefaultResponse404 (Text.pack name)
+    & addDefaultResponse404 tname
     where
-      name = symbolVal (Proxy :: Proxy sym)
-      capture = "{" <> name <> "}"
+      pname = symbolVal (Proxy :: Proxy sym)
+      tname = Text.pack pname
+      capture = "{" <> pname <> "}"
       param = mempty
-        & paramName .~ Text.pack name
-        & paramRequired ?~ True
-        & paramSchema .~ ParamOther (mempty
-            & paramOtherSchemaIn .~ ParamPath
-            & parameterSchema .~ toParamSchema (Proxy :: Proxy a))
+        & name .~ tname
+        & required ?~ True
+        & schema .~ ParamOther (mempty
+            & in_ .~ ParamPath
+            & paramSchema .~ toParamSchema (Proxy :: Proxy a))
 
 instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (QueryParam sym a :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
     & addParam param
-    & addDefaultResponse400 (Text.pack name)
+    & addDefaultResponse400 tname
     where
-      name = symbolVal (Proxy :: Proxy sym)
+      tname = Text.pack (symbolVal (Proxy :: Proxy sym))
       param = mempty
-        & paramName .~ Text.pack name
-        & paramSchema .~ ParamOther (mempty
-            & paramOtherSchemaIn .~ ParamQuery
-            & parameterSchema .~ toParamSchema (Proxy :: Proxy a))
+        & name .~ tname
+        & schema .~ ParamOther (mempty
+            & in_ .~ ParamQuery
+            & paramSchema .~ toParamSchema (Proxy :: Proxy a))
 
 instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (QueryParams sym a :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
     & addParam param
-    & addDefaultResponse400 (Text.pack name)
+    & addDefaultResponse400 tname
     where
-      name = symbolVal (Proxy :: Proxy sym)
+      tname = Text.pack (symbolVal (Proxy :: Proxy sym))
       param = mempty
-        & paramName .~ Text.pack name
-        & paramSchema .~ ParamOther (mempty
-            & paramOtherSchemaIn .~ ParamQuery
-            & parameterSchema .~ (mempty
-                & schemaType .~ SwaggerArray
-                & schemaItems ?~ SwaggerItemsPrimitive (Just CollectionMulti) (toParamSchema (Proxy :: Proxy a))))
+        & name .~ tname
+        & schema .~ ParamOther (mempty
+            & in_ .~ ParamQuery
+            & paramSchema .~ (mempty
+                & type_ .~ SwaggerArray
+                & items ?~ SwaggerItemsPrimitive (Just CollectionMulti) (toParamSchema (Proxy :: Proxy a))))
 
 instance (KnownSymbol sym, HasSwagger sub) => HasSwagger (QueryFlag sym :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
     & addParam param
-    & addDefaultResponse400 (Text.pack name)
+    & addDefaultResponse400 tname
     where
-      name = symbolVal (Proxy :: Proxy sym)
+      tname = Text.pack (symbolVal (Proxy :: Proxy sym))
       param = mempty
-        & paramName .~ Text.pack name
-        & paramSchema .~ ParamOther (mempty
-            & paramOtherSchemaIn .~ ParamQuery
-            & paramOtherSchemaAllowEmptyValue ?~ True
-            & parameterSchema .~ (toParamSchema (Proxy :: Proxy Bool)
-                & schemaDefault ?~ toJSON False))
+        & name .~ tname
+        & schema .~ ParamOther (mempty
+            & in_ .~ ParamQuery
+            & allowEmptyValue ?~ True
+            & paramSchema .~ (toParamSchema (Proxy :: Proxy Bool)
+                & default_ ?~ toJSON False))
 
 instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Header sym a :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
     & addParam param
-    & addDefaultResponse400 (Text.pack name)
+    & addDefaultResponse400 tname
     where
-      name = symbolVal (Proxy :: Proxy sym)
+      tname = Text.pack (symbolVal (Proxy :: Proxy sym))
       param = mempty
-        & paramName .~ Text.pack name
-        & paramSchema .~ ParamOther (mempty
-            & paramOtherSchemaIn .~ ParamHeader
-            & parameterSchema .~ toParamSchema (Proxy :: Proxy a))
+        & name .~ tname
+        & schema .~ ParamOther (mempty
+            & in_ .~ ParamHeader
+            & paramSchema .~ toParamSchema (Proxy :: Proxy a))
 
 instance (ToSchema a, AllAccept cs, HasSwagger sub) => HasSwagger (ReqBody cs a :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
     & addParam param
     & addConsumes (allContentType (Proxy :: Proxy cs))
-    & addDefaultResponse400 name
+    & addDefaultResponse400 tname
     & definitions %~ (<> defs)
     where
-      name = "body"
+      tname = "body"
       (defs, ref) = runDeclare (declareSchemaRef (Proxy :: Proxy a)) mempty
       param = mempty
-        & paramName     .~ "body"
-        & paramRequired ?~ True
-        & paramSchema   .~ ParamBody ref
+        & name      .~ tname
+        & required  ?~ True
+        & schema    .~ ParamBody ref
 
 -- =======================================================================
 -- Below are the definitions that should be in Servant.API.ContentTypes
@@ -331,10 +271,10 @@ class ToResponseHeader h where
   toResponseHeader :: Proxy h -> (HeaderName, Swagger.Header)
 
 instance (KnownSymbol sym, ToParamSchema a) => ToResponseHeader (Header sym a) where
-  toResponseHeader _ = (hname, Swagger.Header Nothing schema)
+  toResponseHeader _ = (hname, Swagger.Header Nothing hschema)
     where
       hname = Text.pack (symbolVal (Proxy :: Proxy sym))
-      schema = toParamSchema (Proxy :: Proxy a)
+      hschema = toParamSchema (Proxy :: Proxy a)
 
 class AllToResponseHeader hs where
   toAllResponseHeaders :: Proxy hs -> HashMap HeaderName Swagger.Header
@@ -343,10 +283,10 @@ instance AllToResponseHeader '[] where
   toAllResponseHeaders _ = mempty
 
 instance (ToResponseHeader h, AllToResponseHeader hs) => AllToResponseHeader (h ': hs) where
-  toAllResponseHeaders _ = HashMap.insert name header headers
+  toAllResponseHeaders _ = HashMap.insert hname header hdrs
     where
-      (name, header) = toResponseHeader (Proxy :: Proxy h)
-      headers = toAllResponseHeaders (Proxy :: Proxy hs)
+      (hname, header) = toResponseHeader (Proxy :: Proxy h)
+      hdrs = toAllResponseHeaders (Proxy :: Proxy hs)
 
 instance AllToResponseHeader hs => AllToResponseHeader (HList hs) where
   toAllResponseHeaders _ = toAllResponseHeaders (Proxy :: Proxy hs)

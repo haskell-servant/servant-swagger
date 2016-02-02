@@ -1,9 +1,7 @@
 module Servant.Swagger (
   HasSwagger(..),
 
-  addTag,
   subOperations,
-  setResponse,
 
   ToResponseHeader(..),
   AllAccept,

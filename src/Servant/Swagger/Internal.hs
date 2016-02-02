@@ -27,13 +27,47 @@ import GHC.Exts
 import Network.HTTP.Media (MediaType)
 import Servant.API
 
+-- | Generate a Swagger specification for a servant API.
+--
+-- To generate Swagger specification, your data types need
+-- @'ToParamSchema'@ and/or @'ToSchema'@ instances.
+--
+-- @'ToParamSchema'@ is used for @'Capture'@, @'QueryParam'@ and @'Header'@.
+-- @'ToSchema'@ is used for @'ReqBody'@ and response data types.
+--
+-- You can easily derive those instances via @Generic@.
+-- For more information, refer to <http://hackage.haskell.org/package/swagger2/docs/Data-Swagger.html swagger2 documentation>.
+--
+-- Example:
+--
+-- @
+-- newtype Username = Username String deriving (Generic, ToText)
+--
+-- instance ToParamSchema Username
+--
+-- data User = User
+--   { username :: Username
+--   , fullname :: String
+--   } deriving (Generic)
+--
+-- instance ToJSON User
+-- instance ToSchema User
+--
+-- type MyAPI = QueryParam "username" Username :> Get '[JSON] User
+--
+-- mySwagger :: Swagger
+-- mySwagger = toSwagger (Proxy :: Proxy MyAPI)
+-- @
 class HasSwagger api where
+  -- | Generate a Swagger specification for a servant API.
   toSwagger :: Proxy api -> Swagger
 
 instance HasSwagger Raw where
   toSwagger _ = mempty & paths . at "/" ?~ mempty
 
 -- | All operations of sub API.
+-- This is similar to @'operationsOf'@ but ensures that operations
+-- indeed belong to the API at compile time.
 subOperations :: (IsSubAPI sub api, HasSwagger sub) => Proxy sub -> Proxy api -> Traversal' Swagger Operation
 subOperations sub _ = operationsOf (toSwagger sub)
 

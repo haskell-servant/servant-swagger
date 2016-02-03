@@ -208,11 +208,11 @@ module Servant.Swagger.Internal.Test
 --   
 --   &gt;&gt;&gt; instance Arbitrary User where arbitrary = User &lt;$&gt; arbitrary &lt;*&gt; arbitrary
 --   
---   &gt;&gt;&gt; type MyAPI = (Capture "user_id" UserId :&gt; Get '[JSON] User) :&lt;|&gt; (ReqBody '[JSON] User :&gt; Post '[JSON] UserId)
+--   &gt;&gt;&gt; type UserAPI = (Capture "user_id" UserId :&gt; Get '[JSON] User) :&lt;|&gt; (ReqBody '[JSON] User :&gt; Post '[JSON] UserId)
 --   </pre>
 --   
 --   <pre>
---   &gt;&gt;&gt; hspec $ context "ToJSON matches ToSchema" $ validateEveryToJSON (Proxy :: Proxy MyAPI)
+--   &gt;&gt;&gt; hspec $ context "ToJSON matches ToSchema" $ validateEveryToJSON (Proxy :: Proxy UserAPI)
 --   
 --   ToJSON matches ToSchema
 --     User
@@ -220,6 +220,39 @@ module Servant.Swagger.Internal.Test
 --   
 --   Finished in ... seconds
 --   2 examples, 0 failures
+--   </pre>
+--   
+--   For the test to compile all body types should have the following
+--   instances:
+--   
+--   <ul>
+--   <li><tt><a>ToJSON</a></tt> and <tt><a>ToSchema</a></tt> are used to
+--   perform the validation;</li>
+--   <li><tt><a>Typeable</a></tt> is used to name the test for each
+--   type;</li>
+--   <li><tt><a>Show</a></tt> is used to display value for which
+--   <tt><a>ToJSON</a></tt> does not satisfy <tt><a>ToSchema</a></tt>.</li>
+--   <li><tt><a>Arbitrary</a></tt> is used to arbitrarily generate
+--   values.</li>
+--   </ul>
+--   
+--   If any of the instances is missing, you'll get a descriptive type
+--   error:
+--   
+--   <pre>
+--   &gt;&gt;&gt; data Contact = Contact { fullname :: String, phone :: Integer } deriving (Show, Generic)
+--   
+--   &gt;&gt;&gt; instance ToJSON Contact
+--   
+--   &gt;&gt;&gt; instance ToSchema Contact
+--   
+--   &gt;&gt;&gt; type ContactAPI = Get '[JSON] Contact
+--   
+--   &gt;&gt;&gt; hspec $ validateEveryToJSON (Proxy :: Proxy ContactAPI)
+--   ...
+--       No instance for (Arbitrary Contact)
+--         arising from a use of ‘validateEveryToJSON’
+--   ...
 --   </pre>
 validateEveryToJSON :: TMap (Every '[Typeable, Show, Arbitrary, ToJSON, ToSchema]) (BodyTypes JSON api) => proxy api -> Spec
 
@@ -270,11 +303,11 @@ module Servant.Swagger.Test
 --   
 --   &gt;&gt;&gt; instance Arbitrary User where arbitrary = User &lt;$&gt; arbitrary &lt;*&gt; arbitrary
 --   
---   &gt;&gt;&gt; type MyAPI = (Capture "user_id" UserId :&gt; Get '[JSON] User) :&lt;|&gt; (ReqBody '[JSON] User :&gt; Post '[JSON] UserId)
+--   &gt;&gt;&gt; type UserAPI = (Capture "user_id" UserId :&gt; Get '[JSON] User) :&lt;|&gt; (ReqBody '[JSON] User :&gt; Post '[JSON] UserId)
 --   </pre>
 --   
 --   <pre>
---   &gt;&gt;&gt; hspec $ context "ToJSON matches ToSchema" $ validateEveryToJSON (Proxy :: Proxy MyAPI)
+--   &gt;&gt;&gt; hspec $ context "ToJSON matches ToSchema" $ validateEveryToJSON (Proxy :: Proxy UserAPI)
 --   
 --   ToJSON matches ToSchema
 --     User
@@ -282,6 +315,39 @@ module Servant.Swagger.Test
 --   
 --   Finished in ... seconds
 --   2 examples, 0 failures
+--   </pre>
+--   
+--   For the test to compile all body types should have the following
+--   instances:
+--   
+--   <ul>
+--   <li><tt><a>ToJSON</a></tt> and <tt><a>ToSchema</a></tt> are used to
+--   perform the validation;</li>
+--   <li><tt><a>Typeable</a></tt> is used to name the test for each
+--   type;</li>
+--   <li><tt><a>Show</a></tt> is used to display value for which
+--   <tt><a>ToJSON</a></tt> does not satisfy <tt><a>ToSchema</a></tt>.</li>
+--   <li><tt><a>Arbitrary</a></tt> is used to arbitrarily generate
+--   values.</li>
+--   </ul>
+--   
+--   If any of the instances is missing, you'll get a descriptive type
+--   error:
+--   
+--   <pre>
+--   &gt;&gt;&gt; data Contact = Contact { fullname :: String, phone :: Integer } deriving (Show, Generic)
+--   
+--   &gt;&gt;&gt; instance ToJSON Contact
+--   
+--   &gt;&gt;&gt; instance ToSchema Contact
+--   
+--   &gt;&gt;&gt; type ContactAPI = Get '[JSON] Contact
+--   
+--   &gt;&gt;&gt; hspec $ validateEveryToJSON (Proxy :: Proxy ContactAPI)
+--   ...
+--       No instance for (Arbitrary Contact)
+--         arising from a use of ‘validateEveryToJSON’
+--   ...
 --   </pre>
 validateEveryToJSON :: TMap (Every '[Typeable, Show, Arbitrary, ToJSON, ToSchema]) (BodyTypes JSON api) => proxy api -> Spec
 

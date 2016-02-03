@@ -9,8 +9,8 @@ window.onload = function () {pageLoad();setSynopsis("mini_Servant-Swagger-Test.h
 </code></strong><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>instance ToSchema User
 </code></strong><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>instance ToSchema UserId
 </code></strong><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>instance Arbitrary User where arbitrary = User &lt;$&gt; arbitrary &lt;*&gt; arbitrary
-</code></strong><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>type MyAPI = (Capture &quot;user_id&quot; UserId :&gt; Get '[JSON] User) :&lt;|&gt; (ReqBody '[JSON] User :&gt; Post '[JSON] UserId)
-</code></strong></pre><pre class="screen"><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>hspec $ context &quot;ToJSON matches ToSchema&quot; $ validateEveryToJSON (Proxy :: Proxy MyAPI)
+</code></strong><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>type UserAPI = (Capture &quot;user_id&quot; UserId :&gt; Get '[JSON] User) :&lt;|&gt; (ReqBody '[JSON] User :&gt; Post '[JSON] UserId)
+</code></strong></pre><pre class="screen"><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>hspec $ context &quot;ToJSON matches ToSchema&quot; $ validateEveryToJSON (Proxy :: Proxy UserAPI)
 </code></strong>
 ToJSON matches ToSchema
   User
@@ -18,4 +18,13 @@ ToJSON matches ToSchema
 
 Finished in ... seconds
 2 examples, 0 failures
+</pre><p>For the test to compile all body types should have the following instances:</p><ul><li><code><code>ToJSON</code></code> and <code><code><a href="../swagger2-1.2.1/Data-Swagger-Internal-Schema.html#t:ToSchema">ToSchema</a></code></code> are used to perform the validation;</li><li><code><code><a href="../base-4.8.2.0/Data-Typeable-Internal.html#t:Typeable">Typeable</a></code></code> is used to name the test for each type;</li><li><code><code><a href="../base-4.8.2.0/Text-Show.html#t:Show">Show</a></code></code> is used to display value for which <code><code>ToJSON</code></code> does not satisfy <code><code><a href="../swagger2-1.2.1/Data-Swagger-Internal-Schema.html#t:ToSchema">ToSchema</a></code></code>.</li><li><code><code>Arbitrary</code></code> is used to arbitrarily generate values.</li></ul><p>If any of the instances is missing, you'll get a descriptive type error:</p><pre class="screen"><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>data Contact = Contact { fullname :: String, phone :: Integer } deriving (Show, Generic)
+</code></strong><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>instance ToJSON Contact
+</code></strong><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>instance ToSchema Contact
+</code></strong><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>type ContactAPI = Get '[JSON] Contact
+</code></strong><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>hspec $ validateEveryToJSON (Proxy :: Proxy ContactAPI)
+</code></strong>...
+    No instance for (Arbitrary Contact)
+      arising from a use of &#8216;validateEveryToJSON&#8217;
+...
 </pre></div></div></div></div><div id="footer"><p>Produced by <a href="http://www.haskell.org/haddock/">Haddock</a> version 2.16.1</p></div></body></html>

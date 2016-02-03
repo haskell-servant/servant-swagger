@@ -65,7 +65,7 @@ type family Merge xs ys where
   Merge '[] ys = ys
   Merge (x ': xs) ys = Insert x (Merge xs ys)
 
--- | Extract a list of "body" types for a specific content-type from a servant API.
+-- | Extract a list of unique "body" types for a specific content-type from a servant API.
 type family BodyTypes c api :: [*] where
   BodyTypes c (Delete  cs (Headers hdrs a)) = AddBodyType c cs a '[]
   BodyTypes c (Get     cs (Headers hdrs a)) = AddBodyType c cs a '[]

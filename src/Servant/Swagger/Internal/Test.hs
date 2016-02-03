@@ -27,6 +27,9 @@ import Servant.Swagger.Internal.TypeLevel
 -- | Verify that every type used with @'JSON'@ content type in a servant API
 -- has compatible @'ToJSON'@ and @'ToSchema'@ instances using @'validateToJSON'@.
 --
+-- @'validateEveryToJSON'@ will produce one @'prop'@ specification for every type in the API.
+-- Each type only gets one test, even if it occurs multiple times in the API.
+--
 -- >>> data User = User { name :: String, age :: Maybe Int } deriving (Show, Generic, Typeable)
 -- >>> newtype UserId = UserId String deriving (Show, Generic, Typeable, ToJSON, Arbitrary)
 -- >>> instance ToJSON User
@@ -34,6 +37,7 @@ import Servant.Swagger.Internal.TypeLevel
 -- >>> instance ToSchema UserId
 -- >>> instance Arbitrary User where arbitrary = User <$> arbitrary <*> arbitrary
 -- >>> type MyAPI = (Capture "user_id" UserId :> Get '[JSON] User) :<|> (ReqBody '[JSON] User :> Post '[JSON] UserId)
+--
 -- >>> hspec $ context "ToJSON matches ToSchema" $ validateEveryToJSON (Proxy :: Proxy MyAPI)
 -- <BLANKLINE>
 -- ToJSON matches ToSchema

@@ -10,35 +10,51 @@ copyright:           David Johnson (c) 2015-2016
 category:            Web
 build-type:          Simple
 cabal-version:       >=1.10
+data-files:
+  swagger.json
 
-executable swagger-server
-  main-is: Server.hs
-  build-depends:
-                    base
+library
+  ghc-options:      -Wall
+  hs-source-dirs: src/
+  exposed-modules:
+    Todo
+  build-depends:  base
                 , aeson
-                , bytestring == 0.10.*
+                , lens
                 , servant
-                , either
                 , servant-server
                 , servant-swagger
                 , swagger2
-                , lens
-                , wai
+                , text
+                , time
+  default-language: Haskell2010
+
+executable swagger-server
+  ghc-options:      -Wall
+  hs-source-dirs: server/
+  main-is: Main.hs
+  build-depends:  base
+                , example
+                , servant-server
                 , warp
   default-language: Haskell2010
 
-executable swagger-file
-  main-is: File.hs
-  build-depends:
-                    base
-                , aeson
-                , bytestring == 0.10.*
-                , servant
-                , swagger2
-                , either
-                , servant-server
-                , servant-swagger
-                , lens
+test-suite swagger-server-spec
+  ghc-options:      -Wall
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   test
+  main-is:          Spec.hs
+  other-modules:
+    TodoSpec
+    Paths_example
+  build-depends:    base  == 4.*
+                  , aeson
+                  , bytestring
+                  , example
+                  , hspec
+                  , servant-swagger
+                  , QuickCheck
+                  , quickcheck-instances
   default-language: Haskell2010
 
 executable readme

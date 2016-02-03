@@ -158,10 +158,20 @@ module Servant.Swagger.Internal.TypeLevel.API
 -- | Check whether a type is a member of a list of types. This is a
 --   type-level analogue of <tt><a>elem</a></tt>.
 
--- | A type-level analogue of <tt>if then else</tt> statement.
+-- | <tt><a>AddBodyType</a> c cs a as</tt> adds type <tt>a</tt> to the list
+--   <tt>as</tt> only if <tt>c</tt> is in <tt>cs</tt> and <tt>a</tt> is not
+--   in <tt>as</tt>. This allows to build a list of unique body types.
+type AddBodyType c cs a as = If (Elem c cs) (Insert a as) as
 
--- | Extract a list of "body" types for a specific content-type from a
---   servant API.
+-- | Insert type <tt>x</tt> into a type list <tt>xs</tt> only if it is not
+--   already there.
+type Insert x xs = If (Elem x xs) xs (x : xs)
+
+-- | Merge two lists, ignoring any type in <tt>xs</tt> which occurs also in
+--   <tt>ys</tt>.
+
+-- | Extract a list of unique "body" types for a specific content-type from
+--   a servant API.
 
 module Servant.Swagger.Internal.TypeLevel
 
@@ -171,8 +181,8 @@ module Servant.Swagger.TypeLevel
 
 -- | Build a list of endpoints from an API.
 
--- | Extract a list of "body" types for a specific content-type from a
---   servant API.
+-- | Extract a list of unique "body" types for a specific content-type from
+--   a servant API.
 
 module Servant.Swagger.Internal.Test
 
@@ -180,6 +190,10 @@ module Servant.Swagger.Internal.Test
 --   a servant API has compatible <tt><a>ToJSON</a></tt> and
 --   <tt><a>ToSchema</a></tt> instances using
 --   <tt><a>validateToJSON</a></tt>.
+--   
+--   <tt><a>validateEveryToJSON</a></tt> will produce one
+--   <tt><a>prop</a></tt> specification for every type in the API. Each
+--   type only gets one test, even if it occurs multiple times in the API.
 --   
 --   <pre>
 --   &gt;&gt;&gt; data User = User { name :: String, age :: Maybe Int } deriving (Show, Generic, Typeable)
@@ -195,16 +209,17 @@ module Servant.Swagger.Internal.Test
 --   &gt;&gt;&gt; instance Arbitrary User where arbitrary = User &lt;$&gt; arbitrary &lt;*&gt; arbitrary
 --   
 --   &gt;&gt;&gt; type MyAPI = (Capture "user_id" UserId :&gt; Get '[JSON] User) :&lt;|&gt; (ReqBody '[JSON] User :&gt; Post '[JSON] UserId)
+--   </pre>
 --   
+--   <pre>
 --   &gt;&gt;&gt; hspec $ context "ToJSON matches ToSchema" $ validateEveryToJSON (Proxy :: Proxy MyAPI)
 --   
 --   ToJSON matches ToSchema
 --     User
---     User
 --     UserId
 --   
 --   Finished in ... seconds
---   3 examples, 0 failures
+--   2 examples, 0 failures
 --   </pre>
 validateEveryToJSON :: TMap (Every '[Typeable, Show, Arbitrary, ToJSON, ToSchema]) (BodyTypes JSON api) => proxy api -> Spec
 
@@ -238,6 +253,10 @@ module Servant.Swagger.Test
 --   <tt><a>ToSchema</a></tt> instances using
 --   <tt><a>validateToJSON</a></tt>.
 --   
+--   <tt><a>validateEveryToJSON</a></tt> will produce one
+--   <tt><a>prop</a></tt> specification for every type in the API. Each
+--   type only gets one test, even if it occurs multiple times in the API.
+--   
 --   <pre>
 --   &gt;&gt;&gt; data User = User { name :: String, age :: Maybe Int } deriving (Show, Generic, Typeable)
 --   
@@ -252,16 +271,17 @@ module Servant.Swagger.Test
 --   &gt;&gt;&gt; instance Arbitrary User where arbitrary = User &lt;$&gt; arbitrary &lt;*&gt; arbitrary
 --   
 --   &gt;&gt;&gt; type MyAPI = (Capture "user_id" UserId :&gt; Get '[JSON] User) :&lt;|&gt; (ReqBody '[JSON] User :&gt; Post '[JSON] UserId)
+--   </pre>
 --   
+--   <pre>
 --   &gt;&gt;&gt; hspec $ context "ToJSON matches ToSchema" $ validateEveryToJSON (Proxy :: Proxy MyAPI)
 --   
 --   ToJSON matches ToSchema
 --     User
---     User
 --     UserId
 --   
 --   Finished in ... seconds
---   3 examples, 0 failures
+--   2 examples, 0 failures
 --   </pre>
 validateEveryToJSON :: TMap (Every '[Typeable, Show, Arbitrary, ToJSON, ToSchema]) (BodyTypes JSON api) => proxy api -> Spec
 

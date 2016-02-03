@@ -57,15 +57,3 @@ test-suite swagger-server-spec
                   , quickcheck-instances
   default-language: Haskell2010
 
-executable readme
-  main-is:             README.lhs
-  ghc-options:         -Wall -pgmL markdown-unlit
-  build-depends:       base >=4.7 && <4.9
-                     , aeson
-                     , bytestring
-                     , lens
-                     , markdown-unlit
-                     , servant-server
-                     , servant-swagger
-                     , swagger2
-  default-language:    Haskell2010

@@ -15,7 +15,6 @@ import Data.Proxy
 import Data.Swagger
 import Data.Swagger.Operation
 import Data.Text (Text)
-import qualified Data.Text as Text
 import Data.Time
 import GHC.Generics
 import Servant.API

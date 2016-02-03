@@ -5,9 +5,7 @@
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE UndecidableInstances #-}
 module Servant.Swagger.Internal where
 
 import Control.Lens
@@ -23,9 +21,10 @@ import Data.Swagger.Operation
 import Data.Text (Text)
 import qualified Data.Text as Text
 import GHC.TypeLits
-import GHC.Exts
 import Network.HTTP.Media (MediaType)
 import Servant.API
+
+import Servant.Swagger.Internal.TypeLevel.API
 
 -- | Generate a Swagger specification for a servant API.
 --
@@ -324,38 +323,3 @@ instance (ToResponseHeader h, AllToResponseHeader hs) => AllToResponseHeader (h 
 
 instance AllToResponseHeader hs => AllToResponseHeader (HList hs) where
   toAllResponseHeaders _ = toAllResponseHeaders (Proxy :: Proxy hs)
-
--- | Check that every element of @xs@ is an endpoint of @api@.
-type family AllIsElem xs api :: Constraint where
-  AllIsElem '[] api = ()
-  AllIsElem (x ': xs) api = (IsIn x api, AllIsElem xs api)
-
--- | Apply @(e :>)@ to every API in @xs@.
-type family MapSub e xs where
-  MapSub e '[] = '[]
-  MapSub e (x ': xs) = (e :> x) ': MapSub e xs
-
--- | Append two type-level lists.
-type family AppendList xs ys where
-  AppendList '[]       ys = ys
-  AppendList (x ': xs) ys = x ': AppendList xs ys
-
--- | Build a list of endpoints from an API.
-type family EndpointsList api where
-  EndpointsList (a :<|> b) = AppendList (EndpointsList a) (EndpointsList b)
-  EndpointsList (e :> a)   = MapSub e (EndpointsList a)
-  EndpointsList a = '[a]
-
--- | Check whether @sub@ is a sub API of @api@.
-type family IsSubAPI sub api :: Constraint where
-  IsSubAPI sub api = AllIsElem (EndpointsList sub) api
-
-type family Or (a :: Constraint) (b :: Constraint) :: Constraint where
-  Or () b = ()
-  Or a () = ()
-
-type family IsIn sub api :: Constraint where
-  IsIn e (a :<|> b) = Or (IsIn e a) (IsIn e b)
-  IsIn (e :> a) (e :> b) = IsIn a b
-  IsIn e e = ()
-

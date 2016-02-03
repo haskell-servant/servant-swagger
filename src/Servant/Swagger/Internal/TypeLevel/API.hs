@@ -7,6 +7,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 module Servant.Swagger.Internal.TypeLevel.API where
 
+import Data.Type.Bool (If)
 import Servant.API
 import GHC.Exts (Constraint)
 
@@ -46,28 +47,37 @@ type family IsIn sub api :: Constraint where
 
 -- | Check whether a type is a member of a list of types.
 -- This is a type-level analogue of @'elem'@.
-type family Elem x xs :: Constraint where
-  Elem x (x ': xs) = ()
+type family Elem x xs where
+  Elem x '[] = 'False
+  Elem x (x ': xs) = 'True
   Elem x (y ': xs) = Elem x xs
 
--- | A type-level analogue of @if then else@ statement.
-type family IfThenElse (c :: Constraint) a b where
-  IfThenElse () a b = a
-  IfThenElse c  a b = b
+-- | @'AddBodyType' c cs a as@ adds type @a@ to the list @as@
+-- only if @c@ is in @cs@ and @a@ is not in @as@.
+-- This allows to build a list of unique body types.
+type AddBodyType c cs a as = If (Elem c cs) (Insert a as) as
+
+-- | Insert type @x@ into a type list @xs@ only if it is not already there.
+type Insert x xs = If (Elem x xs) xs (x ': xs)
+
+-- | Merge two lists, ignoring any type in @xs@ which occurs also in @ys@.
+type family Merge xs ys where
+  Merge '[] ys = ys
+  Merge (x ': xs) ys = Insert x (Merge xs ys)
 
 -- | Extract a list of "body" types for a specific content-type from a servant API.
 type family BodyTypes c api :: [*] where
-  BodyTypes c (Delete  cs (Headers hdrs a)) = IfThenElse (Elem c cs) '[a] '[]
-  BodyTypes c (Get     cs (Headers hdrs a)) = IfThenElse (Elem c cs) '[a] '[]
-  BodyTypes c (Patch   cs (Headers hdrs a)) = IfThenElse (Elem c cs) '[a] '[]
-  BodyTypes c (Post    cs (Headers hdrs a)) = IfThenElse (Elem c cs) '[a] '[]
-  BodyTypes c (Put     cs (Headers hdrs a)) = IfThenElse (Elem c cs) '[a] '[]
-  BodyTypes c (Delete  cs a) = IfThenElse (Elem c cs) '[a] '[]
-  BodyTypes c (Get     cs a) = IfThenElse (Elem c cs) '[a] '[]
-  BodyTypes c (Patch   cs a) = IfThenElse (Elem c cs) '[a] '[]
-  BodyTypes c (Post    cs a) = IfThenElse (Elem c cs) '[a] '[]
-  BodyTypes c (Put     cs a) = IfThenElse (Elem c cs) '[a] '[]
-  BodyTypes c (ReqBody cs a :> api) = IfThenElse (Elem c cs) (a ': BodyTypes c api) (BodyTypes c api)
+  BodyTypes c (Delete  cs (Headers hdrs a)) = AddBodyType c cs a '[]
+  BodyTypes c (Get     cs (Headers hdrs a)) = AddBodyType c cs a '[]
+  BodyTypes c (Patch   cs (Headers hdrs a)) = AddBodyType c cs a '[]
+  BodyTypes c (Post    cs (Headers hdrs a)) = AddBodyType c cs a '[]
+  BodyTypes c (Put     cs (Headers hdrs a)) = AddBodyType c cs a '[]
+  BodyTypes c (Delete  cs a) = AddBodyType c cs a '[]
+  BodyTypes c (Get     cs a) = AddBodyType c cs a '[]
+  BodyTypes c (Patch   cs a) = AddBodyType c cs a '[]
+  BodyTypes c (Post    cs a) = AddBodyType c cs a '[]
+  BodyTypes c (Put     cs a) = AddBodyType c cs a '[]
+  BodyTypes c (ReqBody cs a :> api) = AddBodyType c cs a (BodyTypes c api)
   BodyTypes c (e :> api) = BodyTypes c api
-  BodyTypes c (a :<|> b) = AppendList (BodyTypes c a) (BodyTypes c b)
+  BodyTypes c (a :<|> b) = Merge (BodyTypes c a) (BodyTypes c b)
 

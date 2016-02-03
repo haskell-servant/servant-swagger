@@ -38,11 +38,10 @@ import Servant.Swagger.Internal.TypeLevel
 -- <BLANKLINE>
 -- ToJSON matches ToSchema
 --   User
---   User
 --   UserId
 -- <BLANKLINE>
 -- Finished in ... seconds
--- 3 examples, 0 failures
+-- 2 examples, 0 failures
 validateEveryToJSON :: forall proxy api. TMap (Every [Typeable, Show, Arbitrary, ToJSON, ToSchema]) (BodyTypes JSON api) => proxy api -> Spec
 validateEveryToJSON _ = props (Proxy :: Proxy [ToJSON, ToSchema]) (\x -> validateToJSON x == []) (Proxy :: Proxy (BodyTypes JSON api))
 

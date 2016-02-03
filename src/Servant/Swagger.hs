@@ -1,4 +1,9 @@
 -- |
+-- Module:      Servant.Swagger
+-- License:     BSD3
+-- Maintainer:  Nickolay Kudasov <nickolay@getshoptv.com>
+-- Stability:   experimental
+--
 -- This module provides means to generate and manipulate
 -- Swagger specification for servant APIs.
 --

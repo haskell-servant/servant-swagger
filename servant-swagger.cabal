@@ -14,8 +14,13 @@ build-type:          Simple
 cabal-version:       >=1.10
 extra-source-files:
     README.md
-  , example/*.hs
+  , CHANGELOG.md
+  , example/server/*.hs
+  , example/src/*.hs
+  , example/test/*.hs
   , example/*.cabal
+  , example/swagger.json
+  , example/LICENSE
 
 source-repository head
   type:     git

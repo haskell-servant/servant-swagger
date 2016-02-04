@@ -17,7 +17,6 @@ import Data.Proxy
 import qualified Data.Swagger as Swagger
 import Data.Swagger hiding (Header)
 import Data.Swagger.Declare
-import Data.Swagger.Operation
 import Data.Text (Text)
 import qualified Data.Text as Text
 import GHC.TypeLits

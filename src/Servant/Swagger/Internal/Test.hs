@@ -7,7 +7,6 @@ module Servant.Swagger.Internal.Test where
 
 import Data.Aeson (ToJSON)
 import Data.Swagger
-import Data.Swagger.Schema.Validation
 import Data.Typeable
 import Test.Hspec
 import Test.Hspec.QuickCheck

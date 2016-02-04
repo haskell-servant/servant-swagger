@@ -13,7 +13,6 @@ import Data.Aeson.QQ
 import Data.Char (toLower)
 import Data.Proxy
 import Data.Swagger
-import Data.Swagger.Operation
 import Data.Text (Text)
 import Data.Time
 import GHC.Generics

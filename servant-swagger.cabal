@@ -1,5 +1,5 @@
 name:                servant-swagger
-version:             0.1.2
+version:             1.0
 synopsis:            Generate Swagger specification for your servant API.
 description:         Please see README.md
 homepage:            https://github.com/haskell-servant/servant-swagger

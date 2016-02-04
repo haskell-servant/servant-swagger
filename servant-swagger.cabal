@@ -39,7 +39,6 @@ library
   build-depends:       aeson
                      , base >=4.7 && <5
                      , bytestring
-                     , contravariant
                      , http-media
                      , lens
                      , servant

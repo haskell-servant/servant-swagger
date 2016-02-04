@@ -54,7 +54,7 @@ UserId
 
 Finished in ... seconds
 3 examples, 0 failures
-</pre><p>Although servant is great chances are that your API clients don't use Haskell.
+</pre><p>Although servant is great, chances are that your API clients don't use Haskell.
  In many cases <code>swagger.json</code> serves as a specification, not a Haskell type.</p><p>In this cases it is a good idea to store generated and annotated <code><code>Swagger</code></code> in a <code>swagger.json</code> file
  under a version control system (such as Git, Subversion, Mercurial, etc.).</p><p>It is also recommended to version API based on changes to the <code>swagger.json</code> rather than changes
  to the Haskell API.</p><p>See <a href="example/test/TodoSpec.hs">TodoSpec.hs</a> for an example of a complete test suite for a swagger specification.</p></div><h2 id="g:5">Serve</h2><div class="doc"><p>If you're implementing a server for an API, you might also want to serve its <code><code>Swagger</code></code> specification.</p><p>See <a href="example/src/Todo.hs">Todo.hs</a> for an example of a server.</p></div><h1 id="g:6"><code><code><a href="Servant-Swagger.html#t:HasSwagger">HasSwagger</a></code></code> class</h1><div class="top"><p class="src"><span class="keyword">class</span> <a name="t:HasSwagger" class="def">HasSwagger</a> api <span class="keyword">where</span> <a href="src/Servant-Swagger-Internal.html#HasSwagger" class="link">Source</a></p><div class="doc"><p>Generate a Swagger specification for a servant API.</p><p>To generate Swagger specification, your data types need

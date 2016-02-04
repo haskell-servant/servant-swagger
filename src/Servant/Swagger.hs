@@ -88,7 +88,7 @@ import Servant.Swagger.Test
 -- >>> type UserAPI  = GetUsers :<|> GetUser :<|> PostUser
 --
 -- Here we define a user API with three endpoints. @GetUsers@ endpoint returns a list of all users.
--- @GetUser@ returns a user given his/her ID. @PostUser@ creates a new user and returns his/her ID.
+-- @GetUser@ returns a user given his\/her ID. @PostUser@ creates a new user and returns his\/her ID.
 
 -- $generate
 -- In order to generate @'Swagger'@ specification for a servant API, just use @'toSwagger'@:

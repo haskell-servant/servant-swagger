@@ -7,6 +7,8 @@ module Servant.Swagger.Internal.Test where
 
 import Data.Aeson (ToJSON)
 import Data.Swagger
+import Data.Swagger.Internal (Pattern)
+import Data.Text (Text)
 import Data.Typeable
 import Test.Hspec
 import Test.Hspec.QuickCheck
@@ -25,6 +27,9 @@ import Servant.Swagger.Internal.TypeLevel
 
 -- | Verify that every type used with @'JSON'@ content type in a servant API
 -- has compatible @'ToJSON'@ and @'ToSchema'@ instances using @'validateToJSON'@.
+--
+-- /NOTE:/ @'validateEveryToJSON'@ does not perform string pattern validation.
+-- See @'validateEveryToJSONWithPatternChecker'@.
 --
 -- @'validateEveryToJSON'@ will produce one @'prop'@ specification for every type in the API.
 -- Each type only gets one test, even if it occurs multiple times in the API.
@@ -65,7 +70,21 @@ import Servant.Swagger.Internal.TypeLevel
 --       arising from a use of ‘validateEveryToJSON’
 -- ...
 validateEveryToJSON :: forall proxy api. TMap (Every [Typeable, Show, Arbitrary, ToJSON, ToSchema]) (BodyTypes JSON api) => proxy api -> Spec
-validateEveryToJSON _ = props (Proxy :: Proxy [ToJSON, ToSchema]) (\x -> validateToJSON x == []) (Proxy :: Proxy (BodyTypes JSON api))
+validateEveryToJSON _ = props
+  (Proxy :: Proxy [ToJSON, ToSchema])
+  (null . validateToJSON)
+  (Proxy :: Proxy (BodyTypes JSON api))
+
+-- | Verify that every type used with @'JSON'@ content type in a servant API
+-- has compatible @'ToJSON'@ and @'ToSchema'@ instances using @'validateToJSONWithPatternChecker'@.
+--
+-- For validation without patterns see @'validateEveryToJSON'@.
+validateEveryToJSONWithPatternChecker :: forall proxy api. TMap (Every [Typeable, Show, Arbitrary, ToJSON, ToSchema]) (BodyTypes JSON api) =>
+  (Pattern -> Text -> Bool) -> proxy api -> Spec
+validateEveryToJSONWithPatternChecker checker _ = props
+  (Proxy :: Proxy [ToJSON, ToSchema])
+  (null . validateToJSONWithPatternChecker checker)
+  (Proxy :: Proxy (BodyTypes JSON api))
 
 -- * QuickCheck-related stuff
 

@@ -14,12 +14,11 @@ import Data.Char (toLower)
 import Data.Proxy
 import Data.Swagger
 import Data.Text (Text)
-import qualified Data.Text as Text
 import Data.Time
 import GHC.Generics
 import Servant.API
 import Servant.Swagger
-import Test.Hspec
+import Test.Hspec hiding (example)
 
 checkAPI :: HasSwagger api => Proxy api -> Value -> IO ()
 checkAPI proxy = checkSwagger (toSwagger proxy)
@@ -41,9 +40,9 @@ main = hspec spec
 -- =======================================================================
 
 data Todo = Todo
-  { created     :: UTCTime
-  , title       :: String
-  , description :: Maybe String
+  { created :: UTCTime
+  , title   :: String
+  , summary :: Maybe String
   } deriving (Generic, FromJSON, ToSchema)
 
 newtype TodoId = TodoId String deriving (Generic, ToParamSchema)
@@ -69,7 +68,7 @@ todoAPI = [aesonQQ|
             {
               "created": { "$ref": "#/definitions/UTCTime" },
               "title": { "type": "string" },
-              "description": { "type": "string" }
+              "summary": { "type": "string" }
             }
         },
       "UTCTime":
@@ -138,12 +137,10 @@ instance ToJSON UserSummary where
   toJSON = genericToJSON JSON.defaultOptions { JSON.fieldLabelModifier = lowerCutPrefix "summary" }
 
 instance ToSchema UserSummary where
-  declareNamedSchema proxy = do
-    (name, schema) <- genericDeclareNamedSchema defaultSchemaOptions { fieldLabelModifier = lowerCutPrefix "summary" } proxy
-    return (name, schema
-      & schemaExample ?~ toJSON UserSummary
+  declareNamedSchema proxy = genericDeclareNamedSchema defaultSchemaOptions { fieldLabelModifier = lowerCutPrefix "summary" } proxy
+    & mapped.schema.example ?~ toJSON UserSummary
          { summaryUsername = "JohnDoe"
-         , summaryUserid   = 123 })
+         , summaryUserid   = 123 }
 
 type Group = Text
 
@@ -159,13 +156,10 @@ newtype Package = Package { packageName :: Text }
 hackageSwaggerWithTags :: Swagger
 hackageSwaggerWithTags = toSwagger (Proxy :: Proxy HackageAPI)
   & host ?~ Host "hackage.haskell.org" Nothing
-  & usersOps    %~ addTag "users"
-  & packagesOps %~ addTag "packages"
-  & tags .~
-      [ Tag "users" (Just "Operations about user") Nothing
-      , Tag "packages" (Just "Query packages") Nothing
-      ]
+  & applyTagsFor usersOps    ["users"    & description ?~ "Operations about user"]
+  & applyTagsFor packagesOps ["packages" & description ?~ "Query packages"]
   where
+    usersOps, packagesOps :: Traversal' Swagger Operation
     usersOps    = subOperations (Proxy :: Proxy HackageUserAPI)     (Proxy :: Proxy HackageAPI)
     packagesOps = subOperations (Proxy :: Proxy HackagePackagesAPI) (Proxy :: Proxy HackageAPI)
 
@@ -311,12 +305,12 @@ hackageAPI = [aesonQQ|
    },
    "tags":[
       {
-         "name":"users",
-         "description":"Operations about user"
-      },
-      {
          "name":"packages",
          "description":"Query packages"
+      },
+      {
+         "name":"users",
+         "description":"Operations about user"
       }
    ]
 }
@@ -331,10 +325,9 @@ type GetPostAPI = Get '[JSON] String :<|> Post '[JSON] String
 
 getPostSwagger :: Swagger
 getPostSwagger = toSwagger (Proxy :: Proxy GetPostAPI)
-  & getOps %~ addTag "get"
-  & tags .~
-      [ Tag "get" (Just "GET operations") Nothing ]
+  & applyTagsFor getOps ["get" & description ?~ "GET operations"]
   where
+    getOps :: Traversal' Swagger Operation
     getOps = subOperations (Proxy :: Proxy (Get '[JSON] String)) (Proxy :: Proxy GetPostAPI)
 
 getPostAPI :: Value

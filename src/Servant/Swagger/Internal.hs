@@ -66,7 +66,10 @@ instance HasSwagger Raw where
 -- | All operations of sub API.
 -- This is similar to @'operationsOf'@ but ensures that operations
 -- indeed belong to the API at compile time.
-subOperations :: (IsSubAPI sub api, HasSwagger sub) => Proxy sub -> Proxy api -> Traversal' Swagger Operation
+subOperations :: (IsSubAPI sub api, HasSwagger sub) =>
+  Proxy sub     -- ^ Part of a servant API.
+  -> Proxy api  -- ^ The whole servant API.
+  -> Traversal' Swagger Operation
 subOperations sub _ = operationsOf (toSwagger sub)
 
 mkEndpoint :: forall a cs hs proxy _verb. (ToSchema a, AllAccept cs, AllToResponseHeader hs)

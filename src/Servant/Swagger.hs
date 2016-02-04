@@ -39,6 +39,7 @@ module Servant.Swagger (
 
   -- * Testing
   validateEveryToJSON,
+  validateEveryToJSONWithPatternChecker,
 ) where
 
 import Servant.Swagger.Internal

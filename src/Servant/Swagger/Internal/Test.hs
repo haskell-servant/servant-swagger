@@ -69,7 +69,9 @@ import Servant.Swagger.Internal.TypeLevel
 --     No instance for (Arbitrary Contact)
 --       arising from a use of ‘validateEveryToJSON’
 -- ...
-validateEveryToJSON :: forall proxy api. TMap (Every [Typeable, Show, Arbitrary, ToJSON, ToSchema]) (BodyTypes JSON api) => proxy api -> Spec
+validateEveryToJSON :: forall proxy api. TMap (Every [Typeable, Show, Arbitrary, ToJSON, ToSchema]) (BodyTypes JSON api) =>
+  proxy api   -- ^ Servant API.
+  -> Spec
 validateEveryToJSON _ = props
   (Proxy :: Proxy [ToJSON, ToSchema])
   (null . validateToJSON)
@@ -80,7 +82,9 @@ validateEveryToJSON _ = props
 --
 -- For validation without patterns see @'validateEveryToJSON'@.
 validateEveryToJSONWithPatternChecker :: forall proxy api. TMap (Every [Typeable, Show, Arbitrary, ToJSON, ToSchema]) (BodyTypes JSON api) =>
-  (Pattern -> Text -> Bool) -> proxy api -> Spec
+  (Pattern -> Text -> Bool)   -- ^ @'Pattern'@ checker.
+  -> proxy api                -- ^ Servant API.
+  -> Spec
 validateEveryToJSONWithPatternChecker checker _ = props
   (Proxy :: Proxy [ToJSON, ToSchema])
   (null . validateToJSONWithPatternChecker checker)
@@ -108,7 +112,10 @@ validateEveryToJSONWithPatternChecker checker _ = props
 -- Finished in ... seconds
 -- 3 examples, 0 failures
 props :: forall p p'' cs xs. TMap (Every (Typeable ': Show ': Arbitrary ': cs)) xs =>
-  p cs -> (forall x. EveryTF cs x => x -> Bool) -> p'' xs -> Spec
+  p cs                                      -- ^ A list of constraints.
+  -> (forall x. EveryTF cs x => x -> Bool)  -- ^ Property predicate.
+  -> p'' xs                                 -- ^ A list of types.
+  -> Spec
 props _ f px = sequence_ specs
   where
     specs :: [Spec]

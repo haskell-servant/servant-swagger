@@ -5,13 +5,12 @@ resolver: nightly-2016-01-26
 
 # Local packages, usually specified by relative directory name
 packages:
-- location: '../../getshoptv/swagger2/'
-  extra-dep: true
 - '.'
 - example/
 
 # Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
-extra-deps: []
+extra-deps:
+- swagger2-2.0
 
 # Override default flag values for local packages and extra-deps
 flags: {}

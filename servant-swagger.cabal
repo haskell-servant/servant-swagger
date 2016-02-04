@@ -43,7 +43,7 @@ library
                      , http-media
                      , lens
                      , servant
-                     , swagger2 >= 1 && <2
+                     , swagger2 >= 2 && <3
                      , text
                      , unordered-containers
 
@@ -71,7 +71,7 @@ test-suite spec
                   , lens
                   , servant
                   , servant-swagger
-                  , swagger2 >= 1 && <2
+                  , swagger2 >= 2 && <3
                   , text
                   , time
   other-modules:

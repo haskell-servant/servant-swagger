@@ -8,23 +8,179 @@
 </head>
 <body>
 <pre><a name="line-1"></a><span class='hs-comment'>-- |</span>
-<a name="line-2"></a><span class='hs-comment'>-- This module provides means to generate and manipulate</span>
-<a name="line-3"></a><span class='hs-comment'>-- Swagger specification for servant APIs.</span>
-<a name="line-4"></a><span class='hs-comment'>--</span>
-<a name="line-5"></a><span class='hs-comment'>-- Swagger™ is a project used to describe and document RESTful APIs.</span>
+<a name="line-2"></a><span class='hs-comment'>-- Module:      Servant.Swagger</span>
+<a name="line-3"></a><span class='hs-comment'>-- License:     BSD3</span>
+<a name="line-4"></a><span class='hs-comment'>-- Maintainer:  Nickolay Kudasov &lt;nickolay@getshoptv.com&gt;</span>
+<a name="line-5"></a><span class='hs-comment'>-- Stability:   experimental</span>
 <a name="line-6"></a><span class='hs-comment'>--</span>
-<a name="line-7"></a><span class='hs-comment'>-- The Swagger specification defines a set of files required to describe such an API.</span>
-<a name="line-8"></a><span class='hs-comment'>-- These files can then be used by the Swagger-UI project to display the API</span>
-<a name="line-9"></a><span class='hs-comment'>-- and Swagger-Codegen to generate clients in various languages.</span>
-<a name="line-10"></a><span class='hs-comment'>-- Additional utilities can also take advantage of the resulting files, such as testing tools.</span>
+<a name="line-7"></a><span class='hs-comment'>-- This module provides means to generate and manipulate</span>
+<a name="line-8"></a><span class='hs-comment'>-- Swagger specification for servant APIs.</span>
+<a name="line-9"></a><span class='hs-comment'>--</span>
+<a name="line-10"></a><span class='hs-comment'>-- Swagger™ is a project used to describe and document RESTful APIs.</span>
 <a name="line-11"></a><span class='hs-comment'>--</span>
-<a name="line-12"></a><span class='hs-comment'>-- For more information see &lt;<a href="http://swagger.io/">http://swagger.io/</a> Swagger™ documentation&gt;.</span>
-<a name="line-13"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Servant</span><span class='hs-varop'>.</span><span class='hs-conid'>Swagger</span> <span class='hs-layout'>(</span>
-<a name="line-14"></a>  <span class='hs-conid'>HasSwagger</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>,</span>
-<a name="line-15"></a>  <span class='hs-varid'>subOperations</span><span class='hs-layout'>,</span>
-<a name="line-16"></a><span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
-<a name="line-17"></a>
-<a name="line-18"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Servant</span><span class='hs-varop'>.</span><span class='hs-conid'>Swagger</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span>
-<a name="line-19"></a>
+<a name="line-12"></a><span class='hs-comment'>-- The Swagger specification defines a set of files required to describe such an API.</span>
+<a name="line-13"></a><span class='hs-comment'>-- These files can then be used by the Swagger-UI project to display the API</span>
+<a name="line-14"></a><span class='hs-comment'>-- and Swagger-Codegen to generate clients in various languages.</span>
+<a name="line-15"></a><span class='hs-comment'>-- Additional utilities can also take advantage of the resulting files, such as testing tools.</span>
+<a name="line-16"></a><span class='hs-comment'>--</span>
+<a name="line-17"></a><span class='hs-comment'>-- For more information see &lt;<a href="http://swagger.io/">http://swagger.io/</a> Swagger™ documentation&gt;.</span>
+<a name="line-18"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Servant</span><span class='hs-varop'>.</span><span class='hs-conid'>Swagger</span> <span class='hs-layout'>(</span>
+<a name="line-19"></a>  <span class='hs-comment'>-- * How to use this library</span>
+<a name="line-20"></a>  <span class='hs-comment'>-- $howto</span>
+<a name="line-21"></a>
+<a name="line-22"></a>  <span class='hs-comment'>-- ** Generate @'Swagger'@</span>
+<a name="line-23"></a>  <span class='hs-comment'>-- $generate</span>
+<a name="line-24"></a>
+<a name="line-25"></a>  <span class='hs-comment'>-- ** Annotate</span>
+<a name="line-26"></a>  <span class='hs-comment'>-- $annotate</span>
+<a name="line-27"></a>
+<a name="line-28"></a>  <span class='hs-comment'>-- ** Test</span>
+<a name="line-29"></a>  <span class='hs-comment'>-- $test</span>
+<a name="line-30"></a>
+<a name="line-31"></a>  <span class='hs-comment'>-- ** Serve</span>
+<a name="line-32"></a>  <span class='hs-comment'>-- $serve</span>
+<a name="line-33"></a>
+<a name="line-34"></a>  <span class='hs-comment'>-- * @'HasSwagger'@ class</span>
+<a name="line-35"></a>  <span class='hs-conid'>HasSwagger</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>,</span>
+<a name="line-36"></a>
+<a name="line-37"></a>  <span class='hs-varid'>subOperations</span><span class='hs-layout'>,</span>
+<a name="line-38"></a>
+<a name="line-39"></a>  <span class='hs-comment'>-- * Testing</span>
+<a name="line-40"></a>  <span class='hs-varid'>validateEveryToJSON</span><span class='hs-layout'>,</span>
+<a name="line-41"></a><span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
+<a name="line-42"></a>
+<a name="line-43"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Servant</span><span class='hs-varop'>.</span><span class='hs-conid'>Swagger</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span>
+<a name="line-44"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Servant</span><span class='hs-varop'>.</span><span class='hs-conid'>Swagger</span><span class='hs-varop'>.</span><span class='hs-conid'>Test</span>
+<a name="line-45"></a>
+<a name="line-46"></a><span class='hs-comment'>-- $setup</span>
+<a name="line-47"></a><span class='hs-comment'>-- &gt;&gt;&gt; import Control.Lens</span>
+<a name="line-48"></a><span class='hs-comment'>-- &gt;&gt;&gt; import Data.Aeson</span>
+<a name="line-49"></a><span class='hs-comment'>-- &gt;&gt;&gt; import Data.Swagger</span>
+<a name="line-50"></a><span class='hs-comment'>-- &gt;&gt;&gt; import Data.Typeable</span>
+<a name="line-51"></a><span class='hs-comment'>-- &gt;&gt;&gt; import GHC.Generics</span>
+<a name="line-52"></a><span class='hs-comment'>-- &gt;&gt;&gt; import Servant.API</span>
+<a name="line-53"></a><span class='hs-comment'>-- &gt;&gt;&gt; import Test.Hspec</span>
+<a name="line-54"></a><span class='hs-comment'>-- &gt;&gt;&gt; import Test.QuickCheck</span>
+<a name="line-55"></a><span class='hs-comment'>-- &gt;&gt;&gt; :set -XDataKinds</span>
+<a name="line-56"></a><span class='hs-comment'>-- &gt;&gt;&gt; :set -XDeriveGeneric</span>
+<a name="line-57"></a><span class='hs-comment'>-- &gt;&gt;&gt; :set -XGeneralizedNewtypeDeriving</span>
+<a name="line-58"></a><span class='hs-comment'>-- &gt;&gt;&gt; :set -XOverloadedStrings</span>
+<a name="line-59"></a><span class='hs-comment'>-- &gt;&gt;&gt; :set -XTypeOperators</span>
+<a name="line-60"></a><span class='hs-comment'>-- &gt;&gt;&gt; data User = User { name :: String, age :: Int } deriving (Show, Generic, Typeable)</span>
+<a name="line-61"></a><span class='hs-comment'>-- &gt;&gt;&gt; newtype UserId = UserId Integer deriving (Show, Generic, Typeable, ToJSON)</span>
+<a name="line-62"></a><span class='hs-comment'>-- &gt;&gt;&gt; instance ToJSON User</span>
+<a name="line-63"></a><span class='hs-comment'>-- &gt;&gt;&gt; instance ToSchema User</span>
+<a name="line-64"></a><span class='hs-comment'>-- &gt;&gt;&gt; instance ToSchema UserId</span>
+<a name="line-65"></a><span class='hs-comment'>-- &gt;&gt;&gt; instance ToParamSchema UserId</span>
+<a name="line-66"></a><span class='hs-comment'>-- &gt;&gt;&gt; type GetUsers = Get '[JSON] [User]</span>
+<a name="line-67"></a><span class='hs-comment'>-- &gt;&gt;&gt; type GetUser  = Capture "user_id" UserId :&gt; Get '[JSON] User</span>
+<a name="line-68"></a><span class='hs-comment'>-- &gt;&gt;&gt; type PostUser = ReqBody '[JSON] User :&gt; Post '[JSON] UserId</span>
+<a name="line-69"></a><span class='hs-comment'>-- &gt;&gt;&gt; type UserAPI  = GetUsers :&lt;|&gt; GetUser :&lt;|&gt; PostUser</span>
+<a name="line-70"></a>
+<a name="line-71"></a><span class='hs-comment'>-- $howto</span>
+<a name="line-72"></a><span class='hs-comment'>--</span>
+<a name="line-73"></a><span class='hs-comment'>-- This section explains how to use this library to generate Swagger specification,</span>
+<a name="line-74"></a><span class='hs-comment'>-- modify it and run automatic tests for a servant API.</span>
+<a name="line-75"></a><span class='hs-comment'>--</span>
+<a name="line-76"></a><span class='hs-comment'>-- For the purposes of this section we will use this servant API:</span>
+<a name="line-77"></a><span class='hs-comment'>--</span>
+<a name="line-78"></a><span class='hs-comment'>-- &gt;&gt;&gt; data User = User { name :: String, age :: Int } deriving (Show, Generic, Typeable)</span>
+<a name="line-79"></a><span class='hs-comment'>-- &gt;&gt;&gt; newtype UserId = UserId Integer deriving (Show, Generic, Typeable, ToJSON)</span>
+<a name="line-80"></a><span class='hs-comment'>-- &gt;&gt;&gt; instance ToJSON User</span>
+<a name="line-81"></a><span class='hs-comment'>-- &gt;&gt;&gt; instance ToSchema User</span>
+<a name="line-82"></a><span class='hs-comment'>-- &gt;&gt;&gt; instance ToSchema UserId</span>
+<a name="line-83"></a><span class='hs-comment'>-- &gt;&gt;&gt; instance ToParamSchema UserId</span>
+<a name="line-84"></a><span class='hs-comment'>-- &gt;&gt;&gt; type GetUsers = Get '[JSON] [User]</span>
+<a name="line-85"></a><span class='hs-comment'>-- &gt;&gt;&gt; type GetUser  = Capture "user_id" UserId :&gt; Get '[JSON] User</span>
+<a name="line-86"></a><span class='hs-comment'>-- &gt;&gt;&gt; type PostUser = ReqBody '[JSON] User :&gt; Post '[JSON] UserId</span>
+<a name="line-87"></a><span class='hs-comment'>-- &gt;&gt;&gt; type UserAPI  = GetUsers :&lt;|&gt; GetUser :&lt;|&gt; PostUser</span>
+<a name="line-88"></a><span class='hs-comment'>--</span>
+<a name="line-89"></a><span class='hs-comment'>-- Here we define a user API with three endpoints. @GetUsers@ endpoint returns a list of all users.</span>
+<a name="line-90"></a><span class='hs-comment'>-- @GetUser@ returns a user given his/her ID. @PostUser@ creates a new user and returns his/her ID.</span>
+<a name="line-91"></a>
+<a name="line-92"></a><span class='hs-comment'>-- $generate</span>
+<a name="line-93"></a><span class='hs-comment'>-- In order to generate @'Swagger'@ specification for a servant API, just use @'toSwagger'@:</span>
+<a name="line-94"></a><span class='hs-comment'>--</span>
+<a name="line-95"></a><span class='hs-comment'>-- &gt;&gt;&gt; encode $ toSwagger (Proxy :: Proxy UserAPI)</span>
+<a name="line-96"></a><span class='hs-comment'>-- "{\"swagger\":\"2.0\",\"info\":{\"version\":\"\",\"title\":\"\"},\"definitions\":{\"User\":{\"required\":[\"name\",\"age\"],\"type\":\"object\",\"properties\":{\"age\":{\"maximum\":9223372036854775807,\"minimum\":-9223372036854775808,\"type\":\"integer\"},\"name\":{\"type\":\"string\"}}},\"UserId\":{\"type\":\"integer\"}},\"paths\":{\"/{user_id}\":{\"get\":{\"responses\":{\"404\":{\"description\":\"`user_id` not found\"},\"200\":{\"schema\":{\"$ref\":\"#/definitions/User\"},\"description\":\"\"}},\"produces\":[\"application/json\"],\"parameters\":[{\"required\":true,\"in\":\"path\",\"name\":\"user_id\",\"type\":\"integer\"}]}},\"/\":{\"post\":{\"consumes\":[\"application/json\"],\"responses\":{\"400\":{\"description\":\"Invalid `body`\"},\"201\":{\"schema\":{\"$ref\":\"#/definitions/UserId\"},\"description\":\"\"}},\"produces\":[\"application/json\"],\"parameters\":[{\"required\":true,\"schema\":{\"$ref\":\"#/definitions/User\"},\"in\":\"body\",\"name\":\"body\"}]},\"get\":{\"responses\":{\"200\":{\"schema\":{\"items\":{\"$ref\":\"#/definitions/User\"},\"type\":\"array\"},\"description\":\"\"}},\"produces\":[\"application/json\"]}}}}"</span>
+<a name="line-97"></a><span class='hs-comment'>--</span>
+<a name="line-98"></a><span class='hs-comment'>-- By default @'toSwagger'@ will generate specification for all API routes, parameters, headers, responses and data schemas.</span>
+<a name="line-99"></a><span class='hs-comment'>--</span>
+<a name="line-100"></a><span class='hs-comment'>-- For some parameters it will also add 400 and/or 404 responses with a description mentioning parameter name.</span>
+<a name="line-101"></a><span class='hs-comment'>--</span>
+<a name="line-102"></a><span class='hs-comment'>-- Data schemas come from @'ToParamSchema'@ and @'ToSchema'@ classes.</span>
+<a name="line-103"></a>
+<a name="line-104"></a><span class='hs-comment'>-- $annotate</span>
+<a name="line-105"></a><span class='hs-comment'>-- While initially generated @'Swagger'@ looks good, it lacks some information it can't get from a servant API.</span>
+<a name="line-106"></a><span class='hs-comment'>--</span>
+<a name="line-107"></a><span class='hs-comment'>-- We can add this information using field lenses from @"Data.Swagger"@:</span>
+<a name="line-108"></a><span class='hs-comment'>--</span>
+<a name="line-109"></a><span class='hs-comment'>-- &gt;&gt;&gt; :{</span>
+<a name="line-110"></a><span class='hs-comment'>-- encode $ toSwagger (Proxy :: Proxy UserAPI)</span>
+<a name="line-111"></a><span class='hs-comment'>--   &amp; info.title        .~ "User API"</span>
+<a name="line-112"></a><span class='hs-comment'>--   &amp; info.version      .~ "1.0"</span>
+<a name="line-113"></a><span class='hs-comment'>--   &amp; info.description  ?~ "This is an API for the Users service"</span>
+<a name="line-114"></a><span class='hs-comment'>--   &amp; info.license      ?~ "MIT"</span>
+<a name="line-115"></a><span class='hs-comment'>--   &amp; host              ?~ "example.com"</span>
+<a name="line-116"></a><span class='hs-comment'>-- :}</span>
+<a name="line-117"></a><span class='hs-comment'>-- "{\"swagger\":\"2.0\",\"host\":\"example.com\",\"info\":{\"version\":\"1.0\",\"title\":\"User API\",\"license\":{\"name\":\"MIT\"},\"description\":\"This is an API for the Users service\"},\"definitions\":{\"User\":{\"required\":[\"name\",\"age\"],\"type\":\"object\",\"properties\":{\"age\":{\"maximum\":9223372036854775807,\"minimum\":-9223372036854775808,\"type\":\"integer\"},\"name\":{\"type\":\"string\"}}},\"UserId\":{\"type\":\"integer\"}},\"paths\":{\"/{user_id}\":{\"get\":{\"responses\":{\"404\":{\"description\":\"`user_id` not found\"},\"200\":{\"schema\":{\"$ref\":\"#/definitions/User\"},\"description\":\"\"}},\"produces\":[\"application/json\"],\"parameters\":[{\"required\":true,\"in\":\"path\",\"name\":\"user_id\",\"type\":\"integer\"}]}},\"/\":{\"post\":{\"consumes\":[\"application/json\"],\"responses\":{\"400\":{\"description\":\"Invalid `body`\"},\"201\":{\"schema\":{\"$ref\":\"#/definitions/UserId\"},\"description\":\"\"}},\"produces\":[\"application/json\"],\"parameters\":[{\"required\":true,\"schema\":{\"$ref\":\"#/definitions/User\"},\"in\":\"body\",\"name\":\"body\"}]},\"get\":{\"responses\":{\"200\":{\"schema\":{\"items\":{\"$ref\":\"#/definitions/User\"},\"type\":\"array\"},\"description\":\"\"}},\"produces\":[\"application/json\"]}}}}"</span>
+<a name="line-118"></a><span class='hs-comment'>--</span>
+<a name="line-119"></a><span class='hs-comment'>-- It is also useful to annotate or modify certain endpoints.</span>
+<a name="line-120"></a><span class='hs-comment'>-- @'subOperations'@ provides a convenient way to zoom into a part of an API.</span>
+<a name="line-121"></a><span class='hs-comment'>--</span>
+<a name="line-122"></a><span class='hs-comment'>-- @'subOperations' sub api@ traverses all operations of the @api@ which are also present in @sub@.</span>
+<a name="line-123"></a><span class='hs-comment'>-- Furthermore, @sub@ is required to be an exact sub API of @api. Otherwise it will not typecheck.</span>
+<a name="line-124"></a><span class='hs-comment'>--</span>
+<a name="line-125"></a><span class='hs-comment'>-- @"Data.Swagger.Operation"@ provides some useful helpers that can be used with @'subOperations'@.</span>
+<a name="line-126"></a><span class='hs-comment'>-- One example is applying tags to certain endpoints:</span>
+<a name="line-127"></a><span class='hs-comment'>--</span>
+<a name="line-128"></a><span class='hs-comment'>-- &gt;&gt;&gt; let getOps  = subOperations (Proxy :: Proxy (GetUsers :&lt;|&gt; GetUser)) (Proxy :: Proxy UserAPI)</span>
+<a name="line-129"></a><span class='hs-comment'>-- &gt;&gt;&gt; let postOps = subOperations (Proxy :: Proxy PostUser) (Proxy :: Proxy UserAPI)</span>
+<a name="line-130"></a><span class='hs-comment'>-- &gt;&gt;&gt; :{</span>
+<a name="line-131"></a><span class='hs-comment'>-- encode $ toSwagger (Proxy :: Proxy UserAPI)</span>
+<a name="line-132"></a><span class='hs-comment'>--   &amp; applyTagsFor getOps  ["get"  &amp; description ?~ "GET operations"]</span>
+<a name="line-133"></a><span class='hs-comment'>--   &amp; applyTagsFor postOps ["post" &amp; description ?~ "POST operations"]</span>
+<a name="line-134"></a><span class='hs-comment'>-- :}</span>
+<a name="line-135"></a><span class='hs-comment'>-- "{\"swagger\":\"2.0\",\"info\":{\"version\":\"\",\"title\":\"\"},\"definitions\":{\"User\":{\"required\":[\"name\",\"age\"],\"type\":\"object\",\"properties\":{\"age\":{\"maximum\":9223372036854775807,\"minimum\":-9223372036854775808,\"type\":\"integer\"},\"name\":{\"type\":\"string\"}}},\"UserId\":{\"type\":\"integer\"}},\"paths\":{\"/{user_id}\":{\"get\":{\"responses\":{\"404\":{\"description\":\"`user_id` not found\"},\"200\":{\"schema\":{\"$ref\":\"#/definitions/User\"},\"description\":\"\"}},\"produces\":[\"application/json\"],\"parameters\":[{\"required\":true,\"in\":\"path\",\"name\":\"user_id\",\"type\":\"integer\"}],\"tags\":[\"get\"]}},\"/\":{\"post\":{\"consumes\":[\"application/json\"],\"responses\":{\"400\":{\"description\":\"Invalid `body`\"},\"201\":{\"schema\":{\"$ref\":\"#/definitions/UserId\"},\"description\":\"\"}},\"produces\":[\"application/json\"],\"parameters\":[{\"required\":true,\"schema\":{\"$ref\":\"#/definitions/User\"},\"in\":\"body\",\"name\":\"body\"}],\"tags\":[\"post\"]},\"get\":{\"responses\":{\"200\":{\"schema\":{\"items\":{\"$ref\":\"#/definitions/User\"},\"type\":\"array\"},\"description\":\"\"}},\"produces\":[\"application/json\"],\"tags\":[\"get\"]}}},\"tags\":[{\"name\":\"get\",\"description\":\"GET operations\"},{\"name\":\"post\",\"description\":\"POST operations\"}]}"</span>
+<a name="line-136"></a><span class='hs-comment'>--</span>
+<a name="line-137"></a><span class='hs-comment'>-- This applies @"get"@ tag to the @GET@ endpoints and @"post"@ tag to the @"POST"@ endpoint of the User API.</span>
+<a name="line-138"></a>
+<a name="line-139"></a><span class='hs-comment'>-- $test</span>
+<a name="line-140"></a><span class='hs-comment'>-- Automatic generation of data schemas uses @'ToSchema'@ instances for the types</span>
+<a name="line-141"></a><span class='hs-comment'>-- used in a servant API. But to encode/decode actual data servant uses different classes.</span>
+<a name="line-142"></a><span class='hs-comment'>-- For instance in @UserAPI@ @User@ is always encoded/decoded using @'ToJSON'@ and @'FromJSON'@ instances.</span>
+<a name="line-143"></a><span class='hs-comment'>--</span>
+<a name="line-144"></a><span class='hs-comment'>-- To be sure your Haskell server/client handles data properly you need to check</span>
+<a name="line-145"></a><span class='hs-comment'>-- that @'ToJSON'@ instance always generates values that satisfy schema produced</span>
+<a name="line-146"></a><span class='hs-comment'>-- by @'ToSchema'@ instance.</span>
+<a name="line-147"></a><span class='hs-comment'>--</span>
+<a name="line-148"></a><span class='hs-comment'>-- With @'validateEveryToJSON'@ it is possible to test all those instances automatically,</span>
+<a name="line-149"></a><span class='hs-comment'>-- without having to write down every type:</span>
+<a name="line-150"></a><span class='hs-comment'>--</span>
+<a name="line-151"></a><span class='hs-comment'>-- &gt;&gt;&gt; instance Arbitrary User where arbitrary = User &lt;$&gt; arbitrary &lt;*&gt; arbitrary</span>
+<a name="line-152"></a><span class='hs-comment'>-- &gt;&gt;&gt; instance Arbitrary UserId where arbitrary = UserId &lt;$&gt; arbitrary</span>
+<a name="line-153"></a><span class='hs-comment'>-- &gt;&gt;&gt; hspec $ validateEveryToJSON (Proxy :: Proxy UserAPI)</span>
+<a name="line-154"></a><span class='hs-comment'>-- &lt;BLANKLINE&gt;</span>
+<a name="line-155"></a><span class='hs-comment'>-- [User]</span>
+<a name="line-156"></a><span class='hs-comment'>-- User</span>
+<a name="line-157"></a><span class='hs-comment'>-- UserId</span>
+<a name="line-158"></a><span class='hs-comment'>-- &lt;BLANKLINE&gt;</span>
+<a name="line-159"></a><span class='hs-comment'>-- Finished in ... seconds</span>
+<a name="line-160"></a><span class='hs-comment'>-- 3 examples, 0 failures</span>
+<a name="line-161"></a><span class='hs-comment'>--</span>
+<a name="line-162"></a><span class='hs-comment'>-- Although servant is great chances are that your API clients don't use Haskell.</span>
+<a name="line-163"></a><span class='hs-comment'>-- In many cases @swagger.json@ serves as a specification, not a Haskell type.</span>
+<a name="line-164"></a><span class='hs-comment'>--</span>
+<a name="line-165"></a><span class='hs-comment'>-- In this cases it is a good idea to store generated and annotated @'Swagger'@ in a @swagger.json@ file</span>
+<a name="line-166"></a><span class='hs-comment'>-- under a version control system (such as Git, Subversion, Mercurial, etc.).</span>
+<a name="line-167"></a><span class='hs-comment'>-- It is also recommended to version API based on changes to the @swagger.json@ rather than changes</span>
+<a name="line-168"></a><span class='hs-comment'>-- to the Haskell API.</span>
+<a name="line-169"></a><span class='hs-comment'>--</span>
+<a name="line-170"></a><span class='hs-comment'>-- See &lt;example/test/TodoSpec.hs TodoSpec.hs&gt; for an example of a complete test suite for a swagger specification.</span>
+<a name="line-171"></a>
+<a name="line-172"></a><span class='hs-comment'>-- $serve</span>
+<a name="line-173"></a><span class='hs-comment'>-- If you're implementing a server for an API, you might also want to serve its @'Swagger'@ specification.</span>
+<a name="line-174"></a><span class='hs-comment'>--</span>
+<a name="line-175"></a><span class='hs-comment'>-- See &lt;example/src/Todo.hs Todo.hs&gt; for an example of a server.</span>
 </pre></body>
 </html>

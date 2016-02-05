@@ -1,3 +1,10 @@
+1.0.1
+---
+
+* Fixes:
+    * Stop using `Data.Swagger.Internal`;
+    * Documentation fixes (links to examples).
+
 1.0
 ---
 

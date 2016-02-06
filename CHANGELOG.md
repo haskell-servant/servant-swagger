@@ -1,3 +1,12 @@
+1.0.2
+---
+
+* Minor changes:
+    * Add GHC 7.8 support (see [#26](https://github.com/haskell-servant/servant-swagger/pull/26)).
+
+* Fixes:
+    * Improve compile-time performance of `BodyTypes` (see [#25](https://github.com/haskell-servant/servant-swagger/issues/25)).
+
 1.0.1
 ---
 

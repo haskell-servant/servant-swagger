@@ -63,7 +63,7 @@ type Insert x xs = If (Elem x xs) xs (x ': xs)
 -- | Merge two lists, ignoring any type in @xs@ which occurs also in @ys@.
 type family Merge xs ys where
   Merge '[] ys = ys
-  Merge (x ': xs) ys = Insert x (Merge xs ys)
+  Merge (x ': xs) ys = If (Elem x ys) (Merge xs ys) (x ': (Merge xs ys))
 
 -- | Extract a list of unique "body" types for a specific content-type from a servant API.
 type family BodyTypes c api :: [*] where

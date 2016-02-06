@@ -18,6 +18,7 @@ import Servant.API
 import Servant.Swagger.Internal.TypeLevel
 
 -- $setup
+-- >>> import Control.Applicative
 -- >>> import GHC.Generics
 -- >>> import Test.QuickCheck
 -- >>> :set -XDeriveGeneric

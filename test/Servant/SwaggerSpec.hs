@@ -11,6 +11,7 @@ import Data.Aeson
 import qualified Data.Aeson.Types as JSON
 import Data.Aeson.QQ
 import Data.Char (toLower)
+import Data.Int (Int64)
 import Data.Proxy
 import Data.Swagger
 import Data.Text (Text)
@@ -131,7 +132,7 @@ type Username = Text
 
 data UserSummary = UserSummary
   { summaryUsername :: Username
-  , summaryUserid   :: Int
+  , summaryUserid   :: Int64  -- Word64 would make sense too
   } deriving (Eq, Show, Generic)
 
 lowerCutPrefix :: String -> String -> String
@@ -150,7 +151,7 @@ type Group = Text
 
 data UserDetailed = UserDetailed
   { username :: Username
-  , userid   :: Int
+  , userid   :: Int64
   , groups   :: [Group]
   } deriving (Eq, Show, Generic)
 instance ToSchema UserDetailed
@@ -199,7 +200,8 @@ hackageAPI = [aesonQQ|
             "userid":{
                "maximum":9223372036854775807,
                "minimum":-9223372036854775808,
-               "type":"integer"
+               "type":"integer",
+               "format":"int64"
             }
          }
       },
@@ -227,7 +229,8 @@ hackageAPI = [aesonQQ|
             "userid":{
                "maximum":9223372036854775807,
                "minimum":-9223372036854775808,
-               "type":"integer"
+               "type":"integer",
+               "format":"int64"
             }
          },
          "example":{

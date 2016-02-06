@@ -3,6 +3,7 @@ packages:
 - '.'
 - example/
 extra-deps:
+- aeson-qq-0.8.1
 - swagger2-2.0.1
 - servant-0.4.4.6
 - servant-server-0.4.4.6

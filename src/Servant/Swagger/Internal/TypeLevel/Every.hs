@@ -57,4 +57,3 @@ instance (c x, Every cs x) => Every (c ': cs) x where
 tmapEvery :: forall a cs p p'' xs. (TMap (Every cs) xs) =>
   p cs -> (forall x p'. Every cs x => p' x -> a) -> p'' xs -> [a]
 tmapEvery _ = tmap (Proxy :: Proxy (Every cs))
-

@@ -72,7 +72,7 @@ test-suite spec
   main-is:          Spec.hs
   build-depends:    base  == 4.*
                   , aeson
-                  , aeson-qq
+                  , aeson-qq >=0.8.1
                   , hspec
                   , QuickCheck
                   , lens

@@ -46,6 +46,7 @@ import Servant.Swagger.Internal
 import Servant.Swagger.Test
 
 -- $setup
+-- >>> import Control.Applicative
 -- >>> import Control.Lens
 -- >>> import Data.Aeson
 -- >>> import Data.Swagger
@@ -55,6 +56,7 @@ import Servant.Swagger.Test
 -- >>> import Test.Hspec
 -- >>> import Test.QuickCheck
 -- >>> :set -XDataKinds
+-- >>> :set -XDeriveDataTypeable
 -- >>> :set -XDeriveGeneric
 -- >>> :set -XGeneralizedNewtypeDeriving
 -- >>> :set -XOverloadedStrings

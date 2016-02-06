@@ -1,9 +1,9 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 module Servant.SwaggerSpec where
 
 import Control.Lens
@@ -43,9 +43,13 @@ data Todo = Todo
   { created :: UTCTime
   , title   :: String
   , summary :: Maybe String
-  } deriving (Generic, FromJSON, ToSchema)
+  } deriving (Generic)
 
-newtype TodoId = TodoId String deriving (Generic, ToParamSchema)
+instance ToJSON Todo
+instance ToSchema Todo
+
+newtype TodoId = TodoId String deriving (Generic)
+instance ToParamSchema TodoId
 
 type TodoAPI = "todo" :> Capture "id" TodoId :> Get '[JSON] Todo
 
@@ -148,10 +152,12 @@ data UserDetailed = UserDetailed
   { username :: Username
   , userid   :: Int
   , groups   :: [Group]
-  } deriving (Eq, Show, Generic, ToSchema)
+  } deriving (Eq, Show, Generic)
+instance ToSchema UserDetailed
 
 newtype Package = Package { packageName :: Text }
-  deriving (Eq, Show, Generic, ToSchema)
+  deriving (Eq, Show, Generic)
+instance ToSchema Package
 
 hackageSwaggerWithTags :: Swagger
 hackageSwaggerWithTags = toSwagger (Proxy :: Proxy HackageAPI)

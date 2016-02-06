@@ -80,4 +80,5 @@ type family BodyTypes c api :: [*] where
   BodyTypes c (ReqBody cs a :> api) = AddBodyType c cs a (BodyTypes c api)
   BodyTypes c (e :> api) = BodyTypes c api
   BodyTypes c (a :<|> b) = Merge (BodyTypes c a) (BodyTypes c b)
+  BodyTypes c api = '[]
 

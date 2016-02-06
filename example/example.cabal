@@ -48,7 +48,7 @@ test-suite swagger-server-spec
     TodoSpec
     Paths_example
   build-depends:    base  == 4.*
-                  , aeson
+                  , aeson >=0.9.0.1
                   , bytestring
                   , example
                   , hspec

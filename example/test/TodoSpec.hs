@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module TodoSpec where
 
+import Control.Applicative
 import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as BL8
 import Servant.Swagger.Test

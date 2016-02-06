@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveDataTypeable         #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
@@ -10,7 +11,7 @@ import Data.Aeson
 import Data.Proxy
 import Data.Text (Text)
 import Data.Time (UTCTime(..), fromGregorian)
-import Data.Typeable
+import Data.Typeable (Typeable)
 import Data.Swagger
 import GHC.Generics
 import Servant

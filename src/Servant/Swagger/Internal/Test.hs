@@ -3,6 +3,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE ConstraintKinds #-}
 module Servant.Swagger.Internal.Test where
 
 import Data.Aeson (ToJSON)
@@ -17,6 +18,7 @@ import Servant.API
 import Servant.Swagger.Internal.TypeLevel
 
 -- $setup
+-- >>> import Control.Applicative
 -- >>> import GHC.Generics
 -- >>> import Test.QuickCheck
 -- >>> :set -XDeriveGeneric

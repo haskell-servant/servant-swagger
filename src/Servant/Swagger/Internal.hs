@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -6,6 +7,13 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE ConstraintKinds #-}
+#if __GLASGOW_HASKELL__ >= 710
+#define OVERLAPPABLE_ {-# OVERLAPPABLE #-}
+#else
+{-# LANGUAGE OverlappingInstances #-}
+#define OVERLAPPABLE_
+#endif
 module Servant.Swagger.Internal where
 
 import Control.Lens
@@ -119,7 +127,7 @@ markdownCode :: Text -> Text
 markdownCode s = "`" <> s <> "`"
 
 addDefaultResponse404 :: ParamName -> Swagger -> Swagger
-addDefaultResponse404 pname = setResponseWith (\old _new -> alter404 old) 404 (pure response404)
+addDefaultResponse404 pname = setResponseWith (\old _new -> alter404 old) 404 (return response404)
   where
     sname = markdownCode pname
     description404 = sname <> " not found"
@@ -127,7 +135,7 @@ addDefaultResponse404 pname = setResponseWith (\old _new -> alter404 old) 404 (p
     response404 = mempty & description .~ description404
 
 addDefaultResponse400 :: ParamName -> Swagger -> Swagger
-addDefaultResponse400 pname = setResponseWith (\old _new -> alter400 old) 400 (pure response400)
+addDefaultResponse400 pname = setResponseWith (\old _new -> alter400 old) 400 (return response400)
   where
     sname = markdownCode pname
     description400 = "Invalid " <> sname
@@ -138,7 +146,7 @@ addDefaultResponse400 pname = setResponseWith (\old _new -> alter400 old) 400 (p
 -- DELETE
 -- -----------------------------------------------------------------------
 
-instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Delete cs a) where
+instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Delete cs a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Delete cs (Headers '[] a)))
 
 instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Delete cs (Headers hs a)) where
@@ -151,7 +159,7 @@ instance AllAccept cs => HasSwagger (Delete cs ()) where
 -- GET
 -- -----------------------------------------------------------------------
 
-instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Get cs a) where
+instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Get cs a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Get cs (Headers '[] a)))
 
 instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Get cs (Headers hs a)) where
@@ -164,7 +172,7 @@ instance AllAccept cs => HasSwagger (Get cs ()) where
 -- PATCH
 -- -----------------------------------------------------------------------
 
-instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Patch cs a) where
+instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Patch cs a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Patch cs (Headers '[] a)))
 
 instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Patch cs (Headers hs a)) where
@@ -177,7 +185,7 @@ instance AllAccept cs => HasSwagger (Patch cs ()) where
 -- PUT
 -- -----------------------------------------------------------------------
 
-instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Put cs a) where
+instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Put cs a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Put cs (Headers '[] a)))
 
 instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Put cs (Headers hs a)) where
@@ -190,7 +198,7 @@ instance AllAccept cs => HasSwagger (Put cs ()) where
 -- POST
 -- -----------------------------------------------------------------------
 
-instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs) => HasSwagger (Post cs a) where
+instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Post cs a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Post cs (Headers '[] a)))
 
 instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Post cs (Headers hs a)) where

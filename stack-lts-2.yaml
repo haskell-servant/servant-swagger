@@ -1,0 +1,12 @@
+resolver: lts-2.22
+packages:
+- '.'
+- location: example/
+  extra-dep: true
+extra-deps:
+- aeson-qq-0.8.1
+- servant-0.4.4.6
+- servant-server-0.4.4.6
+- swagger2-2.0.1
+flags: {}
+extra-package-dbs: []

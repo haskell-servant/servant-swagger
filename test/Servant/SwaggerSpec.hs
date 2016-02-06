@@ -1,9 +1,9 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 module Servant.SwaggerSpec where
 
 import Control.Lens
@@ -11,6 +11,7 @@ import Data.Aeson
 import qualified Data.Aeson.Types as JSON
 import Data.Aeson.QQ
 import Data.Char (toLower)
+import Data.Int (Int64)
 import Data.Proxy
 import Data.Swagger
 import Data.Text (Text)
@@ -43,9 +44,13 @@ data Todo = Todo
   { created :: UTCTime
   , title   :: String
   , summary :: Maybe String
-  } deriving (Generic, FromJSON, ToSchema)
+  } deriving (Generic)
 
-newtype TodoId = TodoId String deriving (Generic, ToParamSchema)
+instance ToJSON Todo
+instance ToSchema Todo
+
+newtype TodoId = TodoId String deriving (Generic)
+instance ToParamSchema TodoId
 
 type TodoAPI = "todo" :> Capture "id" TodoId :> Get '[JSON] Todo
 
@@ -127,7 +132,7 @@ type Username = Text
 
 data UserSummary = UserSummary
   { summaryUsername :: Username
-  , summaryUserid   :: Int
+  , summaryUserid   :: Int64  -- Word64 would make sense too
   } deriving (Eq, Show, Generic)
 
 lowerCutPrefix :: String -> String -> String
@@ -146,12 +151,14 @@ type Group = Text
 
 data UserDetailed = UserDetailed
   { username :: Username
-  , userid   :: Int
+  , userid   :: Int64
   , groups   :: [Group]
-  } deriving (Eq, Show, Generic, ToSchema)
+  } deriving (Eq, Show, Generic)
+instance ToSchema UserDetailed
 
 newtype Package = Package { packageName :: Text }
-  deriving (Eq, Show, Generic, ToSchema)
+  deriving (Eq, Show, Generic)
+instance ToSchema Package
 
 hackageSwaggerWithTags :: Swagger
 hackageSwaggerWithTags = toSwagger (Proxy :: Proxy HackageAPI)
@@ -193,7 +200,8 @@ hackageAPI = [aesonQQ|
             "userid":{
                "maximum":9223372036854775807,
                "minimum":-9223372036854775808,
-               "type":"integer"
+               "type":"integer",
+               "format":"int64"
             }
          }
       },
@@ -221,7 +229,8 @@ hackageAPI = [aesonQQ|
             "userid":{
                "maximum":9223372036854775807,
                "minimum":-9223372036854775808,
-               "type":"integer"
+               "type":"integer",
+               "format":"int64"
             }
          },
          "example":{

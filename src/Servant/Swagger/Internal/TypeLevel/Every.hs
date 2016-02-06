@@ -52,9 +52,8 @@ instance (c x, Every cs x) => Every (c ': cs) x where
 -- | Like @'tmap'@, but uses @'Every'@ for multiple constraints.
 --
 -- >>> let zero :: forall p a. (Show a, Num a) => p a -> String; zero _ = show (0 :: a)
--- >>> tmapEvery (Proxy :: Proxy [Show, Num]) zero (Proxy :: Proxy [Int, Float])
+-- >>> tmapEvery (Proxy :: Proxy [Show, Num]) zero (Proxy :: Proxy [Int, Float]) :: [String]
 -- ["0","0.0"]
 tmapEvery :: forall a cs p p'' xs. (TMap (Every cs) xs) =>
-  p cs -> (forall x p'. EveryTF cs x => p' x -> a) -> p'' xs -> [a]
+  p cs -> (forall x p'. Every cs x => p' x -> a) -> p'' xs -> [a]
 tmapEvery _ = tmap (Proxy :: Proxy (Every cs))
-

@@ -52,33 +52,39 @@ type family Elem x xs where
   Elem x (x ': xs) = 'True
   Elem x (y ': xs) = Elem x xs
 
--- | @'AddBodyType' c cs a as@ adds type @a@ to the list @as@
--- only if @c@ is in @cs@ and @a@ is not in @as@.
--- This allows to build a list of unique body types.
-type AddBodyType c cs a as = If (Elem c cs) (Insert a as) as
+-- | Remove duplicates from a type-level list.
+type family Nub xs where
+  Nub '[] = '[]
+  Nub (x ': xs) = x ': Nub (Remove x xs)
 
--- | Insert type @x@ into a type list @xs@ only if it is not already there.
-type Insert x xs = If (Elem x xs) xs (x ': xs)
-
--- | Merge two lists, ignoring any type in @xs@ which occurs also in @ys@.
-type family Merge xs ys where
-  Merge '[] ys = ys
-  Merge (x ': xs) ys = If (Elem x ys) (Merge xs ys) (x ': (Merge xs ys))
+-- | Remove element from a type-level list.
+type family Remove x xs where
+  Remove x '[]       = '[]
+  Remove x (x ': ys) =      Remove x ys
+  Remove x (y ': ys) = y ': Remove x ys
 
 -- | Extract a list of unique "body" types for a specific content-type from a servant API.
-type family BodyTypes c api :: [*] where
-  BodyTypes c (Delete  cs (Headers hdrs a)) = AddBodyType c cs a '[]
-  BodyTypes c (Get     cs (Headers hdrs a)) = AddBodyType c cs a '[]
-  BodyTypes c (Patch   cs (Headers hdrs a)) = AddBodyType c cs a '[]
-  BodyTypes c (Post    cs (Headers hdrs a)) = AddBodyType c cs a '[]
-  BodyTypes c (Put     cs (Headers hdrs a)) = AddBodyType c cs a '[]
-  BodyTypes c (Delete  cs a) = AddBodyType c cs a '[]
-  BodyTypes c (Get     cs a) = AddBodyType c cs a '[]
-  BodyTypes c (Patch   cs a) = AddBodyType c cs a '[]
-  BodyTypes c (Post    cs a) = AddBodyType c cs a '[]
-  BodyTypes c (Put     cs a) = AddBodyType c cs a '[]
-  BodyTypes c (ReqBody cs a :> api) = AddBodyType c cs a (BodyTypes c api)
-  BodyTypes c (e :> api) = BodyTypes c api
-  BodyTypes c (a :<|> b) = Merge (BodyTypes c a) (BodyTypes c b)
-  BodyTypes c api = '[]
+type BodyTypes c api = Nub (BodyTypes' c api)
+
+-- | @'AddBodyType' c cs a as@ adds type @a@ to the list @as@
+-- only if @c@ is in @cs@.
+type AddBodyType c cs a as = If (Elem c cs) (a ': as) as
+
+-- | Extract a list of "body" types for a specific content-type from a servant API.
+-- To extract unique types see @'BodyTypes'@.
+type family BodyTypes' c api :: [*] where
+  BodyTypes' c (Delete  cs (Headers hdrs a)) = AddBodyType c cs a '[]
+  BodyTypes' c (Get     cs (Headers hdrs a)) = AddBodyType c cs a '[]
+  BodyTypes' c (Patch   cs (Headers hdrs a)) = AddBodyType c cs a '[]
+  BodyTypes' c (Post    cs (Headers hdrs a)) = AddBodyType c cs a '[]
+  BodyTypes' c (Put     cs (Headers hdrs a)) = AddBodyType c cs a '[]
+  BodyTypes' c (Delete  cs a) = AddBodyType c cs a '[]
+  BodyTypes' c (Get     cs a) = AddBodyType c cs a '[]
+  BodyTypes' c (Patch   cs a) = AddBodyType c cs a '[]
+  BodyTypes' c (Post    cs a) = AddBodyType c cs a '[]
+  BodyTypes' c (Put     cs a) = AddBodyType c cs a '[]
+  BodyTypes' c (ReqBody cs a :> api) = AddBodyType c cs a (BodyTypes' c api)
+  BodyTypes' c (e :> api) = BodyTypes' c api
+  BodyTypes' c (a :<|> b) = AppendList (BodyTypes' c a) (BodyTypes' c b)
+  BodyTypes' c api = '[]
 

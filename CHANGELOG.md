@@ -1,3 +1,9 @@
+1.0.3
+---
+
+* Fixes:
+    * Improve compile-time performance of `BodyTypes` even further (see [18e0d95](https://github.com/haskell-servant/servant-swagger/commit/18e0d95ef6fe9076dd9621cb515d8d1a189f71d3))!
+
 1.0.2
 ---
 

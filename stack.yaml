@@ -1,7 +1,11 @@
-resolver: nightly-2016-02-05
+resolver: nightly-2016-05-13
 packages:
 - '.'
 - example/
+- location:
+    git: https://github.com/GetShopTV/swagger2.git
+    commit: 863b414893da1db41da6a6e22dc4933684e29da9
+  extra-dep: true
 extra-deps:
 - aeson-0.11.2.0
 - doctest-0.11.0

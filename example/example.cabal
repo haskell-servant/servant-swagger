@@ -20,6 +20,8 @@ library
     Todo
   build-depends:  base
                 , aeson
+                , aeson-pretty
+                , bytestring
                 , lens
                 , servant
                 , servant-server

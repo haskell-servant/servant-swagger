@@ -8,6 +8,8 @@ module Todo where
 
 import Control.Lens
 import Data.Aeson
+import Data.Aeson.Encode.Pretty (encodePretty)
+import qualified Data.ByteString.Lazy.Char8 as BL8
 import Data.Proxy
 import Data.Text (Text)
 import Data.Time (UTCTime(..), fromGregorian)
@@ -66,3 +68,6 @@ todoSwagger = toSwagger todoAPI
 server :: Server API
 server = return todoSwagger :<|> error "not implemented"
 
+-- | Output generated @swagger.json@ file for the @'TodoAPI'@.
+writeSwaggerJSON :: IO ()
+writeSwaggerJSON = BL8.writeFile "example/swagger.json" (encodePretty todoSwagger)

@@ -29,6 +29,11 @@ library
                 , swagger2
                 , text
                 , time
+                , lens
+                , wai
+                , warp
+                , transformers
+                , http-api-data
   default-language: Haskell2010
 
 executable swagger-server
@@ -39,6 +44,9 @@ executable swagger-server
                 , example
                 , servant-server
                 , warp
+                , servant-swagger
+                , lens
+                , http-api-data
   default-language: Haskell2010
 
 test-suite swagger-server-spec

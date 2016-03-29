@@ -1,15 +1,14 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module TodoSpec where
 
-import Control.Applicative
-import Data.Aeson
+import           Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as BL8
-import Servant.Swagger.Test
-import Test.Hspec
-import Test.QuickCheck
-import Test.QuickCheck.Instances ()
-import Todo
-import Paths_example
+import           Paths_example
+import           Servant.Swagger.Test
+import           Test.Hspec
+import           Test.QuickCheck
+import           Test.QuickCheck.Instances  ()
+import           Todo
 
 spec :: Spec
 spec = describe "Swagger" $ do

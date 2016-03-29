@@ -146,69 +146,85 @@ addDefaultResponse400 pname = setResponseWith (\old _new -> alter400 old) 400 (r
 -- DELETE
 -- -----------------------------------------------------------------------
 
-instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Delete cs a) where
+instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Verb 'DELETE c cs a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Delete cs (Headers '[] a)))
 
-instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Delete cs (Headers hs a)) where
-  toSwagger = mkEndpoint "/" delete 200
+instance (ToSchema a, AllAccept cs, AllToResponseHeader hs, KnownNat c) => HasSwagger (Verb 'DELETE c cs (Headers hs a)) where
+  toSwagger = mkEndpoint "/" delete (fromIntegral (natVal (Proxy :: Proxy c)))
 
-instance AllAccept cs => HasSwagger (Delete cs ()) where
+instance AllAccept cs => HasSwagger (Verb 'DELETE c cs ()) where
   toSwagger = noContentEndpoint "/" delete
 
 -- -----------------------------------------------------------------------
 -- GET
 -- -----------------------------------------------------------------------
 
-instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Get cs a) where
+instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Verb 'GET c cs a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Get cs (Headers '[] a)))
 
-instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Get cs (Headers hs a)) where
-  toSwagger = mkEndpoint "/" get 200
+instance (ToSchema a, AllAccept cs, AllToResponseHeader hs, KnownNat c) => HasSwagger (Verb 'GET c cs (Headers hs a)) where
+  toSwagger = mkEndpoint "/" get (fromIntegral (natVal (Proxy :: Proxy c)))
 
-instance AllAccept cs => HasSwagger (Get cs ()) where
+instance AllAccept cs => HasSwagger (Verb 'GET c cs ()) where
   toSwagger = noContentEndpoint "/" get
 
 -- -----------------------------------------------------------------------
 -- PATCH
 -- -----------------------------------------------------------------------
 
-instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Patch cs a) where
+instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Verb 'PATCH c cs a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Patch cs (Headers '[] a)))
 
-instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Patch cs (Headers hs a)) where
-  toSwagger = mkEndpoint "/" patch 200
+instance (ToSchema a, AllAccept cs, AllToResponseHeader hs, KnownNat c) => HasSwagger (Verb 'PATCH c cs (Headers hs a)) where
+  toSwagger = mkEndpoint "/" patch (fromIntegral (natVal (Proxy :: Proxy c)))
 
-instance AllAccept cs => HasSwagger (Patch cs ()) where
+instance AllAccept cs => HasSwagger (Verb 'PATCH c cs ()) where
   toSwagger = noContentEndpoint "/" patch
 
 -- -----------------------------------------------------------------------
 -- PUT
 -- -----------------------------------------------------------------------
 
-instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Put cs a) where
+instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Verb 'PUT c cs a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Put cs (Headers '[] a)))
 
-instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Put cs (Headers hs a)) where
-  toSwagger = mkEndpoint "/" put 200
+instance (ToSchema a, AllAccept cs, AllToResponseHeader hs, KnownNat c) => HasSwagger (Verb 'PUT c cs (Headers hs a)) where
+  toSwagger = mkEndpoint "/" put (fromIntegral (natVal (Proxy :: Proxy c)))
 
-instance AllAccept cs => HasSwagger (Put cs ()) where
+instance AllAccept cs => HasSwagger (Verb 'PUT c cs ()) where
   toSwagger = noContentEndpoint "/" put
 
 -- -----------------------------------------------------------------------
 -- POST
 -- -----------------------------------------------------------------------
 
-instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Post cs a) where
+instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Verb 'POST c cs a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Post cs (Headers '[] a)))
 
-instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Post cs (Headers hs a)) where
-  toSwagger = mkEndpoint "/" post 201
+instance (ToSchema a, AllAccept cs, AllToResponseHeader hs, KnownNat c) => HasSwagger (Verb 'POST c cs (Headers hs a)) where
+  toSwagger = mkEndpoint "/" post (fromIntegral (natVal (Proxy :: Proxy c)))
 
-instance AllAccept cs => HasSwagger (Post cs ()) where
+instance AllAccept cs => HasSwagger (Verb 'POST c cs ()) where
   toSwagger = noContentEndpoint "/" post
 
 instance (HasSwagger a, HasSwagger b) => HasSwagger (a :<|> b) where
   toSwagger _ = toSwagger (Proxy :: Proxy a) <> toSwagger (Proxy :: Proxy b)
+
+-- | @'Vault'@ combinator does not change our specification at all.
+instance (HasSwagger sub) => HasSwagger (Vault :> sub) where
+  toSwagger _ = toSwagger (Proxy :: Proxy sub)
+
+-- | @'IsSecure'@ combinator does not change our specification at all.
+instance (HasSwagger sub) => HasSwagger (IsSecure :> sub) where
+  toSwagger _ = toSwagger (Proxy :: Proxy sub)
+
+-- | @'RemoteHost'@ combinator does not change our specification at all.
+instance (HasSwagger sub) => HasSwagger (RemoteHost :> sub) where
+  toSwagger _ = toSwagger (Proxy :: Proxy sub)
+
+-- | @'HttpVersion'@ combinator does not change our specification at all.
+instance (HasSwagger sub) => HasSwagger (HttpVersion :> sub) where
+  toSwagger _ = toSwagger (Proxy :: Proxy sub)
 
 instance (KnownSymbol sym, HasSwagger sub) => HasSwagger (sym :> sub) where
   toSwagger _ = prependPath piece (toSwagger (Proxy :: Proxy sub))

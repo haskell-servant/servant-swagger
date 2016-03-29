@@ -4,5 +4,7 @@ packages:
 - example/
 extra-deps:
 - swagger2-2.0.1
+- servant-0.5
+- servant-server-0.5
 flags: {}
 extra-package-dbs: []

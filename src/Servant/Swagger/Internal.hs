@@ -210,19 +210,19 @@ instance AllAccept cs => HasSwagger (Verb 'POST c cs ()) where
 instance (HasSwagger a, HasSwagger b) => HasSwagger (a :<|> b) where
   toSwagger _ = toSwagger (Proxy :: Proxy a) <> toSwagger (Proxy :: Proxy b)
 
--- | Vault combinator does not change our specification at all.
+-- | @'Vault'@ combinator does not change our specification at all.
 instance (HasSwagger sub) => HasSwagger (Vault :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
 
--- | IsSecure combinator does not change our specification at all.
+-- | @'IsSecure'@ combinator does not change our specification at all.
 instance (HasSwagger sub) => HasSwagger (IsSecure :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
 
--- | RemoteHost combinator does not change our specification at all.
+-- | @'RemoteHost'@ combinator does not change our specification at all.
 instance (HasSwagger sub) => HasSwagger (RemoteHost :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
 
--- | HttpVersion combinator does not change our specification at all.
+-- | @'HttpVersion'@ combinator does not change our specification at all.
 instance (HasSwagger sub) => HasSwagger (HttpVersion :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
 

@@ -118,7 +118,7 @@
                     "400": {
                         "description": "Invalid `body`"
                     },
-                    "201": {
+                    "200": {
                         "schema": {
                             "$ref": "#/definitions/TodoId"
                         },

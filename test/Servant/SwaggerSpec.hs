@@ -1,25 +1,25 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE DataKinds          #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE QuasiQuotes        #-}
+{-# LANGUAGE TypeOperators      #-}
 module Servant.SwaggerSpec where
 
-import Control.Lens
-import Data.Aeson
+import           Control.Lens
+import           Data.Aeson
+import           Data.Aeson.QQ
 import qualified Data.Aeson.Types as JSON
-import Data.Aeson.QQ
-import Data.Char (toLower)
-import Data.Int (Int64)
-import Data.Proxy
-import Data.Swagger
-import Data.Text (Text)
-import Data.Time
-import GHC.Generics
-import Servant.API
-import Servant.Swagger
-import Test.Hspec hiding (example)
+import           Data.Char        (toLower)
+import           Data.Int         (Int64)
+import           Data.Proxy
+import           Data.Swagger
+import           Data.Text        (Text)
+import           Data.Time
+import           GHC.Generics
+import           Servant.API
+import           Servant.Swagger
+import           Test.Hspec       hiding (example)
 
 checkAPI :: HasSwagger api => Proxy api -> Value -> IO ()
 checkAPI proxy = checkSwagger (toSwagger proxy)
@@ -90,7 +90,7 @@ todoAPI = [aesonQQ|
             {
               "responses":
                 {
-                  "200":
+                  "201":
                     {
                       "schema": { "$ref":"#/definitions/Todo" },
                       "description": ""

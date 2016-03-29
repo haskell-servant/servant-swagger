@@ -123,7 +123,7 @@ type HackageAPI
 
 type HackageUserAPI =
       "users" :> Get '[JSON] [UserSummary]
- :<|> "user" :> Capture "username" Username :> Get '[JSON] UserDetailed
+ :<|> "user"  :> Capture "username" Username :> Get '[JSON] UserDetailed
 
 type HackagePackagesAPI
     = "packages" :> Get '[JSON] [Package]

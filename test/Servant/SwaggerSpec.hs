@@ -90,7 +90,7 @@ todoAPI = [aesonQQ|
             {
               "responses":
                 {
-                  "201":
+                  "200":
                     {
                       "schema": { "$ref":"#/definitions/Todo" },
                       "description": ""
@@ -351,7 +351,7 @@ getPostAPI = [aesonQQ|
       "/":{
          "post":{
             "responses":{
-               "201":{
+               "200":{
                   "schema":{
                      "type":"string"
                   },

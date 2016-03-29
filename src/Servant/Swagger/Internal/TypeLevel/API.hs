@@ -73,16 +73,16 @@ type AddBodyType c cs a as = If (Elem c cs) (a ': as) as
 -- | Extract a list of "body" types for a specific content-type from a servant API.
 -- To extract unique types see @'BodyTypes'@.
 type family BodyTypes' c api :: [*] where
-  BodyTypes' c (Delete  cs (Headers hdrs a)) = AddBodyType c cs a '[]
-  BodyTypes' c (Get     cs (Headers hdrs a)) = AddBodyType c cs a '[]
-  BodyTypes' c (Patch   cs (Headers hdrs a)) = AddBodyType c cs a '[]
-  BodyTypes' c (Post    cs (Headers hdrs a)) = AddBodyType c cs a '[]
-  BodyTypes' c (Put     cs (Headers hdrs a)) = AddBodyType c cs a '[]
-  BodyTypes' c (Delete  cs a) = AddBodyType c cs a '[]
-  BodyTypes' c (Get     cs a) = AddBodyType c cs a '[]
-  BodyTypes' c (Patch   cs a) = AddBodyType c cs a '[]
-  BodyTypes' c (Post    cs a) = AddBodyType c cs a '[]
-  BodyTypes' c (Put     cs a) = AddBodyType c cs a '[]
+  BodyTypes' c (Verb 'DELETE b cs (Headers hdrs a)) = AddBodyType c cs a '[]
+  BodyTypes' c (Verb 'GET    b cs (Headers hdrs a)) = AddBodyType c cs a '[]
+  BodyTypes' c (Verb 'PATCH  b cs (Headers hdrs a)) = AddBodyType c cs a '[]
+  BodyTypes' c (Verb 'POST   b cs (Headers hdrs a)) = AddBodyType c cs a '[]
+  BodyTypes' c (Verb 'PUT    b cs (Headers hdrs a)) = AddBodyType c cs a '[]
+  BodyTypes' c (Verb 'DELETE b cs a) = AddBodyType c cs a '[]
+  BodyTypes' c (Verb 'GET    b cs a) = AddBodyType c cs a '[]
+  BodyTypes' c (Verb 'PATCH  b cs a) = AddBodyType c cs a '[]
+  BodyTypes' c (Verb 'POST   b cs a) = AddBodyType c cs a '[]
+  BodyTypes' c (Verb 'PUT    b cs a) = AddBodyType c cs a '[]
   BodyTypes' c (ReqBody cs a :> api) = AddBodyType c cs a (BodyTypes' c api)
   BodyTypes' c (e :> api) = BodyTypes' c api
   BodyTypes' c (a :<|> b) = AppendList (BodyTypes' c a) (BodyTypes' c b)

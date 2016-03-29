@@ -6,18 +6,18 @@
 {-# LANGUAGE TypeOperators              #-}
 module Todo where
 
-import Control.Lens
-import Data.Aeson
-import Data.Aeson.Encode.Pretty (encodePretty)
+import           Control.Lens
+import           Data.Aeson
+import           Data.Aeson.Encode.Pretty   (encodePretty)
 import qualified Data.ByteString.Lazy.Char8 as BL8
-import Data.Proxy
-import Data.Text (Text)
-import Data.Time (UTCTime(..), fromGregorian)
-import Data.Typeable (Typeable)
-import Data.Swagger
-import GHC.Generics
-import Servant
-import Servant.Swagger
+import           Data.Proxy
+import           Data.Swagger
+import           Data.Text                  (Text)
+import           Data.Time                  (UTCTime (..), fromGregorian)
+import           Data.Typeable              (Typeable)
+import           GHC.Generics
+import           Servant
+import           Servant.Swagger
 
 todoAPI :: Proxy TodoAPI
 todoAPI = Proxy
@@ -43,7 +43,7 @@ data Todo = Todo
 
 -- | A unique Todo entry ID.
 newtype TodoId = TodoId Int
-  deriving (Show, Generic, Typeable, ToJSON, FromText)
+  deriving (Show, Generic, Typeable, ToJSON, FromHttpApiData)
 
 instance ToJSON Todo
 instance FromJSON Todo

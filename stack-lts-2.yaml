@@ -5,8 +5,8 @@ packages:
   extra-dep: true
 extra-deps:
 - aeson-qq-0.8.1
-- servant-0.5
-- servant-server-0.5
+- servant-0.7
+- servant-server-0.7
 - swagger2-2.0.1
 - http-api-data-0.1.1.1
 - base-compat-0.9.0

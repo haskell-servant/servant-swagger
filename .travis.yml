@@ -8,6 +8,7 @@ addons:
 env:
   - STACK_YAML=stack.yaml
   - STACK_YAML=stack-lts-2.yaml
+  - STACK_YAML=stack-servant-0.4.yaml
 
 before_install:
   # Download and unpack the stack executable

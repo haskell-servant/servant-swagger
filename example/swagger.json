@@ -13,7 +13,7 @@
         "Todo": {
             "example": {
                 "summary": "get milk",
-                "created": "2015-12-31T00:00:00.000000000000Z"
+                "created": "2015-12-31T00:00:00Z"
             },
             "required": [
                 "created",

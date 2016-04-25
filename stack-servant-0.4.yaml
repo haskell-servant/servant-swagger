@@ -1,7 +1,8 @@
 resolver: nightly-2016-04-20
 packages:
 - '.'
-- example/
+- location: example/
+  extra-dep: true
 extra-deps:
 - swagger2-2.0.1
 - servant-0.4.4.7

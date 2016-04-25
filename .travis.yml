@@ -20,6 +20,7 @@ before_install:
 
 install:
   - stack setup
+  - stack install servant
 
 script:
   - stack --no-terminal build --test

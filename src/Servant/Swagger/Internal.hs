@@ -81,12 +81,11 @@ subOperations :: (IsSubAPI sub api, HasSwagger sub) =>
 subOperations sub _ = operationsOf (toSwagger sub)
 
 #if MIN_VERSION_servant(0,5,0)
-
 -- | Make an singleton Swagger spec (with only one endpoint).
-mkEndpoint :: forall a cs hs proxy proxy' method status.
+mkEndpoint :: forall a cs hs proxy method status.
   (ToSchema a, AllAccept cs, AllToResponseHeader hs, SwaggerMethod method, KnownNat status)
-  => FilePath                                       -- ^ Endpoint path.
-  -> proxy' (Verb method status cs (Headers hs a))  -- ^ Method, content-types, headers and response.
+  => FilePath                                     -- ^ Endpoint path.
+  -> proxy (Verb method status cs (Headers hs a)) -- ^ Method, content-types, headers and response.
   -> Swagger
 mkEndpoint path proxy
   = mkEndpointWithSchemaRef (Just ref) path proxy
@@ -114,9 +113,7 @@ mkEndpointWithSchemaRef mref path _ = mempty
     code            = fromIntegral (natVal (Proxy :: Proxy status))
     contentTypes    = allContentType (Proxy :: Proxy cs)
     responseHeaders = toAllResponseHeaders (Proxy :: Proxy hs)
-
 #else
-
 mkEndpoint :: forall a cs hs proxy _verb. (ToSchema a, AllAccept cs, AllToResponseHeader hs)
   => FilePath
   -> Lens' PathItem (Maybe Operation)
@@ -150,7 +147,6 @@ mkEndpointWithSchemaRef mref path verb code _ = mempty
       & at code ?~ Inline (mempty
             & schema  .~ mref
             & headers .~ toAllResponseHeaders (Proxy :: Proxy hs))))
-
 #endif
 
 -- | Add parameter to every operation in the spec.
@@ -182,7 +178,6 @@ addDefaultResponse400 pname = setResponseWith (\old _new -> alter400 old) 400 (r
     response400 = mempty & description .~ description400
 
 #if MIN_VERSION_servant(0,5,0)
-
 -- | Methods, available for Swagger.
 class SwaggerMethod method where
   swaggerMethod :: proxy method -> Lens' PathItem (Maybe Operation)
@@ -217,9 +212,7 @@ instance (HasSwagger sub) => HasSwagger (RemoteHost :> sub) where
 -- | @'HttpVersion'@ combinator does not change our specification at all.
 instance (HasSwagger sub) => HasSwagger (HttpVersion :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
-
 #else
-
 -- -----------------------------------------------------------------------
 -- DELETE
 -- -----------------------------------------------------------------------
@@ -284,7 +277,6 @@ instance (ToSchema a, AllAccept cs, AllToResponseHeader hs) => HasSwagger (Post 
 
 instance AllAccept cs => HasSwagger (Post cs ()) where
   toSwagger = noContentEndpoint "/" post
-
 #endif
 
 instance (HasSwagger a, HasSwagger b) => HasSwagger (a :<|> b) where

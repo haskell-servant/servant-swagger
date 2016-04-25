@@ -80,39 +80,38 @@ subOperations :: (IsSubAPI sub api, HasSwagger sub) =>
   -> Traversal' Swagger Operation
 subOperations sub _ = operationsOf (toSwagger sub)
 
-mkEndpoint :: forall a cs hs proxy _verb. (ToSchema a, AllAccept cs, AllToResponseHeader hs)
-  => FilePath
-  -> Lens' PathItem (Maybe Operation)
-  -> HttpStatusCode
-  -> proxy (_verb cs (Headers hs a))
+-- | Make an singleton Swagger spec (with only one endpoint).
+mkEndpoint :: forall a cs hs proxy proxy' method status.
+  (ToSchema a, AllAccept cs, AllToResponseHeader hs, SwaggerMethod method, KnownNat status)
+  => FilePath                                       -- ^ Endpoint path.
+  -> proxy' (Verb method status cs (Headers hs a))  -- ^ Method, content-types, headers and response.
   -> Swagger
-mkEndpoint path verb code proxy
-  = mkEndpointWithSchemaRef (Just ref) path verb code proxy
+mkEndpoint path proxy
+  = mkEndpointWithSchemaRef (Just ref) path proxy
       & definitions .~ defs
   where
     (defs, ref) = runDeclare (declareSchemaRef (Proxy :: Proxy a)) mempty
 
-noContentEndpoint :: forall cs proxy verb. (AllAccept cs)
-  => FilePath
-  -> Lens' PathItem (Maybe Operation)
-  -> proxy (verb cs ())
-  -> Swagger
-noContentEndpoint path verb _ = mkEndpointWithSchemaRef Nothing path verb 204 (Proxy :: Proxy (verb cs (Headers '[] ())))
-
-mkEndpointWithSchemaRef :: forall cs hs proxy verb a. (AllAccept cs, AllToResponseHeader hs)
+-- | Like @'mkEndpoint'@ but with explicit schema reference.
+-- Unlike @'mkEndpoint'@ this function does not update @'definitions'@.
+mkEndpointWithSchemaRef :: forall cs hs proxy method status a.
+  (AllAccept cs, AllToResponseHeader hs, SwaggerMethod method, KnownNat status)
   => Maybe (Referenced Schema)
   -> FilePath
-  -> Lens' PathItem (Maybe Operation)
-  -> HttpStatusCode
-  -> proxy (verb cs (Headers hs a))
+  -> proxy (Verb method status cs (Headers hs a))
   -> Swagger
-mkEndpointWithSchemaRef mref path verb code _ = mempty
+mkEndpointWithSchemaRef mref path _ = mempty
   & paths.at path ?~
-    (mempty & verb ?~ (mempty
-      & produces ?~ MimeList (allContentType (Proxy :: Proxy cs))
+    (mempty & method ?~ (mempty
+      & produces ?~ MimeList contentTypes
       & at code ?~ Inline (mempty
             & schema  .~ mref
-            & headers .~ toAllResponseHeaders (Proxy :: Proxy hs))))
+            & headers .~ responseHeaders)))
+  where
+    method          = swaggerMethod (Proxy :: Proxy method)
+    code            = fromIntegral (natVal (Proxy :: Proxy status))
+    contentTypes    = allContentType (Proxy :: Proxy cs)
+    responseHeaders = toAllResponseHeaders (Proxy :: Proxy hs)
 
 -- | Add parameter to every operation in the spec.
 addParam :: Param -> Swagger -> Swagger
@@ -142,70 +141,24 @@ addDefaultResponse400 pname = setResponseWith (\old _new -> alter400 old) 400 (r
     alter400 = description %~ (<> (" or " <> sname))
     response400 = mempty & description .~ description400
 
--- -----------------------------------------------------------------------
--- DELETE
--- -----------------------------------------------------------------------
+-- | Methods, available for Swagger.
+class SwaggerMethod method where
+  swaggerMethod :: proxy method -> Lens' PathItem (Maybe Operation)
 
-instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Verb 'DELETE c cs a) where
-  toSwagger _ = toSwagger (Proxy :: Proxy (Delete cs (Headers '[] a)))
+instance SwaggerMethod 'GET     where swaggerMethod _ = get
+instance SwaggerMethod 'PUT     where swaggerMethod _ = put
+instance SwaggerMethod 'POST    where swaggerMethod _ = post
+instance SwaggerMethod 'DELETE  where swaggerMethod _ = delete
+instance SwaggerMethod 'OPTIONS where swaggerMethod _ = options
+instance SwaggerMethod 'HEAD    where swaggerMethod _ = head_
+instance SwaggerMethod 'PATCH   where swaggerMethod _ = patch
 
-instance (ToSchema a, AllAccept cs, AllToResponseHeader hs, KnownNat c) => HasSwagger (Verb 'DELETE c cs (Headers hs a)) where
-  toSwagger = mkEndpoint "/" delete (fromIntegral (natVal (Proxy :: Proxy c)))
+instance OVERLAPPABLE_ (ToSchema a, AllAccept cs, KnownNat status, SwaggerMethod method) => HasSwagger (Verb method status cs a) where
+  toSwagger _ = toSwagger (Proxy :: Proxy (Verb method status cs (Headers '[] a)))
 
-instance AllAccept cs => HasSwagger (Verb 'DELETE c cs ()) where
-  toSwagger = noContentEndpoint "/" delete
-
--- -----------------------------------------------------------------------
--- GET
--- -----------------------------------------------------------------------
-
-instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Verb 'GET c cs a) where
-  toSwagger _ = toSwagger (Proxy :: Proxy (Get cs (Headers '[] a)))
-
-instance (ToSchema a, AllAccept cs, AllToResponseHeader hs, KnownNat c) => HasSwagger (Verb 'GET c cs (Headers hs a)) where
-  toSwagger = mkEndpoint "/" get (fromIntegral (natVal (Proxy :: Proxy c)))
-
-instance AllAccept cs => HasSwagger (Verb 'GET c cs ()) where
-  toSwagger = noContentEndpoint "/" get
-
--- -----------------------------------------------------------------------
--- PATCH
--- -----------------------------------------------------------------------
-
-instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Verb 'PATCH c cs a) where
-  toSwagger _ = toSwagger (Proxy :: Proxy (Patch cs (Headers '[] a)))
-
-instance (ToSchema a, AllAccept cs, AllToResponseHeader hs, KnownNat c) => HasSwagger (Verb 'PATCH c cs (Headers hs a)) where
-  toSwagger = mkEndpoint "/" patch (fromIntegral (natVal (Proxy :: Proxy c)))
-
-instance AllAccept cs => HasSwagger (Verb 'PATCH c cs ()) where
-  toSwagger = noContentEndpoint "/" patch
-
--- -----------------------------------------------------------------------
--- PUT
--- -----------------------------------------------------------------------
-
-instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Verb 'PUT c cs a) where
-  toSwagger _ = toSwagger (Proxy :: Proxy (Put cs (Headers '[] a)))
-
-instance (ToSchema a, AllAccept cs, AllToResponseHeader hs, KnownNat c) => HasSwagger (Verb 'PUT c cs (Headers hs a)) where
-  toSwagger = mkEndpoint "/" put (fromIntegral (natVal (Proxy :: Proxy c)))
-
-instance AllAccept cs => HasSwagger (Verb 'PUT c cs ()) where
-  toSwagger = noContentEndpoint "/" put
-
--- -----------------------------------------------------------------------
--- POST
--- -----------------------------------------------------------------------
-
-instance OVERLAPPABLE_ (ToSchema a, AllAccept cs) => HasSwagger (Verb 'POST c cs a) where
-  toSwagger _ = toSwagger (Proxy :: Proxy (Post cs (Headers '[] a)))
-
-instance (ToSchema a, AllAccept cs, AllToResponseHeader hs, KnownNat c) => HasSwagger (Verb 'POST c cs (Headers hs a)) where
-  toSwagger = mkEndpoint "/" post (fromIntegral (natVal (Proxy :: Proxy c)))
-
-instance AllAccept cs => HasSwagger (Verb 'POST c cs ()) where
-  toSwagger = noContentEndpoint "/" post
+instance (ToSchema a, AllAccept cs, AllToResponseHeader hs, KnownNat status, SwaggerMethod method)
+  => HasSwagger (Verb method status cs (Headers hs a)) where
+  toSwagger = mkEndpoint "/"
 
 instance (HasSwagger a, HasSwagger b) => HasSwagger (a :<|> b) where
   toSwagger _ = toSwagger (Proxy :: Proxy a) <> toSwagger (Proxy :: Proxy b)

@@ -19,6 +19,7 @@ import           Data.Time
 import           GHC.Generics
 import           Servant.API
 import           Servant.Swagger
+import           Servant.API.Internal.Test.ComprehensiveAPI (comprehensiveAPI)
 import           Test.Hspec       hiding (example)
 
 checkAPI :: HasSwagger api => Proxy api -> Value -> IO ()
@@ -32,6 +33,9 @@ spec = describe "HasSwagger" $ do
   it "Todo API" $ checkAPI (Proxy :: Proxy TodoAPI) todoAPI
   it "Hackage API (with tags)" $ checkSwagger hackageSwaggerWithTags hackageAPI
   it "GetPost API (test subOperations)" $ checkSwagger getPostSwagger getPostAPI
+  it "Comprehensive API" $ do
+    let _x = toSwagger comprehensiveAPI
+    True `shouldBe` True -- type-level test
 
 main :: IO ()
 main = hspec spec

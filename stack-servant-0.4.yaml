@@ -1,10 +1,11 @@
 resolver: nightly-2016-04-20
 packages:
 - '.'
-- example/
+- location: example/
+  extra-dep: true
 extra-deps:
 - swagger2-2.0.1
-- servant-0.7
-- servant-server-0.7
+- servant-0.4.4.7
+- servant-server-0.4.4.7
 flags: {}
 extra-package-dbs: []

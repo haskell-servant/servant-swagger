@@ -1,6 +1,8 @@
+{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DataKinds          #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE FlexibleContexts   #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE QuasiQuotes        #-}
 {-# LANGUAGE TypeOperators      #-}
@@ -26,7 +28,18 @@ checkAPI :: HasSwagger api => Proxy api -> Value -> IO ()
 checkAPI proxy = checkSwagger (toSwagger proxy)
 
 checkSwagger :: Swagger -> Value -> IO ()
-checkSwagger swag js = toJSON swag `shouldBe` js
+checkSwagger swag js = toJSON swag' `shouldBe` js
+  where
+#if MIN_VERSION_servant(0,5,0)
+    swag' = swag
+#else
+    swag' = swag & paths.traverse.post._Just.responses.responses %~ replace201with200
+
+    replace201with200 rs = case rs ^. at 201 of
+      Just r  -> rs & at 201 .~ Nothing
+                    & at 200 ?~ r
+      Nothing -> rs
+#endif
 
 spec :: Spec
 spec = describe "HasSwagger" $ do

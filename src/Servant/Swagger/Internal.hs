@@ -170,6 +170,13 @@ instance OVERLAPPABLE_ (ToSchema a, AllAccept cs, AllToResponseHeader hs, KnownN
   => HasSwagger (Verb method status cs (Headers hs a)) where
   toSwagger = mkEndpoint "/"
 
+-- ATTENTION: do not remove this instance!
+-- A similar instance above will always use the more general
+-- polymorphic -- HasSwagger instance and will result in a type error
+-- since 'NoContent' does not have a 'ToSchema' instance.
+instance (AllAccept cs, KnownNat status, SwaggerMethod method) => HasSwagger (Verb method status cs NoContent) where
+  toSwagger _ = toSwagger (Proxy :: Proxy (Verb method status cs (Headers '[] NoContent)))
+
 instance (AllAccept cs, AllToResponseHeader hs, KnownNat status, SwaggerMethod method)
   => HasSwagger (Verb method status cs (Headers hs NoContent)) where
   toSwagger = mkEndpointNoContent "/"

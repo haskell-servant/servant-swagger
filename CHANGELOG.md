@@ -1,3 +1,13 @@
+1.1
+---
+
+* Breaking changes:
+    * Requires `swagger2 >= 2.1`
+    * Requires `servant >= 0.5`
+
+* Notes:
+    * GHC-8.0 compatible release
+
 1.0.3
 ---
 

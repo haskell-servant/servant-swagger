@@ -25,6 +25,8 @@ import Data.Proxy
 import qualified Data.Swagger as Swagger
 import Data.Swagger hiding (Header)
 import Data.Swagger.Declare
+import Data.HashMap.Strict.InsOrd (InsOrdHashMap)
+import qualified Data.HashMap.Strict.InsOrd  as InsOrdHashMap
 import Data.Text (Text)
 import qualified Data.Text as Text
 import GHC.TypeLits
@@ -314,13 +316,13 @@ instance (KnownSymbol sym, ToParamSchema a) => ToResponseHeader (Header sym a) w
       hschema = toParamSchema (Proxy :: Proxy a)
 
 class AllToResponseHeader hs where
-  toAllResponseHeaders :: Proxy hs -> HashMap HeaderName Swagger.Header
+  toAllResponseHeaders :: Proxy hs -> InsOrdHashMap HeaderName Swagger.Header
 
 instance AllToResponseHeader '[] where
   toAllResponseHeaders _ = mempty
 
 instance (ToResponseHeader h, AllToResponseHeader hs) => AllToResponseHeader (h ': hs) where
-  toAllResponseHeaders _ = HashMap.insert hname header hdrs
+  toAllResponseHeaders _ = InsOrdHashMap.insert hname header hdrs
     where
       (hname, header) = toResponseHeader (Proxy :: Proxy h)
       hdrs = toAllResponseHeaders (Proxy :: Proxy hs)

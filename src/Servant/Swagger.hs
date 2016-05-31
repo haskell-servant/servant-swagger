@@ -55,6 +55,7 @@ import           Servant.Swagger.Test
 -- >>> import Servant.API
 -- >>> import Test.Hspec
 -- >>> import Test.QuickCheck
+-- >>> import qualified Data.ByteString.Lazy.Char8 as BSL8
 -- >>> :set -XDataKinds
 -- >>> :set -XDeriveDataTypeable
 -- >>> :set -XDeriveGeneric
@@ -96,8 +97,8 @@ import           Servant.Swagger.Test
 -- $generate
 -- In order to generate @'Swagger'@ specification for a servant API, just use @'toSwagger'@:
 --
--- >>> encode $ toSwagger (Proxy :: Proxy UserAPI)
--- "{\"swagger\":\"2.0\",\"info\":{\"version\":\"\",\"title\":\"\"},\"definitions\":{\"User\":{\"required\":[\"name\",\"age\"],\"type\":\"object\",\"properties\":{\"age\":{\"maximum\":9223372036854775807,\"minimum\":-9223372036854775808,\"type\":\"integer\"},\"name\":{\"type\":\"string\"}}},\"UserId\":{\"type\":\"integer\"}},\"paths\":{\"/{user_id}\":{\"get\":{\"responses\":{\"404\":{\"description\":\"`user_id` not found\"},\"200\":{\"schema\":{\"$ref\":\"#/definitions/User\"},\"description\":\"\"}},\"produces\":[\"application/json\"],\"parameters\":[{\"required\":true,\"in\":\"path\",\"name\":\"user_id\",\"type\":\"integer\"}]}},\"/\":{\"post\":{\"consumes\":[\"application/json\"],\"responses\":{\"400\":{\"description\":\"Invalid `body`\"},\"200\":{\"schema\":{\"$ref\":\"#/definitions/UserId\"},\"description\":\"\"}},\"produces\":[\"application/json\"],\"parameters\":[{\"required\":true,\"schema\":{\"$ref\":\"#/definitions/User\"},\"in\":\"body\",\"name\":\"body\"}]},\"get\":{\"responses\":{\"200\":{\"schema\":{\"items\":{\"$ref\":\"#/definitions/User\"},\"type\":\"array\"},\"description\":\"\"}},\"produces\":[\"application/json\"]}}}}"
+-- >>> BSL8.putStrLn $ encode $ toSwagger (Proxy :: Proxy UserAPI)
+-- {"swagger":"2.0","info":{"version":"","title":""},"paths":{"/":{"get":{"produces":["application/json"],"responses":{"200":{"schema":{"items":{"$ref":"#/definitions/User"},"type":"array"},"description":""}}},"post":{"consumes":["application/json"],"produces":["application/json"],"parameters":[{"required":true,"schema":{"$ref":"#/definitions/User"},"in":"body","name":"body"}],"responses":{"400":{"description":"Invalid `body`"},"200":{"schema":{"$ref":"#/definitions/UserId"},"description":""}}}},"/{user_id}":{"get":{"produces":["application/json"],"parameters":[{"required":true,"in":"path","name":"user_id","type":"integer"}],"responses":{"404":{"description":"`user_id` not found"},"200":{"schema":{"$ref":"#/definitions/User"},"description":""}}}}},"definitions":{"User":{"required":["name","age"],"properties":{"name":{"type":"string"},"age":{"maximum":9223372036854775807,"minimum":-9223372036854775808,"type":"integer"}},"type":"object"},"UserId":{"type":"integer"}}}
 --
 -- By default @'toSwagger'@ will generate specification for all API routes, parameters, headers, responses and data schemas.
 --
@@ -111,14 +112,14 @@ import           Servant.Swagger.Test
 -- We can add this information using field lenses from @"Data.Swagger"@:
 --
 -- >>> :{
--- encode $ toSwagger (Proxy :: Proxy UserAPI)
+-- BSL8.putStrLn $ encode $ toSwagger (Proxy :: Proxy UserAPI)
 --   & info.title        .~ "User API"
 --   & info.version      .~ "1.0"
 --   & info.description  ?~ "This is an API for the Users service"
 --   & info.license      ?~ "MIT"
 --   & host              ?~ "example.com"
 -- :}
--- "{\"swagger\":\"2.0\",\"host\":\"example.com\",\"info\":{\"version\":\"1.0\",\"title\":\"User API\",\"license\":{\"name\":\"MIT\"},\"description\":\"This is an API for the Users service\"},\"definitions\":{\"User\":{\"required\":[\"name\",\"age\"],\"type\":\"object\",\"properties\":{\"age\":{\"maximum\":9223372036854775807,\"minimum\":-9223372036854775808,\"type\":\"integer\"},\"name\":{\"type\":\"string\"}}},\"UserId\":{\"type\":\"integer\"}},\"paths\":{\"/{user_id}\":{\"get\":{\"responses\":{\"404\":{\"description\":\"`user_id` not found\"},\"200\":{\"schema\":{\"$ref\":\"#/definitions/User\"},\"description\":\"\"}},\"produces\":[\"application/json\"],\"parameters\":[{\"required\":true,\"in\":\"path\",\"name\":\"user_id\",\"type\":\"integer\"}]}},\"/\":{\"post\":{\"consumes\":[\"application/json\"],\"responses\":{\"400\":{\"description\":\"Invalid `body`\"},\"200\":{\"schema\":{\"$ref\":\"#/definitions/UserId\"},\"description\":\"\"}},\"produces\":[\"application/json\"],\"parameters\":[{\"required\":true,\"schema\":{\"$ref\":\"#/definitions/User\"},\"in\":\"body\",\"name\":\"body\"}]},\"get\":{\"responses\":{\"200\":{\"schema\":{\"items\":{\"$ref\":\"#/definitions/User\"},\"type\":\"array\"},\"description\":\"\"}},\"produces\":[\"application/json\"]}}}}"
+-- {"swagger":"2.0","info":{"version":"1.0","title":"User API","license":{"name":"MIT"},"description":"This is an API for the Users service"},"host":"example.com","paths":{"/":{"get":{"produces":["application/json"],"responses":{"200":{"schema":{"items":{"$ref":"#/definitions/User"},"type":"array"},"description":""}}},"post":{"consumes":["application/json"],"produces":["application/json"],"parameters":[{"required":true,"schema":{"$ref":"#/definitions/User"},"in":"body","name":"body"}],"responses":{"400":{"description":"Invalid `body`"},"200":{"schema":{"$ref":"#/definitions/UserId"},"description":""}}}},"/{user_id}":{"get":{"produces":["application/json"],"parameters":[{"required":true,"in":"path","name":"user_id","type":"integer"}],"responses":{"404":{"description":"`user_id` not found"},"200":{"schema":{"$ref":"#/definitions/User"},"description":""}}}}},"definitions":{"User":{"required":["name","age"],"properties":{"name":{"type":"string"},"age":{"maximum":9223372036854775807,"minimum":-9223372036854775808,"type":"integer"}},"type":"object"},"UserId":{"type":"integer"}}}
 --
 -- It is also useful to annotate or modify certain endpoints.
 -- @'subOperations'@ provides a convenient way to zoom into a part of an API.
@@ -132,11 +133,11 @@ import           Servant.Swagger.Test
 -- >>> let getOps  = subOperations (Proxy :: Proxy (GetUsers :<|> GetUser)) (Proxy :: Proxy UserAPI)
 -- >>> let postOps = subOperations (Proxy :: Proxy PostUser) (Proxy :: Proxy UserAPI)
 -- >>> :{
--- encode $ toSwagger (Proxy :: Proxy UserAPI)
+-- BSL8.putStrLn $ encode $ toSwagger (Proxy :: Proxy UserAPI)
 --   & applyTagsFor getOps  ["get"  & description ?~ "GET operations"]
 --   & applyTagsFor postOps ["post" & description ?~ "POST operations"]
 -- :}
--- "{\"swagger\":\"2.0\",\"info\":{\"version\":\"\",\"title\":\"\"},\"definitions\":{\"User\":{\"required\":[\"name\",\"age\"],\"type\":\"object\",\"properties\":{\"age\":{\"maximum\":9223372036854775807,\"minimum\":-9223372036854775808,\"type\":\"integer\"},\"name\":{\"type\":\"string\"}}},\"UserId\":{\"type\":\"integer\"}},\"paths\":{\"/{user_id}\":{\"get\":{\"responses\":{\"404\":{\"description\":\"`user_id` not found\"},\"200\":{\"schema\":{\"$ref\":\"#/definitions/User\"},\"description\":\"\"}},\"produces\":[\"application/json\"],\"parameters\":[{\"required\":true,\"in\":\"path\",\"name\":\"user_id\",\"type\":\"integer\"}],\"tags\":[\"get\"]}},\"/\":{\"post\":{\"consumes\":[\"application/json\"],\"responses\":{\"400\":{\"description\":\"Invalid `body`\"},\"200\":{\"schema\":{\"$ref\":\"#/definitions/UserId\"},\"description\":\"\"}},\"produces\":[\"application/json\"],\"parameters\":[{\"required\":true,\"schema\":{\"$ref\":\"#/definitions/User\"},\"in\":\"body\",\"name\":\"body\"}],\"tags\":[\"post\"]},\"get\":{\"responses\":{\"200\":{\"schema\":{\"items\":{\"$ref\":\"#/definitions/User\"},\"type\":\"array\"},\"description\":\"\"}},\"produces\":[\"application/json\"],\"tags\":[\"get\"]}}},\"tags\":[{\"name\":\"get\",\"description\":\"GET operations\"},{\"name\":\"post\",\"description\":\"POST operations\"}]}"
+-- {"swagger":"2.0","info":{"version":"","title":""},"paths":{"/":{"get":{"tags":["get"],"produces":["application/json"],"responses":{"200":{"schema":{"items":{"$ref":"#/definitions/User"},"type":"array"},"description":""}}},"post":{"tags":["post"],"consumes":["application/json"],"produces":["application/json"],"parameters":[{"required":true,"schema":{"$ref":"#/definitions/User"},"in":"body","name":"body"}],"responses":{"400":{"description":"Invalid `body`"},"200":{"schema":{"$ref":"#/definitions/UserId"},"description":""}}}},"/{user_id}":{"get":{"tags":["get"],"produces":["application/json"],"parameters":[{"required":true,"in":"path","name":"user_id","type":"integer"}],"responses":{"404":{"description":"`user_id` not found"},"200":{"schema":{"$ref":"#/definitions/User"},"description":""}}}}},"definitions":{"User":{"required":["name","age"],"properties":{"name":{"type":"string"},"age":{"maximum":9223372036854775807,"minimum":-9223372036854775808,"type":"integer"}},"type":"object"},"UserId":{"type":"integer"}},"tags":[{"name":"get","description":"GET operations"},{"name":"post","description":"POST operations"}]}
 --
 -- This applies @\"get\"@ tag to the @GET@ endpoints and @\"post\"@ tag to the @POST@ endpoint of the User API.
 

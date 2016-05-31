@@ -1,6 +1,9 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module TodoSpec where
 
+import Prelude ()
+import Prelude.Compat
+
 import           Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as BL8
 import           Paths_example

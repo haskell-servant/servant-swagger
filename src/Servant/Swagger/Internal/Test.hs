@@ -67,8 +67,8 @@ import Servant.Swagger.Internal.TypeLevel
 -- >>> type ContactAPI = Get '[JSON] Contact
 -- >>> hspec $ validateEveryToJSON (Proxy :: Proxy ContactAPI)
 -- ...
---     No instance for (Arbitrary Contact)
---       arising from a use of ‘validateEveryToJSON’
+-- ...No instance for (Arbitrary Contact)
+-- ...  arising from a use of ‘validateEveryToJSON’
 -- ...
 validateEveryToJSON :: forall proxy api. TMap (Every [Typeable, Show, Arbitrary, ToJSON, ToSchema]) (BodyTypes JSON api) =>
   proxy api   -- ^ Servant API.

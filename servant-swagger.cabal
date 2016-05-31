@@ -45,7 +45,7 @@ library
     Servant.Swagger.Internal.TypeLevel.TMap
   hs-source-dirs:      src
   build-depends:       aeson
-                     , base >=4.7 && <4.9
+                     , base >=4.7 && <4.10
                      , bytestring
                      , http-media
                      , lens
@@ -59,7 +59,7 @@ library
   default-language:    Haskell2010
 
 test-suite doctest
-  build-depends:    base, doctest, Glob
+  build-depends:    base, doctest >=0.11.0, Glob
   default-language: Haskell2010
   hs-source-dirs:   test
   main-is:          DocTest.hs

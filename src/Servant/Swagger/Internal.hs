@@ -80,7 +80,8 @@ subOperations :: (IsSubAPI sub api, HasSwagger sub) =>
   -> Traversal' Swagger Operation
 subOperations sub _ = operationsOf (toSwagger sub)
 
--- | Make an singleton Swagger spec (with only one endpoint).
+-- | Make a singleton Swagger spec (with only one endpoint).
+-- For endpoints with no content see 'mkEndpointNoContent'.
 mkEndpoint :: forall a cs hs proxy proxy' method status.
   (ToSchema a, AllAccept cs, AllToResponseHeader hs, SwaggerMethod method, KnownNat status)
   => FilePath                                       -- ^ Endpoint path.
@@ -91,6 +92,15 @@ mkEndpoint path proxy
       & definitions .~ defs
   where
     (defs, ref) = runDeclare (declareSchemaRef (Proxy :: Proxy a)) mempty
+
+-- | Make a singletone 'Swagger' spec (with only one endpoint) and with no content schema.
+mkEndpointNoContent :: forall nocontent cs hs proxy proxy' method status.
+  (AllAccept cs, AllToResponseHeader hs, SwaggerMethod method, KnownNat status)
+  => FilePath                                               -- ^ Endpoint path.
+  -> proxy' (Verb method status cs (Headers hs nocontent))  -- ^ Method, content-types, headers and response.
+  -> Swagger
+mkEndpointNoContent path proxy
+  = mkEndpointWithSchemaRef Nothing path proxy
 
 -- | Like @'mkEndpoint'@ but with explicit schema reference.
 -- Unlike @'mkEndpoint'@ this function does not update @'definitions'@.
@@ -156,9 +166,20 @@ instance SwaggerMethod 'PATCH   where swaggerMethod _ = patch
 instance OVERLAPPABLE_ (ToSchema a, AllAccept cs, KnownNat status, SwaggerMethod method) => HasSwagger (Verb method status cs a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Verb method status cs (Headers '[] a)))
 
-instance (ToSchema a, AllAccept cs, AllToResponseHeader hs, KnownNat status, SwaggerMethod method)
+instance OVERLAPPABLE_ (ToSchema a, AllAccept cs, AllToResponseHeader hs, KnownNat status, SwaggerMethod method)
   => HasSwagger (Verb method status cs (Headers hs a)) where
   toSwagger = mkEndpoint "/"
+
+-- ATTENTION: do not remove this instance!
+-- A similar instance above will always use the more general
+-- polymorphic -- HasSwagger instance and will result in a type error
+-- since 'NoContent' does not have a 'ToSchema' instance.
+instance (AllAccept cs, KnownNat status, SwaggerMethod method) => HasSwagger (Verb method status cs NoContent) where
+  toSwagger _ = toSwagger (Proxy :: Proxy (Verb method status cs (Headers '[] NoContent)))
+
+instance (AllAccept cs, AllToResponseHeader hs, KnownNat status, SwaggerMethod method)
+  => HasSwagger (Verb method status cs (Headers hs NoContent)) where
+  toSwagger = mkEndpointNoContent "/"
 
 instance (HasSwagger a, HasSwagger b) => HasSwagger (a :<|> b) where
   toSwagger _ = toSwagger (Proxy :: Proxy a) <> toSwagger (Proxy :: Proxy b)

@@ -45,7 +45,7 @@ library
     Servant.Swagger.Internal.TypeLevel.TMap
   hs-source-dirs:      src
   build-depends:       aeson
-                     , base >=4.7 && <4.9
+                     , base >=4.7 && < 5
                      , bytestring
                      , http-media
                      , lens

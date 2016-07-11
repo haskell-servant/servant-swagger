@@ -3,4 +3,6 @@ packages:
 - '.'
 - example/
 extra-deps:
+- servant-0.8
+- servant-server-0.8
 - swagger2-2.1

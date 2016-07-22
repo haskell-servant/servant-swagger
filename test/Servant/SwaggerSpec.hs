@@ -83,7 +83,8 @@ todoAPI = [aesonQQ|
       "UTCTime":
         {
           "type": "string",
-          "format": "yyyy-mm-ddThh:MM:ssZ"
+          "format": "yyyy-mm-ddThh:MM:ssZ",
+          "example": "2016-07-22T00:00:00Z"
         }
     },
   "paths":

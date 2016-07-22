@@ -11,7 +11,7 @@ addons:
 env:
   - STACK_YAML=stack.yaml
   - STACK_YAML=stack-ghc-7.8.yaml
-  - STACK_YAML=stack-ghc-8.0.yaml
+  - STACK_YAML=stack-ghc-7.10.yaml
 
 before_install:
   # Download and unpack the stack executable

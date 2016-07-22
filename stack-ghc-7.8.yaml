@@ -35,7 +35,7 @@ extra-deps:
 - semigroupoids-5.0.1
 - servant-0.7.1
 - servant-server-0.7.1
-- swagger2-2.1
+- swagger2-2.1.1
 - tagged-0.8.4
 - time-locale-compat-0.1.1.1
 - unix-time-0.3.6

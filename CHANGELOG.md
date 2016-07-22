@@ -1,3 +1,10 @@
+1.1.1
+---
+
+* Minor fixes:
+  * Fix `unused-imports` and `unused-foralls` warnings;
+  * Fix tests to match `swagger2-2.1.1` (add `example` property for `UTCTime` schema).
+
 1.1
 ---
 

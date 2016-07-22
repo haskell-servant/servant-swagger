@@ -18,8 +18,6 @@ module Servant.Swagger.Internal where
 
 import Control.Lens
 import Data.Aeson
-import Data.HashMap.Strict (HashMap)
-import qualified Data.HashMap.Strict as HashMap
 import Data.Monoid
 import Data.Proxy
 import qualified Data.Swagger as Swagger
@@ -84,10 +82,10 @@ subOperations sub _ = operationsOf (toSwagger sub)
 
 -- | Make a singleton Swagger spec (with only one endpoint).
 -- For endpoints with no content see 'mkEndpointNoContent'.
-mkEndpoint :: forall a cs hs proxy proxy' method status.
+mkEndpoint :: forall a cs hs proxy method status.
   (ToSchema a, AllAccept cs, AllToResponseHeader hs, SwaggerMethod method, KnownNat status)
   => FilePath                                       -- ^ Endpoint path.
-  -> proxy' (Verb method status cs (Headers hs a))  -- ^ Method, content-types, headers and response.
+  -> proxy (Verb method status cs (Headers hs a))  -- ^ Method, content-types, headers and response.
   -> Swagger
 mkEndpoint path proxy
   = mkEndpointWithSchemaRef (Just ref) path proxy
@@ -96,10 +94,10 @@ mkEndpoint path proxy
     (defs, ref) = runDeclare (declareSchemaRef (Proxy :: Proxy a)) mempty
 
 -- | Make a singletone 'Swagger' spec (with only one endpoint) and with no content schema.
-mkEndpointNoContent :: forall nocontent cs hs proxy proxy' method status.
+mkEndpointNoContent :: forall nocontent cs hs proxy method status.
   (AllAccept cs, AllToResponseHeader hs, SwaggerMethod method, KnownNat status)
   => FilePath                                               -- ^ Endpoint path.
-  -> proxy' (Verb method status cs (Headers hs nocontent))  -- ^ Method, content-types, headers and response.
+  -> proxy (Verb method status cs (Headers hs nocontent))  -- ^ Method, content-types, headers and response.
   -> Swagger
 mkEndpointNoContent path proxy
   = mkEndpointWithSchemaRef Nothing path proxy

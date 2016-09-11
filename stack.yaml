@@ -1,6 +1,7 @@
-resolver: nightly-2016-07-19
+resolver: nightly-2016-09-10
 packages:
 - '.'
 - example/
 extra-deps:
-- swagger2-2.1.1
+- servant-0.8.1
+- servant-server-0.8.1

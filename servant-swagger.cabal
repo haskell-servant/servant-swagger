@@ -44,11 +44,11 @@ library
     Servant.Swagger.Internal.TypeLevel.Every
     Servant.Swagger.Internal.TypeLevel.TMap
   hs-source-dirs:      src
-  build-depends:       aeson                     >=0.11.2.0 && <0.12
+  build-depends:       aeson                     >=0.11.2.0 && <1.1
                      , base                      >=4.7.0.0  && <4.10
                      , bytestring                >=0.10.4.0 && <0.11
                      , http-media                >=0.6.3    && <0.7
-                     , insert-ordered-containers >=0.1.0.0  && <0.2
+                     , insert-ordered-containers >=0.1.0.0  && <0.3
                      , lens                      >=4.7.0.1  && <4.15
                      , servant                   >=0.5      && <0.9
                      , swagger2                  >=2.1      && <2.2

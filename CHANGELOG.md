@@ -1,3 +1,10 @@
+1.1.2
+---
+
+* Minor fixes:
+  * Support for aeson-1, insert-ordered-containers-0.2
+  * CaptureAll instance
+
 1.1.1
 ---
 

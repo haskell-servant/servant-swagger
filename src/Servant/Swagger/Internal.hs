@@ -225,6 +225,12 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Captu
             & in_ .~ ParamPath
             & paramSchema .~ toParamSchema (Proxy :: Proxy a))
 
+#if MIN_VERSION_servant(0,8,1)
+-- | Swagger Spec doesn't have a notion of CaptureAll, this instance is the best effort.
+instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (CaptureAll sym a :> sub) where
+  toSwagger _ = toSwagger (Proxy :: Proxy (Capture sym a :> sub))
+#endif
+
 instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (QueryParam sym a :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
     & addParam param

@@ -102,7 +102,7 @@ todoAPI = [aesonQQ|
                     },
                   "404": { "description": "`id` not found" }
                 },
-              "produces": [ "application/json" ],
+              "produces": [ "application/json;charset=utf-8" ],
               "parameters":
                 [
                   {
@@ -259,7 +259,7 @@ hackageAPI = [aesonQQ|
                }
             },
             "produces":[
-               "application/json"
+               "application/json;charset=utf-8"
             ],
             "tags":[
                "users"
@@ -280,7 +280,7 @@ hackageAPI = [aesonQQ|
                }
             },
             "produces":[
-               "application/json"
+               "application/json;charset=utf-8"
             ],
             "tags":[
                "packages"
@@ -301,7 +301,7 @@ hackageAPI = [aesonQQ|
                }
             },
             "produces":[
-               "application/json"
+               "application/json;charset=utf-8"
             ],
             "parameters":[
                {
@@ -363,7 +363,7 @@ getPostAPI = [aesonQQ|
                   "description":""
                }
             },
-            "produces":[ "application/json" ]
+            "produces":[ "application/json;charset=utf-8" ]
          },
          "get":{
             "responses":{
@@ -374,7 +374,7 @@ getPostAPI = [aesonQQ|
                   "description":""
                }
             },
-            "produces":[ "application/json" ],
+            "produces":[ "application/json;charset=utf-8" ],
             "tags":[ "get" ]
          }
       }

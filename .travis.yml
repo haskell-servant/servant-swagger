@@ -72,6 +72,15 @@ script:
  # this builds all libraries and executables (without tests/benchmarks)
  - rm -f cabal.project.freeze
  - cabal new-build -w ${HC} --disable-tests --disable-benchmarks
+
+ # Build with various constraints
+ - if [ $HC = "ghc-8.0.2" ]; then UNLESSGHC802=true; fi
+ - $UNLESSGHC802 cabal new-build -w ${HC} --disable-tests --disable-benchmarks "--constraint=servant==0.5.*"
+ - $UNLESSGHC802 cabal new-build -w ${HC} --disable-tests --disable-benchmarks "--constraint=servant==0.6.*"
+ - $UNLESSGHC802 cabal new-build -w ${HC} --disable-tests --disable-benchmarks "--constraint=servant==0.7.*"
+ -               cabal new-build -w ${HC} --disable-tests --disable-benchmarks "--constraint=servant==0.8.*"
+ -               cabal new-build -w ${HC} --disable-tests --disable-benchmarks "--constraint=servant==0.9.*"
+
  # this builds all libraries and executables (including tests/benchmarks)
  # - rm -rf ./dist-newstyle
  - cabal new-build -w ${HC} ${TEST} ${BENCH}

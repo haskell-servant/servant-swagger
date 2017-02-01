@@ -49,6 +49,12 @@ install:
  - TEST=${TEST---enable-tests}
  - travis_retry cabal update -v
  - sed -i 's/^jobs:/-- jobs:/' ${HOME}/.cabal/config
+ # Install hspec-discover manually, before hackage accepts build-tool-depends
+ - mkdir -p $HOME/.local/bin
+ - export PATH=$HOME/.local/bin/:$PATH
+ - cabal get hspec-discover
+ - "cd hspec-discover-*; cabal new-build hspec-discover:exe:hspec-discover; cp $(find dist-newstyle -type f -name hspec-discover) $HOME/.local/bin; cd .."
+
  - rm -fv cabal.project.local
  - "echo 'packages: .' > cabal.project"
  - rm -f cabal.project.freeze

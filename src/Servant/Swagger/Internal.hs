@@ -71,6 +71,11 @@ class HasSwagger api where
 instance HasSwagger Raw where
   toSwagger _ = mempty & paths . at "/" ?~ mempty
 
+#if MIN_VERSION_servant(0,11,0)
+instance HasSwagger EmptyAPI where
+  toSwagger _ = mempty
+#endif
+
 -- | All operations of sub API.
 -- This is similar to @'operationsOf'@ but ensures that operations
 -- indeed belong to the API at compile time.

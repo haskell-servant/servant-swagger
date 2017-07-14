@@ -18,6 +18,7 @@ cache:
   directories:
     - $HOME/.cabal/packages
     - $HOME/.cabal/store
+    - $HOME/.local/bin
 
 before_cache:
   - rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
@@ -46,7 +47,7 @@ matrix:
 before_install:
  - HC=${CC}
  - unset CC
- - PATH=/opt/ghc/bin:/opt/ghc-ppa-tools/bin:$PATH
+ - PATH=/opt/ghc/bin:/opt/ghc-ppa-tools/bin:$HOME/.local/bin:$PATH
  - PKGNAME='servant-swagger'
 
 install:
@@ -56,6 +57,7 @@ install:
  - TEST=${TEST---enable-tests}
  - travis_retry cabal update -v
  - sed -i 's/^jobs:/-- jobs:/' ${HOME}/.cabal/config
+ - sh install-hspec-discover.sh # TEMP: we should use build-tools-depends
  - rm -fv cabal.project.local
  - "echo 'packages: .' > cabal.project"
  - rm -f cabal.project.freeze
@@ -82,8 +84,11 @@ script:
  # this builds all libraries and executables (including tests/benchmarks)
  # - rm -rf ./dist-newstyle
 
- # build & run tests
+ # build & run tests, build benchmarks
  - cabal new-build -w ${HC} ${TEST} ${BENCH} all
  - if [ "x$TEST" = "x--enable-tests" ]; then cabal new-test -w ${HC} ${TEST} all; fi
+
+ # haddock
+ - cabal new-haddock -w ${HC} --disable-tests --disable-benchmarks all
 
 # EOF

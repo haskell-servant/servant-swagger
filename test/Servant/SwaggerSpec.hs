@@ -1,9 +1,13 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds          #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE QuasiQuotes        #-}
 {-# LANGUAGE TypeOperators      #-}
+#if __GLASGOW_HASKELL__ == 708
+{-# OPTIONS_GHC -fcontext-stack=31 #-}
+#endif
 module Servant.SwaggerSpec where
 
 import           Control.Lens

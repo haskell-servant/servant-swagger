@@ -1,3 +1,9 @@
+1.1.4
+-----
+
+* Notes:
+    * `servant-0.12` compatible release
+
 1.1.3.1
 ---
 

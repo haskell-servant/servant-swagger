@@ -236,6 +236,16 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Captu
   toSwagger _ = toSwagger (Proxy :: Proxy (Capture sym a :> sub))
 #endif
 
+#if MIN_VERSION_servant(0,12,0)
+instance (KnownSymbol desc, HasSwagger api) => HasSwagger (Description desc :> api) where
+  toSwagger _ = toSwagger (Proxy :: Proxy api)
+    & allOperations.description %~ (Just (Text.pack (symbolVal (Proxy :: Proxy desc))) <>)
+
+instance (KnownSymbol desc, HasSwagger api) => HasSwagger (Summary desc :> api) where
+  toSwagger _ = toSwagger (Proxy :: Proxy api)
+    & allOperations.summary %~ (Just (Text.pack (symbolVal (Proxy :: Proxy desc))) <>)
+#endif
+
 instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (QueryParam sym a :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
     & addParam param

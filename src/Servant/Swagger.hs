@@ -158,9 +158,11 @@ import           Servant.Swagger.Test
 -- >>> hspec $ validateEveryToJSON (Proxy :: Proxy UserAPI)
 -- <BLANKLINE>
 -- [User]
+-- ...
 -- User
+-- ...
 -- UserId
--- <BLANKLINE>
+-- ...
 -- Finished in ... seconds
 -- 3 examples, 0 failures
 --

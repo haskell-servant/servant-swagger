@@ -1,5 +1,6 @@
 name:                servant-swagger
 version:             1.1.5
+x-revision:          1
 synopsis:            Generate Swagger specification for your servant API.
 description:
   Swagger™ is a project used to describe and document RESTful APIs.
@@ -30,7 +31,8 @@ tested-with:
   GHC==7.8.4,
   GHC==7.10.3,
   GHC==8.0.2,
-  GHC==8.2.2
+  GHC==8.2.2,
+  GHC==8.4.1
 
 extra-source-files:
     README.md
@@ -51,8 +53,8 @@ source-repository head
 
 custom-setup
   setup-depends:
-    base >=4.7 && <4.11,
-    Cabal >= 1.18 && <2.1,
+    base >=4.7 && <4.12,
+    Cabal >= 1.18 && <2.3,
     cabal-doctest >=1.0.2 && <1.1
 
 library
@@ -70,8 +72,8 @@ library
     Servant.Swagger.Internal.TypeLevel.Every
     Servant.Swagger.Internal.TypeLevel.TMap
   hs-source-dirs:      src
-  build-depends:       aeson                     >=0.11.2.0 && <1.3
-                     , base                      >=4.7.0.0  && <4.11
+  build-depends:       aeson                     >=0.11.2.0 && <1.4
+                     , base                      >=4.7.0.0  && <4.12
                      , bytestring                >=0.10.4.0 && <0.11
                      , http-media                >=0.6.3    && <0.8
                      , insert-ordered-containers >=0.1.0.0  && <0.3
@@ -91,7 +93,7 @@ test-suite doctests
   build-depends:
     base,
     directory >= 1.0,
-    doctest >= 0.11.1 && <0.14,
+    doctest >= 0.11.1 && <0.16,
     servant,
     QuickCheck,
     filepath

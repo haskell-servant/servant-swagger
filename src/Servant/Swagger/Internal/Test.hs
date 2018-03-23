@@ -47,8 +47,9 @@ import Servant.Swagger.Internal.TypeLevel
 -- <BLANKLINE>
 -- ToJSON matches ToSchema
 --   User
+-- ...
 --   UserId
--- <BLANKLINE>
+-- ...
 -- Finished in ... seconds
 -- 2 examples, 0 failures
 --
@@ -107,9 +108,11 @@ validateEveryToJSONWithPatternChecker checker _ = props
 -- <BLANKLINE>
 -- read . show == id
 --   Bool
+-- ...
 --   Int
+-- ...
 --   [Char]
--- <BLANKLINE>
+-- ...
 -- Finished in ... seconds
 -- 3 examples, 0 failures
 props :: forall p p'' cs xs. TMap (Every (Typeable ': Show ': Arbitrary ': cs)) xs =>

@@ -1,6 +1,6 @@
 name:                servant-swagger
 version:             1.1.5
-x-revision:          1
+x-revision:          2
 synopsis:            Generate Swagger specification for your servant API.
 description:
   Swagger™ is a project used to describe and document RESTful APIs.
@@ -32,7 +32,7 @@ tested-with:
   GHC==7.10.3,
   GHC==8.0.2,
   GHC==8.2.2,
-  GHC==8.4.1
+  GHC==8.4.3
 
 extra-source-files:
     README.md
@@ -72,7 +72,7 @@ library
     Servant.Swagger.Internal.TypeLevel.Every
     Servant.Swagger.Internal.TypeLevel.TMap
   hs-source-dirs:      src
-  build-depends:       aeson                     >=0.11.2.0 && <1.4
+  build-depends:       aeson                     >=0.11.2.0 && <1.5
                      , base                      >=4.7.0.0  && <4.12
                      , bytestring                >=0.10.4.0 && <0.11
                      , http-media                >=0.6.3    && <0.8

@@ -1,6 +1,6 @@
 name:                servant-swagger
 version:             1.1.5
-x-revision:          2
+x-revision:          3
 synopsis:            Generate Swagger specification for your servant API.
 description:
   Swagger™ is a project used to describe and document RESTful APIs.

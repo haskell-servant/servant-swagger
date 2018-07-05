@@ -12,7 +12,7 @@ import Data.Text (Text)
 import Data.Typeable
 import Test.Hspec
 import Test.Hspec.QuickCheck
-import Test.QuickCheck (Arbitrary)
+import Test.QuickCheck (Arbitrary, Property, property, counterexample)
 
 import Servant.API
 import Servant.Swagger.Internal.TypeLevel
@@ -76,7 +76,7 @@ validateEveryToJSON :: forall proxy api. TMap (Every [Typeable, Show, Arbitrary,
   -> Spec
 validateEveryToJSON _ = props
   (Proxy :: Proxy [ToJSON, ToSchema])
-  (null . validateToJSON)
+  (reportErrors . validateToJSON)
   (Proxy :: Proxy (BodyTypes JSON api))
 
 -- | Verify that every type used with @'JSON'@ content type in a servant API
@@ -89,7 +89,7 @@ validateEveryToJSONWithPatternChecker :: forall proxy api. TMap (Every [Typeable
   -> Spec
 validateEveryToJSONWithPatternChecker checker _ = props
   (Proxy :: Proxy [ToJSON, ToSchema])
-  (null . validateToJSONWithPatternChecker checker)
+  (reportErrors . validateToJSONWithPatternChecker checker)
   (Proxy :: Proxy (BodyTypes JSON api))
 
 -- * QuickCheck-related stuff
@@ -102,7 +102,7 @@ validateEveryToJSONWithPatternChecker checker _ = props
 --    context "read . show == id" $
 --      props
 --        (Proxy :: Proxy [Eq, Show, Read])
---        (\x -> read (show x) == x)
+--        (\x -> read (show x) === x)
 --        (Proxy :: Proxy [Bool, Int, String])
 -- :}
 -- <BLANKLINE>
@@ -116,9 +116,9 @@ validateEveryToJSONWithPatternChecker checker _ = props
 -- Finished in ... seconds
 -- 3 examples, 0 failures
 props :: forall p p'' cs xs. TMap (Every (Typeable ': Show ': Arbitrary ': cs)) xs =>
-  p cs                                      -- ^ A list of constraints.
-  -> (forall x. EveryTF cs x => x -> Bool)  -- ^ Property predicate.
-  -> p'' xs                                 -- ^ A list of types.
+  p cs                                          -- ^ A list of constraints.
+  -> (forall x. EveryTF cs x => x -> Property)  -- ^ Property predicate.
+  -> p'' xs                                     -- ^ A list of types.
   -> Spec
 props _ f px = sequence_ specs
   where
@@ -126,5 +126,13 @@ props _ f px = sequence_ specs
     specs = tmapEvery (Proxy :: Proxy (Typeable ': Show ': Arbitrary ': cs)) aprop px
 
     aprop :: forall p' a. (EveryTF cs a, Typeable a, Show a, Arbitrary a) => p' a -> Spec
-    aprop _ = prop (show (typeOf (undefined :: a))) (f :: a -> Bool)
+    aprop _ = prop (show (typeOf (undefined :: a))) (f :: a -> Property)
 
+-- | A property that prints a nicely formatted list of errors if there are
+-- any.
+reportErrors :: [ValidationError] -> Property
+reportErrors [] = property True
+reportErrors ex = counterexample errString (property False)
+  where
+    errString = unlines $ "Validation against the schema fails:"
+                        : map ("  * " ++) ex

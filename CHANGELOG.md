@@ -1,3 +1,9 @@
+next
+-----
+
+* Fixes:
+  * `validateEveryToJSON` now prints validation errors
+
 1.1.5
 -----
 

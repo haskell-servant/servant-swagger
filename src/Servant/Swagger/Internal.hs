@@ -1,13 +1,13 @@
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE CPP                  #-}
+{-# LANGUAGE ConstraintKinds      #-}
+{-# LANGUAGE DataKinds            #-}
+{-# LANGUAGE FlexibleContexts     #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE OverloadedStrings    #-}
+{-# LANGUAGE PolyKinds            #-}
+{-# LANGUAGE RankNTypes           #-}
+{-# LANGUAGE ScopedTypeVariables  #-}
+{-# LANGUAGE TypeOperators        #-}
 #if __GLASGOW_HASKELL__ >= 710
 #define OVERLAPPABLE_ {-# OVERLAPPABLE #-}
 #else
@@ -16,25 +16,26 @@
 #endif
 module Servant.Swagger.Internal where
 
-import Control.Lens
-import Data.Aeson
-import Data.Monoid
-import Data.Proxy
-import qualified Data.Swagger as Swagger
-import Data.Swagger hiding (Header)
-import Data.Swagger.Declare
-import Data.HashMap.Strict.InsOrd (InsOrdHashMap)
-import qualified Data.HashMap.Strict.InsOrd  as InsOrdHashMap
-import Data.Text (Text)
-import qualified Data.Text as Text
-import GHC.TypeLits
-import Network.HTTP.Media (MediaType)
-import Servant.API
-import Servant.API.Description (FoldDescription, reflectDescription)
-import Servant.API.Modifiers (FoldRequired)
-import Data.Singletons.Bool
+import           Control.Lens
+import           Data.Aeson
+import           Data.HashMap.Strict.InsOrd             (InsOrdHashMap)
+import qualified Data.HashMap.Strict.InsOrd             as InsOrdHashMap
+import           Data.Monoid
+import           Data.Proxy
+import           Data.Singletons.Bool
+import           Data.Swagger                           hiding (Header)
+import qualified Data.Swagger                           as Swagger
+import           Data.Swagger.Declare
+import           Data.Text                              (Text)
+import qualified Data.Text                              as Text
+import           GHC.TypeLits
+import           Network.HTTP.Media                     (MediaType)
+import           Servant.API
+import           Servant.API.Description                (FoldDescription,
+                                                         reflectDescription)
+import           Servant.API.Modifiers                  (FoldRequired)
 
-import Servant.Swagger.Internal.TypeLevel.API
+import           Servant.Swagger.Internal.TypeLevel.API
 
 -- | Generate a Swagger specification for a servant API.
 --
@@ -119,15 +120,15 @@ mkEndpointWithSchemaRef :: forall cs hs proxy method status a.
 mkEndpointWithSchemaRef mref path _ = mempty
   & paths.at path ?~
     (mempty & method ?~ (mempty
-      & produces ?~ MimeList contentTypes
+      & produces ?~ MimeList responseContentTypes
       & at code ?~ Inline (mempty
             & schema  .~ mref
             & headers .~ responseHeaders)))
   where
-    method          = swaggerMethod (Proxy :: Proxy method)
-    code            = fromIntegral (natVal (Proxy :: Proxy status))
-    contentTypes    = allContentType (Proxy :: Proxy cs)
-    responseHeaders = toAllResponseHeaders (Proxy :: Proxy hs)
+    method               = swaggerMethod (Proxy :: Proxy method)
+    code                 = fromIntegral (natVal (Proxy :: Proxy status))
+    responseContentTypes = allContentType (Proxy :: Proxy cs)
+    responseHeaders      = toAllResponseHeaders (Proxy :: Proxy hs)
 
 -- | Add parameter to every operation in the spec.
 addParam :: Param -> Swagger -> Swagger
@@ -355,9 +356,9 @@ instance AllToResponseHeader '[] where
   toAllResponseHeaders _ = mempty
 
 instance (ToResponseHeader h, AllToResponseHeader hs) => AllToResponseHeader (h ': hs) where
-  toAllResponseHeaders _ = InsOrdHashMap.insert hname header hdrs
+  toAllResponseHeaders _ = InsOrdHashMap.insert headerName headerBS hdrs
     where
-      (hname, header) = toResponseHeader (Proxy :: Proxy h)
+      (headerName, headerBS) = toResponseHeader (Proxy :: Proxy h)
       hdrs = toAllResponseHeaders (Proxy :: Proxy hs)
 
 instance AllToResponseHeader hs => AllToResponseHeader (HList hs) where

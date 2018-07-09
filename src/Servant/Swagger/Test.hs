@@ -10,4 +10,4 @@ module Servant.Swagger.Test (
   validateEveryToJSONWithPatternChecker,
 ) where
 
-import Servant.Swagger.Internal.Test
+import           Servant.Swagger.Internal.Test

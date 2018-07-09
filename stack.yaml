@@ -1,6 +1,4 @@
-resolver: nightly-2016-10-10
+resolver: lts-11.7
 packages:
 - '.'
 - example/
-extra-deps:
-- lens-4.15

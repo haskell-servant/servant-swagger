@@ -1,21 +1,27 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ConstraintKinds     #-}
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE TypeOperators       #-}
 module Servant.Swagger.Internal.Test where
 
-import Data.Aeson (ToJSON)
-import Data.Swagger
-import Data.Text (Text)
-import Data.Typeable
-import Test.Hspec
-import Test.Hspec.QuickCheck
-import Test.QuickCheck (Arbitrary, Property, property, counterexample)
+import           Data.Aeson                         (ToJSON (..))
+import           Data.Aeson.Encode.Pretty           (encodePretty)
+import           Data.Swagger                       (Pattern, ToSchema,
+                                                     toSchema)
+import           Data.Swagger.Schema.Validation
+import           Data.Text                          (Text)
+import qualified Data.Text.Lazy                     as TL
+import qualified Data.Text.Lazy.Encoding            as TL
+import           Data.Typeable
+import           Test.Hspec
+import           Test.Hspec.QuickCheck
+import           Test.QuickCheck                    (Arbitrary, Property,
+                                                     counterexample, property)
 
-import Servant.API
-import Servant.Swagger.Internal.TypeLevel
+import           Servant.API
+import           Servant.Swagger.Internal.TypeLevel
 
 -- $setup
 -- >>> import Control.Applicative
@@ -76,7 +82,7 @@ validateEveryToJSON :: forall proxy api. TMap (Every [Typeable, Show, Arbitrary,
   -> Spec
 validateEveryToJSON _ = props
   (Proxy :: Proxy [ToJSON, ToSchema])
-  (reportErrors . validateToJSON)
+  (maybeCounterExample . prettyValidateWith validateToJSON)
   (Proxy :: Proxy (BodyTypes JSON api))
 
 -- | Verify that every type used with @'JSON'@ content type in a servant API
@@ -89,7 +95,7 @@ validateEveryToJSONWithPatternChecker :: forall proxy api. TMap (Every [Typeable
   -> Spec
 validateEveryToJSONWithPatternChecker checker _ = props
   (Proxy :: Proxy [ToJSON, ToSchema])
-  (reportErrors . validateToJSONWithPatternChecker checker)
+  (maybeCounterExample . prettyValidateWith (validateToJSONWithPatternChecker checker))
   (Proxy :: Proxy (BodyTypes JSON api))
 
 -- * QuickCheck-related stuff
@@ -128,11 +134,65 @@ props _ f px = sequence_ specs
     aprop :: forall p' a. (EveryTF cs a, Typeable a, Show a, Arbitrary a) => p' a -> Spec
     aprop _ = prop (show (typeOf (undefined :: a))) (f :: a -> Property)
 
--- | A property that prints a nicely formatted list of errors if there are
--- any.
-reportErrors :: [ValidationError] -> Property
-reportErrors [] = property True
-reportErrors ex = counterexample errString (property False)
+-- | Pretty print validation errors
+-- together with actual JSON and Swagger Schema
+-- (using 'encodePretty').
+--
+-- >>> import Data.Aeson
+-- >>> data Person = Person { name :: String, phone :: Integer } deriving (Generic)
+-- >>> instance ToJSON Person where toJSON p = object [ "name" .= name p ]
+-- >>> instance ToSchema Person
+-- >>> let person = Person { name = "John", phone = 123456 }
+-- >>> mapM_ putStrLn $ prettyValidateWith validateToJSON person
+-- Validation against the schema fails:
+--   * property "phone" is required, but not found in "{\"name\":\"John\"}"
+-- <BLANKLINE>
+-- JSON value:
+-- {
+--     "name": "John"
+-- }
+-- <BLANKLINE>
+-- Swagger Schema:
+-- {
+--     "required": [
+--         "name",
+--         "phone"
+--     ],
+--     "type": "object",
+--     "properties": {
+--         "phone": {
+--             "type": "integer"
+--         },
+--         "name": {
+--             "type": "string"
+--         }
+--     }
+-- }
+-- <BLANKLINE>
+--
+-- FIXME: this belongs in "Data.Swagger.Schema.Validation" (in @swagger2@).
+prettyValidateWith
+  :: forall a. (ToJSON a, ToSchema a)
+  => (a -> [ValidationError]) -> a -> Maybe String
+prettyValidateWith f x =
+  case f x of
+    []      -> Nothing
+    errors  -> Just $ unlines
+      [ "Validation against the schema fails:"
+      , unlines (map ("  * " ++) errors)
+      , "JSON value:"
+      , ppJSONString json
+      , ""
+      , "Swagger Schema:"
+      , ppJSONString (toJSON schema)
+      ]
   where
-    errString = unlines $ "Validation against the schema fails:"
-                        : map ("  * " ++) ex
+    ppJSONString = TL.unpack . TL.decodeUtf8 . encodePretty
+
+    json   = toJSON x
+    schema = toSchema (Proxy :: Proxy a)
+
+-- | Provide a counterexample if there is any.
+maybeCounterExample :: Maybe String -> Property
+maybeCounterExample Nothing  = property True
+maybeCounterExample (Just s) = counterexample s (property False)

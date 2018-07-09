@@ -11,7 +11,7 @@ Swagger 2.0 conforming json for [servant](https://github.com/haskell-servant/ser
 
 ### Motivation
 
-Swagger™ is a project used to describe and document RESTful APIs.
+Swagger is a project used to describe and document RESTful APIs.
 Unlike Servant it is language-agnostic and thus is quite popular among developers
 in different languages. It also exists for a longer time and has more tools to work with.
 

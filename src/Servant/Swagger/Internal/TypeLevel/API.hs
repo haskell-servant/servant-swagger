@@ -1,15 +1,15 @@
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE ConstraintKinds      #-}
+{-# LANGUAGE DataKinds            #-}
+{-# LANGUAGE KindSignatures       #-}
+{-# LANGUAGE PolyKinds            #-}
+{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE TypeOperators        #-}
 {-# LANGUAGE UndecidableInstances #-}
 module Servant.Swagger.Internal.TypeLevel.API where
 
-import Data.Type.Bool (If)
-import Servant.API
-import GHC.Exts (Constraint)
+import           Data.Type.Bool (If)
+import           GHC.Exts       (Constraint)
+import           Servant.API
 
 -- | Build a list of endpoints from an API.
 type family EndpointsList api where

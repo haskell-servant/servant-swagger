@@ -1,13 +1,13 @@
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE CPP                  #-}
+{-# LANGUAGE ConstraintKinds      #-}
+{-# LANGUAGE DataKinds            #-}
+{-# LANGUAGE FlexibleContexts     #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE OverloadedStrings    #-}
+{-# LANGUAGE PolyKinds            #-}
+{-# LANGUAGE RankNTypes           #-}
+{-# LANGUAGE ScopedTypeVariables  #-}
+{-# LANGUAGE TypeOperators        #-}
 #if __GLASGOW_HASKELL__ >= 710
 #define OVERLAPPABLE_ {-# OVERLAPPABLE #-}
 #else
@@ -16,25 +16,26 @@
 #endif
 module Servant.Swagger.Internal where
 
-import Control.Lens
-import Data.Aeson
-import Data.Monoid
-import Data.Proxy
-import qualified Data.Swagger as Swagger
-import Data.Swagger hiding (Header)
-import Data.Swagger.Declare
-import Data.HashMap.Strict.InsOrd (InsOrdHashMap)
-import qualified Data.HashMap.Strict.InsOrd  as InsOrdHashMap
-import Data.Text (Text)
-import qualified Data.Text as Text
-import GHC.TypeLits
-import Network.HTTP.Media (MediaType)
-import Servant.API
-import Servant.API.Description (FoldDescription, reflectDescription)
-import Servant.API.Modifiers (FoldRequired)
-import Data.Singletons.Bool
+import           Control.Lens
+import           Data.Aeson
+import           Data.HashMap.Strict.InsOrd             (InsOrdHashMap)
+import qualified Data.HashMap.Strict.InsOrd             as InsOrdHashMap
+import           Data.Monoid
+import           Data.Proxy
+import           Data.Singletons.Bool
+import           Data.Swagger                           hiding (Header)
+import qualified Data.Swagger                           as Swagger
+import           Data.Swagger.Declare
+import           Data.Text                              (Text)
+import qualified Data.Text                              as Text
+import           GHC.TypeLits
+import           Network.HTTP.Media                     (MediaType)
+import           Servant.API
+import           Servant.API.Description                (FoldDescription,
+                                                         reflectDescription)
+import           Servant.API.Modifiers                  (FoldRequired)
 
-import Servant.Swagger.Internal.TypeLevel.API
+import           Servant.Swagger.Internal.TypeLevel.API
 
 -- | Generate a Swagger specification for a servant API.
 --

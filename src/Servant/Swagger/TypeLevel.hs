@@ -11,5 +11,5 @@ module Servant.Swagger.TypeLevel (
   BodyTypes,
 ) where
 
-import Servant.Swagger.Internal.TypeLevel
+import           Servant.Swagger.Internal.TypeLevel
 

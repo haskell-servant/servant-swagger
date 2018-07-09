@@ -1,27 +1,27 @@
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE InstanceSigs #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE CPP                     #-}
+{-# LANGUAGE ConstraintKinds         #-}
+{-# LANGUAGE DataKinds               #-}
+{-# LANGUAGE FlexibleContexts        #-}
+{-# LANGUAGE FlexibleInstances       #-}
+{-# LANGUAGE GADTs                   #-}
+{-# LANGUAGE InstanceSigs            #-}
+{-# LANGUAGE KindSignatures          #-}
+{-# LANGUAGE MultiParamTypeClasses   #-}
+{-# LANGUAGE PolyKinds               #-}
+{-# LANGUAGE RankNTypes              #-}
+{-# LANGUAGE ScopedTypeVariables     #-}
+{-# LANGUAGE TypeFamilies            #-}
+{-# LANGUAGE TypeOperators           #-}
+{-# LANGUAGE UndecidableInstances    #-}
 #if __GLASGOW_HASKELL__ >= 800
 {-# LANGUAGE UndecidableSuperClasses #-}
 #endif
 module Servant.Swagger.Internal.TypeLevel.Every where
 
-import Data.Proxy
-import GHC.Exts (Constraint)
+import           Data.Proxy
+import           GHC.Exts                                (Constraint)
 
-import Servant.Swagger.Internal.TypeLevel.TMap
+import           Servant.Swagger.Internal.TypeLevel.TMap
 
 -- $setup
 -- >>> :set -XDataKinds

@@ -139,11 +139,12 @@ props _ f px = sequence_ specs
 -- (using 'encodePretty').
 --
 -- >>> import Data.Aeson
+-- >>> import Data.Foldable (traverse_)
 -- >>> data Person = Person { name :: String, phone :: Integer } deriving (Generic)
 -- >>> instance ToJSON Person where toJSON p = object [ "name" .= name p ]
 -- >>> instance ToSchema Person
 -- >>> let person = Person { name = "John", phone = 123456 }
--- >>> mapM_ putStrLn $ prettyValidateWith validateToJSON person
+-- >>> traverse_ putStrLn $ prettyValidateWith validateToJSON person
 -- Validation against the schema fails:
 --   * property "phone" is required, but not found in "{\"name\":\"John\"}"
 -- <BLANKLINE>

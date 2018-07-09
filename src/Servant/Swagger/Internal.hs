@@ -120,15 +120,15 @@ mkEndpointWithSchemaRef :: forall cs hs proxy method status a.
 mkEndpointWithSchemaRef mref path _ = mempty
   & paths.at path ?~
     (mempty & method ?~ (mempty
-      & produces ?~ MimeList contentTypes
+      & produces ?~ MimeList responseContentTypes
       & at code ?~ Inline (mempty
             & schema  .~ mref
             & headers .~ responseHeaders)))
   where
-    method          = swaggerMethod (Proxy :: Proxy method)
-    code            = fromIntegral (natVal (Proxy :: Proxy status))
-    contentTypes    = allContentType (Proxy :: Proxy cs)
-    responseHeaders = toAllResponseHeaders (Proxy :: Proxy hs)
+    method               = swaggerMethod (Proxy :: Proxy method)
+    code                 = fromIntegral (natVal (Proxy :: Proxy status))
+    responseContentTypes = allContentType (Proxy :: Proxy cs)
+    responseHeaders      = toAllResponseHeaders (Proxy :: Proxy hs)
 
 -- | Add parameter to every operation in the spec.
 addParam :: Param -> Swagger -> Swagger
@@ -356,9 +356,9 @@ instance AllToResponseHeader '[] where
   toAllResponseHeaders _ = mempty
 
 instance (ToResponseHeader h, AllToResponseHeader hs) => AllToResponseHeader (h ': hs) where
-  toAllResponseHeaders _ = InsOrdHashMap.insert hname header hdrs
+  toAllResponseHeaders _ = InsOrdHashMap.insert headerName headerBS hdrs
     where
-      (hname, header) = toResponseHeader (Proxy :: Proxy h)
+      (headerName, headerBS) = toResponseHeader (Proxy :: Proxy h)
       hdrs = toAllResponseHeaders (Proxy :: Proxy hs)
 
 instance AllToResponseHeader hs => AllToResponseHeader (HList hs) where

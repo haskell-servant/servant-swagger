@@ -3,7 +3,7 @@ version:             1.1.5
 x-revision:          4
 synopsis:            Generate Swagger specification for your servant API.
 description:
-  Swagger™ is a project used to describe and document RESTful APIs.
+  Swagger is a project used to describe and document RESTful APIs.
   Unlike Servant it is language-agnostic and thus is quite popular among developers
   in different languages. It also exists for a longer time and has more tools to work with.
   .

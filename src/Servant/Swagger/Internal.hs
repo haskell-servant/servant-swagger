@@ -8,6 +8,9 @@
 {-# LANGUAGE RankNTypes           #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE TypeOperators        #-}
+#if __GLASGOW_HASKELL__ >= 806
+{-# LANGUAGE UndecidableInstances #-}
+#endif
 #if __GLASGOW_HASKELL__ >= 710
 #define OVERLAPPABLE_ {-# OVERLAPPABLE #-}
 #else
@@ -20,7 +23,9 @@ import           Control.Lens
 import           Data.Aeson
 import           Data.HashMap.Strict.InsOrd             (InsOrdHashMap)
 import qualified Data.HashMap.Strict.InsOrd             as InsOrdHashMap
+#if !MIN_VERSION_base(4,11,0)
 import           Data.Monoid
+#endif
 import           Data.Proxy
 import           Data.Singletons.Bool
 import           Data.Swagger                           hiding (Header)

@@ -53,8 +53,8 @@ source-repository head
 
 custom-setup
   setup-depends:
-    base >=4.7 && <4.12,
-    Cabal >= 1.18 && <2.3,
+    base >=4.7 && <4.13,
+    Cabal >= 1.18 && <2.4,
     cabal-doctest >=1.0.2 && <1.1
 
 library
@@ -74,7 +74,7 @@ library
   hs-source-dirs:      src
   build-depends:       aeson                     >=0.11.2.0 && <1.5
                      , aeson-pretty              >=0.4      && <0.9
-                     , base                      >=4.7.0.0  && <4.12
+                     , base                      >=4.7.0.0  && <4.13
                      , bytestring                >=0.10.4.0 && <0.11
                      , http-media                >=0.6.3    && <0.8
                      , insert-ordered-containers >=0.1.0.0  && <0.3

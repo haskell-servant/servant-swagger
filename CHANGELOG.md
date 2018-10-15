@@ -4,6 +4,9 @@ next
 * Fixes:
   * `validateEveryToJSON` now prints validation errors
 
+* Notes:
+  * GHC-8.6 compatible release
+
 1.1.5
 -----
 

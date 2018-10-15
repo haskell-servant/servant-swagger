@@ -1,6 +1,5 @@
 name:                servant-swagger
-version:             1.1.5
-x-revision:          5
+version:             1.1.6
 synopsis:            Generate Swagger specification for your servant API.
 description:
   Swagger is a project used to describe and document RESTful APIs.
@@ -28,11 +27,12 @@ category:            Web, Servant, Swagger
 build-type:          Custom
 cabal-version:       1.18
 tested-with:
-  GHC==7.8.4,
-  GHC==7.10.3,
-  GHC==8.0.2,
-  GHC==8.2.2,
-  GHC==8.4.3
+  GHC ==7.8.4
+   || ==7.10.3
+   || ==8.0.2
+   || ==8.2.2
+   || ==8.4.4
+   || ==8.6.1
 
 extra-source-files:
     README.md
@@ -53,8 +53,8 @@ source-repository head
 
 custom-setup
   setup-depends:
-    base >=4.7 && <4.12,
-    Cabal >= 1.18 && <2.3,
+    base >=4.7 && <4.13,
+    Cabal >= 1.18 && <2.5,
     cabal-doctest >=1.0.2 && <1.1
 
 library
@@ -74,7 +74,7 @@ library
   hs-source-dirs:      src
   build-depends:       aeson                     >=0.11.2.0 && <1.5
                      , aeson-pretty              >=0.4      && <0.9
-                     , base                      >=4.7.0.0  && <4.12
+                     , base                      >=4.7.0.0  && <4.13
                      , bytestring                >=0.10.4.0 && <0.11
                      , http-media                >=0.6.3    && <0.8
                      , insert-ordered-containers >=0.1.0.0  && <0.3
@@ -110,8 +110,8 @@ test-suite spec
   main-is:          Spec.hs
   build-tool-depends: hspec-discover:hspec-discover
   build-depends:    base
+                  , base-compat >= 0.10.4 && <0.11
                   , aeson
-                  , aeson-qq >=0.8.1
                   , hspec
                   , QuickCheck
                   , lens
@@ -119,7 +119,10 @@ test-suite spec
                   , servant-swagger
                   , swagger2
                   , text
+                  , template-haskell
+                  , utf8-string >=1.0.1.1 && <1.1
                   , time
   other-modules:
     Servant.SwaggerSpec
+    Data.Aeson.QQ.Simple
   default-language: Haskell2010

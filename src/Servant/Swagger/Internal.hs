@@ -14,6 +14,9 @@
 {-# LANGUAGE OverlappingInstances #-}
 #define OVERLAPPABLE_
 #endif
+#if __GLASGOW_HASKELL__ >= 806
+{-# LANGUAGE UndecidableInstances #-}
+#endif
 module Servant.Swagger.Internal where
 
 import           Control.Lens

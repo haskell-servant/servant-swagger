@@ -12,7 +12,7 @@ module Servant.SwaggerSpec where
 
 import           Control.Lens
 import           Data.Aeson       (ToJSON(toJSON), Value, genericToJSON)
-import           Data.Aeson.QQ
+import           Data.Aeson.QQ.Simple
 import qualified Data.Aeson.Types as JSON
 import           Data.Char        (toLower)
 import           Data.Int         (Int64)

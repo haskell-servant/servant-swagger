@@ -1,9 +1,8 @@
 -- | Like "Data.Aeson.QQ" but without interpolation.
-module Data.Aeson.QQ.Simple (aesonQQ) where
+module Data.Aeson.QQ.Simple2 (aesonQQ) where
 
 import           Data.Aeson (eitherDecode, Value)
 import           Data.ByteString.Lazy.UTF8  as UTF8
-import qualified Data.Text                  as T
 import           Language.Haskell.TH
 import           Language.Haskell.TH.Quote
 import           Language.Haskell.TH.Syntax (Lift (..))

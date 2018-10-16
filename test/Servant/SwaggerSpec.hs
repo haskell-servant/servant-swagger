@@ -5,6 +5,7 @@
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE QuasiQuotes        #-}
 {-# LANGUAGE TypeOperators      #-}
+{-# LANGUAGE PackageImports     #-}
 #if __GLASGOW_HASKELL__ == 708
 {-# OPTIONS_GHC -fcontext-stack=31 #-}
 #endif
@@ -12,7 +13,7 @@ module Servant.SwaggerSpec where
 
 import           Control.Lens
 import           Data.Aeson       (ToJSON(toJSON), Value, genericToJSON)
-import           Data.Aeson.QQ.Simple
+import           Data.Aeson.QQ.Simple2 -- aeson will have the Simple module soon
 import qualified Data.Aeson.Types as JSON
 import           Data.Char        (toLower)
 import           Data.Int         (Int64)

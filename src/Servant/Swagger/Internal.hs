@@ -19,11 +19,14 @@
 #endif
 module Servant.Swagger.Internal where
 
+import Prelude ()
+import Prelude.Compat
+
 import           Control.Lens
 import           Data.Aeson
 import           Data.HashMap.Strict.InsOrd             (InsOrdHashMap)
 import qualified Data.HashMap.Strict.InsOrd             as InsOrdHashMap
-import           Data.Monoid
+import           Data.Foldable (toList)
 import           Data.Proxy
 import           Data.Singletons.Bool
 import           Data.Swagger                           hiding (Header)
@@ -176,6 +179,10 @@ instance SwaggerMethod 'PATCH   where swaggerMethod _ = patch
 instance OVERLAPPABLE_ (ToSchema a, AllAccept cs, KnownNat status, SwaggerMethod method) => HasSwagger (Verb method status cs a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Verb method status cs (Headers '[] a)))
 
+-- | @since 1.1.7
+instance (ToSchema a, Accept ct, KnownNat status, SwaggerMethod method) => HasSwagger (Stream method status fr ct a) where
+  toSwagger _ = toSwagger (Proxy :: Proxy (Verb method status '[ct] (Headers '[] a)))
+
 instance OVERLAPPABLE_ (ToSchema a, AllAccept cs, AllToResponseHeader hs, KnownNat status, SwaggerMethod method)
   => HasSwagger (Verb method status cs (Headers hs a)) where
   toSwagger = mkEndpoint "/"
@@ -317,6 +324,26 @@ instance (ToSchema a, AllAccept cs, HasSwagger sub, KnownSymbol (FoldDescription
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
     & addParam param
     & addConsumes (allContentType (Proxy :: Proxy cs))
+    & addDefaultResponse400 tname
+    & definitions %~ (<> defs)
+    where
+      tname = "body"
+      transDesc ""   = Nothing
+      transDesc desc = Just (Text.pack desc)
+      (defs, ref) = runDeclare (declareSchemaRef (Proxy :: Proxy a)) mempty
+      param = mempty
+        & name      .~ tname
+        & description .~ transDesc (reflectDescription (Proxy :: Proxy mods))
+        & required  ?~ True
+        & schema    .~ ParamBody ref
+
+-- | This instance is an approximation.
+-- 
+-- @since 1.1.7
+instance (ToSchema a, Accept ct, HasSwagger sub, KnownSymbol (FoldDescription mods)) => HasSwagger (StreamBody' mods fr ct a :> sub) where
+  toSwagger _ = toSwagger (Proxy :: Proxy sub)
+    & addParam param
+    & addConsumes (toList (contentTypes (Proxy :: Proxy ct)))
     & addDefaultResponse400 tname
     & definitions %~ (<> defs)
     where

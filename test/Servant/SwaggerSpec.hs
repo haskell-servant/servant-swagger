@@ -6,9 +6,6 @@
 {-# LANGUAGE QuasiQuotes        #-}
 {-# LANGUAGE TypeOperators      #-}
 {-# LANGUAGE PackageImports     #-}
-#if __GLASGOW_HASKELL__ == 708
-{-# OPTIONS_GHC -fcontext-stack=31 #-}
-#endif
 module Servant.SwaggerSpec where
 
 import           Control.Lens
@@ -24,7 +21,7 @@ import           Data.Time
 import           GHC.Generics
 import           Servant.API
 import           Servant.Swagger
-import           Servant.API.Internal.Test.ComprehensiveAPI (comprehensiveAPI)
+import           Servant.Test.ComprehensiveAPI (comprehensiveAPI)
 import           Test.Hspec       hiding (example)
 
 checkAPI :: HasSwagger api => Proxy api -> Value -> IO ()

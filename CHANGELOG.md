@@ -1,3 +1,12 @@
+1.1.7
+-----
+
+* Support servant-0.15
+   - support for 'Stream' and 'StreamBody' combinators
+   - orphan 'ToSchema (SourceT m a)' instance
+* Fix BodyTypes to work with generalized ReqBody' 
+  [#88](https://github.com/haskell-servant/servant-swagger/pull/88)
+
 1.1.6
 -----
 

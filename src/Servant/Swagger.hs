@@ -44,6 +44,7 @@ module Servant.Swagger (
 
 import           Servant.Swagger.Internal
 import           Servant.Swagger.Test
+import           Servant.Swagger.Internal.Orphans ()
 
 -- $setup
 -- >>> import Control.Applicative

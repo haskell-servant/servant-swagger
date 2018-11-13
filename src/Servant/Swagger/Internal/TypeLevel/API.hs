@@ -75,7 +75,7 @@ type AddBodyType c cs a as = If (Elem c cs) (a ': as) as
 type family BodyTypes' c api :: [*] where
   BodyTypes' c (Verb verb b cs (Headers hdrs a)) = AddBodyType c cs a '[]
   BodyTypes' c (Verb verb b cs a) = AddBodyType c cs a '[]
-  BodyTypes' c (ReqBody cs a :> api) = AddBodyType c cs a (BodyTypes' c api)
+  BodyTypes' c (ReqBody' mods cs a :> api) = AddBodyType c cs a (BodyTypes' c api)
   BodyTypes' c (e :> api) = BodyTypes' c api
   BodyTypes' c (a :<|> b) = AppendList (BodyTypes' c a) (BodyTypes' c b)
   BodyTypes' c api = '[]

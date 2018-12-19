@@ -1,13 +1,15 @@
 name:                servant-swagger
 version:             1.1.7
-synopsis:            Generate Swagger specification for your servant API.
+synopsis:            Generate a Swagger/OpenAPI/OAS 2.0 specification for your servant API.
 description:
-  Swagger is a project used to describe and document RESTful APIs.
-  Unlike Servant it is language-agnostic and thus is quite popular among developers
-  in different languages. It also exists for a longer time and has more tools to work with.
+  Swagger is a project used to describe and document RESTful APIs. The core of the 
+  project is the [OpenAPI Specification (OAS)](https://swagger.io/docs/specification/about/). 
+  This library implements v2.0 of the spec. Unlike Servant it is language-agnostic and thus is 
+  quite popular among developers in different languages. It has also existed for a longer time 
+  and has more helpful tooling.
   .
-  This package provides means to generate Swagger specification for a Servant API
-  and also to partially test whether API conforms with its specification.
+  This package provides means to generate a Swagger/OAS specification for a Servant API
+  and also to partially test whether an API conforms with its specification.
   .
   Generated Swagger specification then can be used for many things such as
   .

@@ -1,5 +1,6 @@
 name:                servant-swagger
 version:             1.1.7
+x-revision:          1
 synopsis:            Generate a Swagger/OpenAPI/OAS 2.0 specification for your servant API.
 description:
   Swagger is a project used to describe and document RESTful APIs. The core of the 
@@ -81,7 +82,7 @@ library
                      , http-media                >=0.7.1.3  && <0.8
                      , insert-ordered-containers >=0.2.1.0  && <0.3
                      , lens                      >=4.17     && <4.18
-                     , servant                   >=0.15     && <0.16
+                     , servant                   >=0.15     && <0.17
                      , singleton-bool            >=0.1.4    && <0.2
                      , swagger2                  >=2.3.0.1  && <2.4
                      , text                      >=1.2.3.0  && <1.3
@@ -110,11 +111,11 @@ test-suite spec
   type:             exitcode-stdio-1.0
   hs-source-dirs:   test
   main-is:          Spec.hs
-  build-tool-depends: hspec-discover:hspec-discover >=2.6.0 && <2.7
+  build-tool-depends: hspec-discover:hspec-discover >=2.6.0 && <2.8
   build-depends:    base
                   , base-compat
                   , aeson
-                  , hspec >=2.6.0 && <2.7
+                  , hspec >=2.6.0 && <2.8
                   , QuickCheck
                   , lens
                   , servant

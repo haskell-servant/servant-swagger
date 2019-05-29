@@ -8,12 +8,6 @@
 {-# LANGUAGE RankNTypes           #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE TypeOperators        #-}
-#if __GLASGOW_HASKELL__ >= 710
-#define OVERLAPPABLE_ {-# OVERLAPPABLE #-}
-#else
-{-# LANGUAGE OverlappingInstances #-}
-#define OVERLAPPABLE_
-#endif
 #if __GLASGOW_HASKELL__ >= 806
 {-# LANGUAGE UndecidableInstances #-}
 #endif
@@ -176,14 +170,14 @@ instance SwaggerMethod 'OPTIONS where swaggerMethod _ = options
 instance SwaggerMethod 'HEAD    where swaggerMethod _ = head_
 instance SwaggerMethod 'PATCH   where swaggerMethod _ = patch
 
-instance OVERLAPPABLE_ (ToSchema a, AllAccept cs, KnownNat status, SwaggerMethod method) => HasSwagger (Verb method status cs a) where
+instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs, KnownNat status, SwaggerMethod method) => HasSwagger (Verb method status cs a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Verb method status cs (Headers '[] a)))
 
 -- | @since 1.1.7
 instance (ToSchema a, Accept ct, KnownNat status, SwaggerMethod method) => HasSwagger (Stream method status fr ct a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Verb method status '[ct] (Headers '[] a)))
 
-instance OVERLAPPABLE_ (ToSchema a, AllAccept cs, AllToResponseHeader hs, KnownNat status, SwaggerMethod method)
+instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs, AllToResponseHeader hs, KnownNat status, SwaggerMethod method)
   => HasSwagger (Verb method status cs (Headers hs a)) where
   toSwagger = mkEndpoint "/"
 
@@ -287,7 +281,11 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Query
         & in_ .~ ParamQuery
         & paramSchema .~ pschema
       pschema = mempty
+#if MIN_VERSION_swagger2(2,4,0)
+        & type_ ?~ SwaggerArray
+#else
         & type_ .~ SwaggerArray
+#endif
         & items ?~ SwaggerItemsPrimitive (Just CollectionMulti) (toParamSchema (Proxy :: Proxy a))
 
 instance (KnownSymbol sym, HasSwagger sub) => HasSwagger (QueryFlag sym :> sub) where

@@ -10,7 +10,7 @@ module Servant.SwaggerSpec where
 
 import           Control.Lens
 import           Data.Aeson       (ToJSON(toJSON), Value, genericToJSON)
-import           Data.Aeson.QQ.Simple2 -- aeson will have the Simple module soon
+import           Data.Aeson.QQ.Simple
 import qualified Data.Aeson.Types as JSON
 import           Data.Char        (toLower)
 import           Data.Int         (Int64)
@@ -23,6 +23,11 @@ import           Servant.API
 import           Servant.Swagger
 import           Servant.Test.ComprehensiveAPI (comprehensiveAPI)
 import           Test.Hspec       hiding (example)
+
+#if !MIN_VERSION_swagger2(2,4,0)
+import           Data.Aeson.Lens   (key, _Array)
+import qualified Data.Vector as V
+#endif
 
 checkAPI :: HasSwagger api => Proxy api -> Value -> IO ()
 checkAPI proxy = checkSwagger (toSwagger proxy)
@@ -178,7 +183,7 @@ hackageSwaggerWithTags = toSwagger (Proxy :: Proxy HackageAPI)
     packagesOps = subOperations (Proxy :: Proxy HackagePackagesAPI) (Proxy :: Proxy HackageAPI)
 
 hackageAPI :: Value
-hackageAPI = [aesonQQ|
+hackageAPI = modifyValue [aesonQQ|
 {
    "swagger":"2.0",
    "host":"hackage.haskell.org",
@@ -321,16 +326,27 @@ hackageAPI = [aesonQQ|
    },
    "tags":[
       {
-         "name":"packages",
-         "description":"Query packages"
-      },
-      {
          "name":"users",
          "description":"Operations about user"
+      },
+      {
+         "name":"packages",
+         "description":"Query packages"
       }
    ]
 }
 |]
+  where
+    modifyValue :: Value -> Value
+#if MIN_VERSION_swagger2(2,4,0)
+    modifyValue = id
+#else
+    -- swagger2-2.4 preserves order of tags
+    -- swagger2-2.3 used Set, so they are ordered
+    -- packages comes before users.
+    -- We simply reverse, not properly sort here for simplicity: 2 elements.
+    modifyValue = over (key "tags" . _Array) V.reverse
+#endif
 
 
 -- =======================================================================

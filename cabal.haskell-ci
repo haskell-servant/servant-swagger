@@ -1,0 +1,13 @@
+branches: master
+
+constraint-set swagger2-2.3
+  constraints: swagger2 ==2.3.*
+
+constraint-set swagger2-2.4
+  constraints: swagger2 ==2.4.*
+
+constraint-set servant-0.15
+  constraints: servant == 0.15.*
+
+constraint-set servant-0.16
+  constraints: servant == 0.16.*

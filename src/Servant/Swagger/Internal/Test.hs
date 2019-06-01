@@ -185,13 +185,13 @@ prettyValidateWith f x =
       , ppJSONString json
       , ""
       , "Swagger Schema:"
-      , ppJSONString (toJSON schema)
+      , ppJSONString (toJSON schema_)
       ]
   where
     ppJSONString = TL.unpack . TL.decodeUtf8 . encodePretty
 
     json   = toJSON x
-    schema = toSchema (Proxy :: Proxy a)
+    schema_ = toSchema (Proxy :: Proxy a)
 
 -- | Provide a counterexample if there is any.
 maybeCounterExample :: Maybe String -> Property

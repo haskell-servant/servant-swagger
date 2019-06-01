@@ -116,6 +116,7 @@ test-suite spec
                   , aeson
                   , hspec >=2.6.0 && <2.8
                   , QuickCheck
+                  , quickcheck-instances
                   , lens
                   , lens-aeson >=1.0.2    && <1.1
                   , servant
@@ -126,6 +127,8 @@ test-suite spec
                   , utf8-string >=1.0.1.1 && <1.1
                   , time
                   , vector
+                  , insert-ordered-containers
+                  , uuid
   other-modules:
     Servant.SwaggerSpec
   default-language: Haskell2010

@@ -5,24 +5,29 @@
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE QuasiQuotes        #-}
 {-# LANGUAGE TypeOperators      #-}
+{-# LANGUAGE TypeApplications   #-}
 {-# LANGUAGE PackageImports     #-}
 module Servant.SwaggerSpec where
 
 import           Control.Lens
 import           Data.Aeson       (ToJSON(toJSON), Value, genericToJSON)
 import           Data.Aeson.QQ.Simple
-import qualified Data.Aeson.Types as JSON
+import qualified Data.Aeson as JSON
 import           Data.Char        (toLower)
+import           Data.HashMap.Strict.InsOrd (InsOrdHashMap, fromList)
 import           Data.Int         (Int64)
 import           Data.Proxy
 import           Data.Swagger
 import           Data.Text        (Text)
 import           Data.Time
+import           Data.UUID
 import           GHC.Generics
 import           Servant.API
 import           Servant.Swagger
 import           Servant.Test.ComprehensiveAPI (comprehensiveAPI)
 import           Test.Hspec       hiding (example)
+import           Test.QuickCheck
+import           Test.QuickCheck.Instances ()
 
 #if !MIN_VERSION_swagger2(2,4,0)
 import           Data.Aeson.Lens   (key, _Array)
@@ -43,6 +48,8 @@ spec = describe "HasSwagger" $ do
   it "Comprehensive API" $ do
     let _x = toSwagger comprehensiveAPI
     True `shouldBe` True -- type-level test
+  describe "Example1: idiomatic js representation of unrestricted sum type" $
+    validateEveryToJSON (Proxy @Example1)
 
 main :: IO ()
 main = hspec spec
@@ -406,3 +413,38 @@ getPostAPI = [aesonQQ|
 }
 |]
 
+-- =======================================================================
+-- counter-examples
+-- =======================================================================
+
+type Example1 = "a" :> Get '[JSON] X
+
+data X = X { s :: Y } deriving (Eq, Show, Generic)
+data Y = Y { a :: UUID } deriving (Eq, Show, Generic)
+
+instance Arbitrary X where
+  arbitrary = X <$> arbitrary
+
+instance Arbitrary Y where
+  arbitrary = Y <$> arbitrary
+
+instance ToJSON X where
+  toJSON (X y) = JSON.object [ "s" JSON..= ("x" :: Text), "y" JSON..= y ]
+
+instance ToJSON Y where
+  toJSON (Y a) = JSON.object [ "a" JSON..= a ]
+
+instance ToSchema X where
+    declareNamedSchema _ = pure $ NamedSchema (Just "X") $ mempty
+        & properties .~ properties_
+        & required .~ ["s"]
+        & type_ .~ SwaggerObject
+      where
+        properties_ :: InsOrdHashMap Text (Referenced Schema)
+        properties_ = fromList
+          [ ("s", Inline (toSchema (Proxy @Text)))
+          , ("y", Inline (toSchema (Proxy @Y)))
+          ]
+
+instance ToSchema Y where
+    declareNamedSchema = genericDeclareNamedSchema defaultSchemaOptions

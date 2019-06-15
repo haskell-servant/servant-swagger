@@ -85,7 +85,7 @@ validateEveryToJSON
   -> Spec
 validateEveryToJSON _ = props
   (Proxy :: Proxy [ToJSON, ToSchema])
-  (maybeCounterExample . prettyValidateWith validateToJSON)
+  (maybeCounterExample . renderValidationErrors validateToJSON)
   (Proxy :: Proxy (BodyTypes JSON api))
 
 -- | Verify that every type used with @'JSON'@ content type in a servant API
@@ -98,7 +98,7 @@ validateEveryToJSONWithPatternChecker :: forall proxy api. TMap (Every [Typeable
   -> Spec
 validateEveryToJSONWithPatternChecker checker _ = props
   (Proxy :: Proxy [ToJSON, ToSchema])
-  (maybeCounterExample . prettyValidateWith (validateToJSONWithPatternChecker checker))
+  (maybeCounterExample . renderValidationErrors (validateToJSONWithPatternChecker checker))
   (Proxy :: Proxy (BodyTypes JSON api))
 
 -- * QuickCheck-related stuff
@@ -136,65 +136,6 @@ props _ f px = sequence_ specs
 
     aprop :: forall p' a. (EveryTF cs a, Typeable a, Show a, Arbitrary a) => p' a -> Spec
     aprop _ = prop (show (typeOf (undefined :: a))) (f :: a -> Property)
-
--- | Pretty print validation errors
--- together with actual JSON and Swagger Schema
--- (using 'encodePretty').
---
--- >>> import Data.Aeson
--- >>> import Data.Foldable (traverse_)
--- >>> data Person = Person { name :: String, phone :: Integer } deriving (Generic)
--- >>> instance ToJSON Person where toJSON p = object [ "name" .= name p ]
--- >>> instance ToSchema Person
--- >>> let person = Person { name = "John", phone = 123456 }
--- >>> traverse_ putStrLn $ prettyValidateWith validateToJSON person
--- Validation against the schema fails:
---   * property "phone" is required, but not found in "{\"name\":\"John\"}"
--- <BLANKLINE>
--- JSON value:
--- {
---     "name": "John"
--- }
--- <BLANKLINE>
--- Swagger Schema:
--- {
---     "required": [
---         "name",
---         "phone"
---     ],
---     "type": "object",
---     "properties": {
---         "phone": {
---             "type": "integer"
---         },
---         "name": {
---             "type": "string"
---         }
---     }
--- }
--- <BLANKLINE>
---
--- FIXME: this belongs in "Data.Swagger.Schema.Validation" (in @swagger2@).
-prettyValidateWith
-  :: forall a. (ToJSON a, ToSchema a)
-  => (a -> [ValidationError]) -> a -> Maybe String
-prettyValidateWith f x =
-  case f x of
-    []      -> Nothing
-    errors  -> Just $ unlines
-      [ "Validation against the schema fails:"
-      , unlines (map ("  * " ++) errors)
-      , "JSON value:"
-      , ppJSONString json
-      , ""
-      , "Swagger Schema:"
-      , ppJSONString (toJSON schema)
-      ]
-  where
-    ppJSONString = TL.unpack . TL.decodeUtf8 . encodePretty
-
-    json   = toJSON x
-    schema = toSchema (Proxy :: Proxy a)
 
 -- | Provide a counterexample if there is any.
 maybeCounterExample :: Maybe String -> Property

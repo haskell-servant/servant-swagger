@@ -1,12 +1,13 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DataKinds          #-}
+{-# LANGUAGE DeriveAnyClass     #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
-{-# LANGUAGE QuasiQuotes        #-}
-{-# LANGUAGE TypeOperators      #-}
-{-# LANGUAGE TypeApplications   #-}
 {-# LANGUAGE PackageImports     #-}
+{-# LANGUAGE QuasiQuotes        #-}
+{-# LANGUAGE TypeApplications   #-}
+{-# LANGUAGE TypeOperators      #-}
 module Servant.SwaggerSpec where
 
 import           Control.Lens
@@ -15,6 +16,7 @@ import           Data.Aeson.QQ.Simple
 import qualified Data.Aeson as JSON
 import           Data.Char        (toLower)
 import           Data.HashMap.Strict.InsOrd (InsOrdHashMap, fromList)
+import qualified Data.HashMap.Strict.InsOrd as HM
 import           Data.Int         (Int64)
 import           Data.Proxy
 import           Data.Swagger
@@ -419,32 +421,18 @@ getPostAPI = [aesonQQ|
 
 type Example1 = "a" :> Get '[JSON] X
 
-data X = X { s :: Y } deriving (Eq, Show, Generic)
-data Y = Y { a :: UUID } deriving (Eq, Show, Generic)
+data X = X { y :: Y } deriving (Eq, Show, Generic, ToJSON)
+data Y = Y { z :: Z } deriving (Eq, Show, Generic, ToJSON, ToSchema)
+data Z = Z { q :: Int } deriving (Eq, Show, Generic, ToJSON, ToSchema)
 
-instance Arbitrary X where
-  arbitrary = X <$> arbitrary
-
-instance Arbitrary Y where
-  arbitrary = Y <$> arbitrary
-
-instance ToJSON X where
-  toJSON (X y) = JSON.object [ "s" JSON..= ("x" :: Text), "y" JSON..= y ]
-
-instance ToJSON Y where
-  toJSON (Y a) = JSON.object [ "a" JSON..= a ]
+instance Arbitrary X where arbitrary = X <$> arbitrary
+instance Arbitrary Y where arbitrary = Y <$> arbitrary
+instance Arbitrary Z where arbitrary = Z <$> arbitrary
 
 instance ToSchema X where
-    declareNamedSchema _ = pure $ NamedSchema (Just "X") $ mempty
-        & properties .~ properties_
-        & required .~ ["s"]
+    declareNamedSchema _ = do
+      _ <- declareNamedSchema (Proxy @Y) -- collect the references in Y.
+      pure $ NamedSchema (Just "X") $ mempty
+        & properties .~ (HM.singleton "y" (Inline (toSchema (Proxy @Y))))
         & type_ .~ SwaggerObject
-      where
-        properties_ :: InsOrdHashMap Text (Referenced Schema)
-        properties_ = fromList
-          [ ("s", Inline (toSchema (Proxy @Text)))
-          , ("y", Inline (toSchema (Proxy @Y)))
-          ]
-
-instance ToSchema Y where
-    declareNamedSchema = genericDeclareNamedSchema defaultSchemaOptions
+        & required .~ ["y"]

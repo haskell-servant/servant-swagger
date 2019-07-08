@@ -77,8 +77,11 @@ import           Servant.Swagger.Internal.TypeLevel
 -- ...No instance for (Arbitrary Contact)
 -- ...  arising from a use of ‘validateEveryToJSON’
 -- ...
-validateEveryToJSON :: forall proxy api. TMap (Every [Typeable, Show, Arbitrary, ToJSON, ToSchema]) (BodyTypes JSON api) =>
-  proxy api   -- ^ Servant API.
+validateEveryToJSON
+  :: forall proxy api .
+     TMap (Every [Typeable, Show, Arbitrary, ToJSON, ToSchema])
+          (BodyTypes JSON api)
+  => proxy api   -- ^ Servant API.
   -> Spec
 validateEveryToJSON _ = props
   (Proxy :: Proxy [ToJSON, ToSchema])

@@ -72,8 +72,13 @@ type AddBodyType c cs a as = If (Elem c cs) (a ': as) as
 
 -- | Extract a list of "body" types for a specific content-type from a servant API.
 -- To extract unique types see @'BodyTypes'@.
+--
+-- @'NoContent'@ is removed from the list and not tested.  (This allows for leaving the body
+-- completely empty on responses to requests that only accept 'application/json', while
+-- setting the content-type in the response accordingly.)
 type family BodyTypes' c api :: [*] where
   BodyTypes' c (Verb verb b cs (Headers hdrs a)) = AddBodyType c cs a '[]
+  BodyTypes' c (Verb verb b cs NoContent) = '[]
   BodyTypes' c (Verb verb b cs a) = AddBodyType c cs a '[]
   BodyTypes' c (ReqBody' mods cs a :> api) = AddBodyType c cs a (BodyTypes' c api)
   BodyTypes' c (e :> api) = BodyTypes' c api

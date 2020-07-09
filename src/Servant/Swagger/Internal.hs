@@ -23,7 +23,7 @@ import qualified Data.HashMap.Strict.InsOrd             as InsOrdHashMap
 import           Data.Foldable (toList)
 import           Data.Proxy
 import           Data.Singletons.Bool
-import           Data.Swagger                           hiding (Header)
+import           Data.Swagger                           hiding (Header, contentType)
 import qualified Data.Swagger                           as Swagger
 import           Data.Swagger.Declare
 import           Data.Text                              (Text)
@@ -96,7 +96,7 @@ mkEndpoint :: forall a cs hs proxy method status.
   -> Swagger
 mkEndpoint path proxy
   = mkEndpointWithSchemaRef (Just ref) path proxy
-      & definitions .~ defs
+      & components.schemas .~ defs
   where
     (defs, ref) = runDeclare (declareSchemaRef (Proxy :: Proxy a)) mempty
 
@@ -120,15 +120,15 @@ mkEndpointWithSchemaRef :: forall cs hs proxy method status a.
 mkEndpointWithSchemaRef mref path _ = mempty
   & paths.at path ?~
     (mempty & method ?~ (mempty
-      & produces ?~ MimeList responseContentTypes
       & at code ?~ Inline (mempty
-            & schema  .~ mref
+            & content .~ InsOrdHashMap.fromList
+              [(t, mempty & schema .~ mref) | t <- responseContentTypes]
             & headers .~ responseHeaders)))
   where
     method               = swaggerMethod (Proxy :: Proxy method)
     code                 = fromIntegral (natVal (Proxy :: Proxy status))
     responseContentTypes = allContentType (Proxy :: Proxy cs)
-    responseHeaders      = toAllResponseHeaders (Proxy :: Proxy hs)
+    responseHeaders      = Inline <$> toAllResponseHeaders (Proxy :: Proxy hs)
 
 mkEndpointNoContentVerb :: forall proxy method.
   (SwaggerMethod method)
@@ -147,9 +147,9 @@ mkEndpointNoContentVerb path _ = mempty
 addParam :: Param -> Swagger -> Swagger
 addParam param = allOperations.parameters %~ (Inline param :)
 
--- | Add accepted content types to every operation in the spec.
-addConsumes :: [MediaType] -> Swagger -> Swagger
-addConsumes cs = allOperations.consumes %~ (<> Just (MimeList cs))
+-- | Add RequestBody to every operations in the spec.
+addRequestBody :: RequestBody -> Swagger -> Swagger
+addRequestBody rb = allOperations . requestBody ?~ Inline rb
 
 -- | Format given text as inline code in Markdown.
 markdownCode :: Text -> Text
@@ -251,8 +251,8 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub, KnownSymbol (FoldDes
         & name .~ tname
         & description .~ transDesc (reflectDescription (Proxy :: Proxy mods))
         & required ?~ True
-        & schema .~ ParamOther (mempty
-            & in_ .~ ParamPath
+        & in_ .~ ParamPath
+        & schema ?~ Inline (mempty
             & paramSchema .~ toParamSchema (Proxy :: Proxy a))
 
 -- | Swagger Spec doesn't have a notion of CaptureAll, this instance is the best effort.
@@ -279,9 +279,9 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub, SBoolI (FoldRequired
         & name .~ tname
         & description .~ transDesc (reflectDescription (Proxy :: Proxy mods))
         & required ?~ reflectBool (Proxy :: Proxy (FoldRequired mods))
-        & schema .~ ParamOther sch
-      sch = mempty
         & in_ .~ ParamQuery
+        & schema ?~ Inline sch
+      sch = mempty
         & paramSchema .~ toParamSchema (Proxy :: Proxy a)
 
 instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (QueryParams sym a :> sub) where
@@ -292,9 +292,9 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Query
       tname = Text.pack (symbolVal (Proxy :: Proxy sym))
       param = mempty
         & name .~ tname
-        & schema .~ ParamOther sch
-      sch = mempty
         & in_ .~ ParamQuery
+        & schema ?~ Inline sch
+      sch = mempty
         & paramSchema .~ pschema
       pschema = mempty
 #if MIN_VERSION_swagger2(2,4,0)
@@ -302,7 +302,7 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Query
 #else
         & type_ .~ SwaggerArray
 #endif
-        & items ?~ SwaggerItemsPrimitive (Just CollectionMulti) (toParamSchema (Proxy :: Proxy a))
+        & items ?~ SwaggerItemsObject (Inline $ mempty & paramSchema .~ toParamSchema (Proxy :: Proxy a))
 
 instance (KnownSymbol sym, HasSwagger sub) => HasSwagger (QueryFlag sym :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
@@ -312,9 +312,9 @@ instance (KnownSymbol sym, HasSwagger sub) => HasSwagger (QueryFlag sym :> sub) 
       tname = Text.pack (symbolVal (Proxy :: Proxy sym))
       param = mempty
         & name .~ tname
-        & schema .~ ParamOther (mempty
-            & in_ .~ ParamQuery
-            & allowEmptyValue ?~ True
+        & in_ .~ ParamQuery
+        & allowEmptyValue ?~ True
+        & schema ?~ (Inline $ mempty
             & paramSchema .~ (toParamSchema (Proxy :: Proxy Bool)
                 & default_ ?~ toJSON False))
 
@@ -330,46 +330,40 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub, SBoolI (FoldRequired
         & name .~ tname
         & description .~ transDesc (reflectDescription (Proxy :: Proxy mods))
         & required ?~ reflectBool (Proxy :: Proxy (FoldRequired mods))
-        & schema .~ ParamOther (mempty
-            & in_ .~ ParamHeader
+        & in_ .~ ParamHeader
+        & schema ?~ (Inline $ mempty
             & paramSchema .~ toParamSchema (Proxy :: Proxy a))
 
 instance (ToSchema a, AllAccept cs, HasSwagger sub, KnownSymbol (FoldDescription mods)) => HasSwagger (ReqBody' mods cs a :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
-    & addParam param
-    & addConsumes (allContentType (Proxy :: Proxy cs))
+    & addRequestBody reqBody
     & addDefaultResponse400 tname
-    & definitions %~ (<> defs)
+    & components.schemas %~ (<> defs)
     where
       tname = "body"
       transDesc ""   = Nothing
       transDesc desc = Just (Text.pack desc)
       (defs, ref) = runDeclare (declareSchemaRef (Proxy :: Proxy a)) mempty
-      param = mempty
-        & name      .~ tname
+      reqBody = (mempty :: RequestBody)
         & description .~ transDesc (reflectDescription (Proxy :: Proxy mods))
-        & required  ?~ True
-        & schema    .~ ParamBody ref
+        & content .~ InsOrdHashMap.fromList [(t, mempty & schema ?~ ref) | t <- allContentType (Proxy :: Proxy cs)]
 
 -- | This instance is an approximation.
--- 
+--
 -- @since 1.1.7
 instance (ToSchema a, Accept ct, HasSwagger sub, KnownSymbol (FoldDescription mods)) => HasSwagger (StreamBody' mods fr ct a :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
-    & addParam param
-    & addConsumes (toList (contentTypes (Proxy :: Proxy ct)))
+    & addRequestBody reqBody
     & addDefaultResponse400 tname
-    & definitions %~ (<> defs)
+    & components.schemas %~ (<> defs)
     where
       tname = "body"
       transDesc ""   = Nothing
       transDesc desc = Just (Text.pack desc)
       (defs, ref) = runDeclare (declareSchemaRef (Proxy :: Proxy a)) mempty
-      param = mempty
-        & name      .~ tname
+      reqBody = (mempty :: RequestBody)
         & description .~ transDesc (reflectDescription (Proxy :: Proxy mods))
-        & required  ?~ True
-        & schema    .~ ParamBody ref
+        & content .~ InsOrdHashMap.fromList [(t, mempty & schema ?~ ref) | t <- toList $ contentTypes (Proxy :: Proxy ct)]
 
 -- =======================================================================
 -- Below are the definitions that should be in Servant.API.ContentTypes
@@ -391,7 +385,7 @@ instance (KnownSymbol sym, ToParamSchema a) => ToResponseHeader (Header sym a) w
   toResponseHeader _ = (hname, Swagger.Header Nothing hschema)
     where
       hname = Text.pack (symbolVal (Proxy :: Proxy sym))
-      hschema = toParamSchema (Proxy :: Proxy a)
+      hschema = Just $ Inline $ mempty & paramSchema .~ toParamSchema (Proxy :: Proxy a)
 
 class AllToResponseHeader hs where
   toAllResponseHeaders :: Proxy hs -> InsOrdHashMap HeaderName Swagger.Header

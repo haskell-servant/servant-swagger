@@ -297,11 +297,7 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (Query
       sch = mempty
         & paramSchema .~ pschema
       pschema = mempty
-#if MIN_VERSION_swagger2(2,4,0)
         & type_ ?~ SwaggerArray
-#else
-        & type_ .~ SwaggerArray
-#endif
         & items ?~ SwaggerItemsObject (Inline $ mempty & paramSchema .~ toParamSchema (Proxy :: Proxy a))
 
 instance (KnownSymbol sym, HasSwagger sub) => HasSwagger (QueryFlag sym :> sub) where

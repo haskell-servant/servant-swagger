@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds          #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
@@ -23,11 +22,6 @@ import           Servant.API
 import           Servant.Swagger
 import           Servant.Test.ComprehensiveAPI (comprehensiveAPI)
 import           Test.Hspec       hiding (example)
-
-#if !MIN_VERSION_swagger2(2,4,0)
-import           Data.Aeson.Lens   (key, _Array)
-import qualified Data.Vector as V
-#endif
 
 checkAPI :: HasCallStack => HasSwagger api => Proxy api -> Value -> IO ()
 checkAPI proxy = checkSwagger (toSwagger proxy)
@@ -192,7 +186,7 @@ hackageSwaggerWithTags = toSwagger (Proxy :: Proxy HackageAPI)
     packagesOps = subOperations (Proxy :: Proxy HackagePackagesAPI) (Proxy :: Proxy HackageAPI)
 
 hackageAPI :: Value
-hackageAPI = modifyValue [aesonQQ|
+hackageAPI = [aesonQQ|
 {
   "openapi": "3.0.0",
   "servers": [
@@ -356,17 +350,6 @@ hackageAPI = modifyValue [aesonQQ|
   ]
 }
 |]
-  where
-    modifyValue :: Value -> Value
-#if MIN_VERSION_swagger2(2,4,0)
-    modifyValue = id
-#else
-    -- swagger2-2.4 preserves order of tags
-    -- swagger2-2.3 used Set, so they are ordered
-    -- packages comes before users.
-    -- We simply reverse, not properly sort here for simplicity: 2 elements.
-    modifyValue = over (key "tags" . _Array) V.reverse
-#endif
 
 
 -- =======================================================================

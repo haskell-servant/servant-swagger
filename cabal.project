@@ -4,4 +4,4 @@ allow-newer: aeson-pretty-0.8.7:base-compat
 source-repository-package
     type: git
     location: https://github.com/biocad/swagger2/
-    tag: ff879159c009627e1bc9414763b4834a2c9bfba7
+    tag: 69788075a4a321505305ef79b57c183409c0c68f

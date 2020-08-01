@@ -1,4 +1,8 @@
-resolver: lts-13.25
+resolver: lts-16.7
 packages:
 - '.'
 - example/
+
+extra-deps:
+- servant-0.17
+- servant-server-0.17

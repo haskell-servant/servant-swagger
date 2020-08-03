@@ -352,7 +352,7 @@ instance (ToSchema a, AllAccept cs, HasSwagger sub, KnownSymbol (FoldDescription
         & schema    .~ ParamBody ref
 
 -- | This instance is an approximation.
--- 
+--
 -- @since 1.1.7
 instance (ToSchema a, Accept ct, HasSwagger sub, KnownSymbol (FoldDescription mods)) => HasSwagger (StreamBody' mods fr ct a :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)

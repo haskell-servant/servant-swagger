@@ -2,3 +2,5 @@ resolver: lts-16.7
 packages:
 - '.'
 - example/
+- ../servant/servant
+- ../servant/servant-server

@@ -1,4 +1,6 @@
-resolver: lts-13.25
+resolver: lts-16.7
 packages:
 - '.'
 - example/
+- ../servant/servant
+- ../servant/servant-server

@@ -4,6 +4,7 @@
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE QuasiQuotes        #-}
+{-# LANGUAGE TypeFamilies       #-}
 {-# LANGUAGE TypeOperators      #-}
 {-# LANGUAGE PackageImports     #-}
 module Servant.SwaggerSpec where
@@ -40,6 +41,7 @@ spec = describe "HasSwagger" $ do
   it "Todo API" $ checkAPI (Proxy :: Proxy TodoAPI) todoAPI
   it "Hackage API (with tags)" $ checkSwagger hackageSwaggerWithTags hackageAPI
   it "GetPost API (test subOperations)" $ checkSwagger getPostSwagger getPostAPI
+  it "UVerb API" $ checkSwagger uverbSwagger uverbAPI
   it "Comprehensive API" $ do
     let _x = toSwagger comprehensiveAPI
     True `shouldBe` True -- type-level test
@@ -406,3 +408,93 @@ getPostAPI = [aesonQQ|
 }
 |]
 
+-- =======================================================================
+-- UVerb API
+-- =======================================================================
+
+data FisxUser = FisxUser {name :: String}
+  deriving (Eq, Show, Generic)
+
+instance ToSchema FisxUser
+
+instance HasStatus FisxUser where
+  type StatusOf FisxUser = 203
+
+data ArianUser = ArianUser
+  deriving (Eq, Show, Generic)
+
+instance ToSchema ArianUser
+
+type UVerbAPI = "fisx" :> UVerb 'GET '[JSON] '[FisxUser, WithStatus 303 String]
+           :<|> "arian" :> UVerb 'POST '[JSON] '[WithStatus 201 ArianUser]
+
+uverbSwagger :: Swagger
+uverbSwagger = toSwagger (Proxy :: Proxy UVerbAPI)
+
+uverbAPI :: Value
+uverbAPI = [aesonQQ|
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "",
+    "title": ""
+  },
+  "paths": {
+    "/fisx": {
+      "get": {
+        "produces": [
+          "application/json;charset=utf-8"
+        ],
+        "responses": {
+          "303": {
+            "schema": {
+              "type": "string"
+            },
+            "description": ""
+          },
+          "203": {
+            "schema": {
+              "$ref": "#/definitions/FisxUser"
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/arian": {
+      "post": {
+        "produces": [
+          "application/json;charset=utf-8"
+        ],
+        "responses": {
+          "201": {
+            "schema": {
+              "$ref": "#/definitions/ArianUser"
+            },
+            "description": ""
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "FisxUser": {
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ArianUser": {
+      "type": "string",
+      "enum": [
+        "ArianUser"
+      ]
+    }
+  }
+}
+|]

@@ -15,8 +15,6 @@
 #endif
 module Servant.Swagger.Internal where
 
--- TODO: write tests!
-
 import Prelude ()
 import Prelude.Compat
 

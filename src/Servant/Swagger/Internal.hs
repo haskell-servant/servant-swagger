@@ -22,6 +22,7 @@ import           Data.HashMap.Strict.InsOrd             (InsOrdHashMap)
 import qualified Data.HashMap.Strict.InsOrd             as InsOrdHashMap
 import           Data.Foldable (toList)
 import           Data.Proxy
+import           Data.Typeable
 import           Data.Singletons.Bool
 import           Data.Swagger                           hiding (Header)
 import qualified Data.Swagger                           as Swagger
@@ -236,13 +237,16 @@ instance (KnownSymbol sym, HasSwagger sub) => HasSwagger (sym :> sub) where
     where
       piece = symbolVal (Proxy :: Proxy sym)
 
-instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub, KnownSymbol (FoldDescription mods)) => HasSwagger (Capture' mods sym a :> sub) where
+instance (KnownSymbol sym, Typeable a, ToParamSchema a, HasSwagger sub, KnownSymbol (FoldDescription mods)) => HasSwagger (Capture' mods sym a :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
     & addParam param
     & prependPath capture
     & addDefaultResponse404 tname
     where
-      pname = symbolVal (Proxy :: Proxy sym)
+      symbol = symbolVal (Proxy :: Proxy sym)
+      pname = if symbol == ""
+        then camelTo2 '-' . tyConName . typeRepTyCon $ typeRep (Proxy :: Proxy a)
+        else symbol
       tname = Text.pack pname
       transDesc ""   = Nothing
       transDesc desc = Just (Text.pack desc)
@@ -256,7 +260,7 @@ instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub, KnownSymbol (FoldDes
             & paramSchema .~ toParamSchema (Proxy :: Proxy a))
 
 -- | Swagger Spec doesn't have a notion of CaptureAll, this instance is the best effort.
-instance (KnownSymbol sym, ToParamSchema a, HasSwagger sub) => HasSwagger (CaptureAll sym a :> sub) where
+instance (KnownSymbol sym, Typeable a, ToParamSchema a, HasSwagger sub) => HasSwagger (CaptureAll sym a :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Capture sym a :> sub))
 
 instance (KnownSymbol desc, HasSwagger api) => HasSwagger (Description desc :> api) where
@@ -352,7 +356,7 @@ instance (ToSchema a, AllAccept cs, HasSwagger sub, KnownSymbol (FoldDescription
         & schema    .~ ParamBody ref
 
 -- | This instance is an approximation.
--- 
+--
 -- @since 1.1.7
 instance (ToSchema a, Accept ct, HasSwagger sub, KnownSymbol (FoldDescription mods)) => HasSwagger (StreamBody' mods fr ct a :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)

@@ -4,5 +4,5 @@ packages:
 - example/
 
 extra-deps:
-- servant-0.18
-- servant-server-0.18
+- servant-0.18.1
+- servant-server-0.18.1

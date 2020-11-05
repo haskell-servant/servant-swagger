@@ -7,7 +7,6 @@
 {-# LANGUAGE UndecidableInstances #-}
 module Servant.Swagger.Internal.TypeLevel.API where
 
-import           Data.Type.Bool (If)
 import           GHC.Exts       (Constraint)
 import           Servant.API
 

@@ -1,14 +1,12 @@
 {-# LANGUAGE CPP                  #-}
 {-# LANGUAGE ConstraintKinds      #-}
 {-# LANGUAGE DataKinds            #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}  -- TODO: can we get rid of this?
 {-# LANGUAGE FlexibleContexts     #-}
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE OverloadedStrings    #-}
 {-# LANGUAGE PolyKinds            #-}
 {-# LANGUAGE RankNTypes           #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
-{-# LANGUAGE StandaloneDeriving   #-}  -- TODO: can we get away with terminating support for ghcs that don't have this?
 {-# LANGUAGE TypeOperators        #-}
 #if __GLASGOW_HASKELL__ >= 806
 {-# LANGUAGE UndecidableInstances #-}
@@ -18,10 +16,7 @@ module Servant.Swagger.Internal where
 import Prelude ()
 import Prelude.Compat
 
--- TODO: turn on lower version bound once servant is released.
--- #if MIN_VERSION_servant(0,19,0)
 import           Control.Applicative                    ((<|>))
--- #endif
 import           Control.Lens
 import           Data.Aeson
 import           Data.HashMap.Strict.InsOrd             (InsOrdHashMap)
@@ -190,8 +185,6 @@ instance SwaggerMethod 'OPTIONS where swaggerMethod _ = options
 instance SwaggerMethod 'HEAD    where swaggerMethod _ = head_
 instance SwaggerMethod 'PATCH   where swaggerMethod _ = patch
 
--- TODO: turn on lower version bound once servant is released.
--- #if MIN_VERSION_servant(0,19,0)
 instance HasSwagger (UVerb method cs '[]) where
   toSwagger _ = mempty
 
@@ -241,9 +234,6 @@ instance
         , _swaggerTags = _swaggerTags s <> _swaggerTags t
         , _swaggerExternalDocs = _swaggerExternalDocs s <|> _swaggerExternalDocs t
         }
-
-deriving instance ToSchema a => ToSchema (WithStatus s a)
--- #endif
 
 instance {-# OVERLAPPABLE #-} (ToSchema a, AllAccept cs, KnownNat status, SwaggerMethod method) => HasSwagger (Verb method status cs a) where
   toSwagger _ = toSwagger (Proxy :: Proxy (Verb method status cs (Headers '[] a)))

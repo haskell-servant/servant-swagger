@@ -1,5 +1,7 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_GHC -fno-warn-orphans       #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE StandaloneDeriving         #-}
 module Servant.Swagger.Internal.Orphans where
 
 import           Data.Proxy
@@ -7,6 +9,7 @@ import           Data.Proxy
 import           Data.Swagger
 import           Servant.Types.SourceT
                  (SourceT)
+import           Servant.API (WithStatus(..))
 
 -- | Pretend that 'SourceT m a' is '[a]'.
 --
@@ -14,3 +17,6 @@ import           Servant.Types.SourceT
 --
 instance ToSchema a => ToSchema (SourceT m a) where
     declareNamedSchema _ = declareNamedSchema (Proxy :: Proxy [a])
+
+-- @since <TODO>
+deriving instance ToSchema a => ToSchema (WithStatus s a)

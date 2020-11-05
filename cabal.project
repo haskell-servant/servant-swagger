@@ -1,6 +1,2 @@
-packages:
-  ./
-  ../servant/servant/
-  ../servant/servant-server/
-
+packages: .
 allow-newer: aeson-pretty-0.8.7:base-compat

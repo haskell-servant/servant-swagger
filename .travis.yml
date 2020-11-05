@@ -149,8 +149,8 @@ script:
   - ${CABAL} v2-build $WITHCOMPILER --disable-tests --disable-benchmarks --constraint='swagger2 ==2.4.*' all
   # Constraint set swagger2-2.5
   - ${CABAL} v2-build $WITHCOMPILER --disable-tests --disable-benchmarks --constraint='swagger2 ==2.5.*' all
-  # Constraint set servant-0.17
-  - ${CABAL} v2-build $WITHCOMPILER --disable-tests --disable-benchmarks --constraint='servant == 0.17.*' all
+  # Constraint set servant-0.18.1
+  - ${CABAL} v2-build $WITHCOMPILER --disable-tests --disable-benchmarks --constraint='servant == 0.18.1' all
 
 # REGENDATA ("0.9.20200121",["--config=cabal.haskell-ci","cabal.project"])
 # EOF

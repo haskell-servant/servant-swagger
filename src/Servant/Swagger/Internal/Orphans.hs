@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans       #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 module Servant.Swagger.Internal.Orphans where
 

@@ -10,7 +10,9 @@ import           Data.Proxy
 import           Data.Swagger
 import           Servant.Types.SourceT
                  (SourceT)
+#if __GLASGOW_HASKELL__ >= 881
 import           Servant.API (WithStatus(..))
+#endif
 
 -- | Pretend that 'SourceT m a' is '[a]'.
 --

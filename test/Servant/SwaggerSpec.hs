@@ -412,89 +412,78 @@ getPostAPI = [aesonQQ|
 -- UVerb API
 -- =======================================================================
 
-data FisxUser = FisxUser {name :: String}
+data Lunch = Lunch {name :: String}
   deriving (Eq, Show, Generic)
 
-instance ToSchema FisxUser
+instance ToSchema Lunch
 
-instance HasStatus FisxUser where
-  type StatusOf FisxUser = 203
+instance HasStatus Lunch where
+  type StatusOf Lunch = 200
 
-data ArianUser = ArianUser
+data NoLunch = NoLunch
   deriving (Eq, Show, Generic)
 
-instance ToSchema ArianUser
+instance ToSchema NoLunch
 
-type UVerbAPI = "fisx" :> UVerb 'GET '[JSON] '[FisxUser, WithStatus 303 String]
-           :<|> "arian" :> UVerb 'POST '[JSON] '[WithStatus 201 ArianUser]
+instance HasStatus NoLunch where
+  type StatusOf NoLunch = 404
+
+type UVerbAPI2 =
+  "lunch" :> UVerb 'GET '[JSON] '[Lunch, NoLunch]
 
 uverbSwagger :: Swagger
-uverbSwagger = toSwagger (Proxy :: Proxy UVerbAPI)
+uverbSwagger = toSwagger (Proxy :: Proxy UVerbAPI2)
 
 uverbAPI :: Value
-uverbAPI = [aesonQQ|
-{
-  "swagger": "2.0",
-  "info": {
-    "version": "",
-    "title": ""
-  },
-  "paths": {
-    "/fisx": {
-      "get": {
-        "produces": [
-          "application/json;charset=utf-8"
-        ],
-        "responses": {
-          "303": {
-            "schema": {
-              "type": "string"
-            },
-            "description": ""
-          },
-          "203": {
-            "schema": {
-              "$ref": "#/definitions/FisxUser"
-            },
-            "description": ""
-          }
-        }
-      }
+uverbAPI =
+  [aesonQQ|
+  {
+    "swagger": "2.0",
+    "info": {
+      "version": "",
+      "title": ""
     },
-    "/arian": {
-      "post": {
-        "produces": [
-          "application/json;charset=utf-8"
+    "definitions": {
+      "Lunch": {
+        "required": [
+          "name"
         ],
-        "responses": {
-          "201": {
-            "schema": {
-              "$ref": "#/definitions/ArianUser"
-            },
-            "description": ""
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
           }
-        }
-      }
-    }
-  },
-  "definitions": {
-    "FisxUser": {
-      "required": [
-        "name"
-      ],
-      "properties": {
-        "name": {
-          "type": "string"
         }
       },
-      "type": "object"
+      "NoLunch": {
+        "type": "string",
+        "enum": [
+          "NoLunch"
+        ]
+      }
     },
-    "ArianUser": {
-      "type": "string",
-      "enum": [
-        "ArianUser"
-      ]
+    "paths": {
+      "/lunch": {
+        "get": {
+          "responses": {
+            "404": {
+              "schema": {
+                "$ref": "#/definitions/NoLunch"
+              },
+              "description": ""
+            },
+            "200": {
+              "schema": {
+                "$ref": "#/definitions/Lunch"
+              },
+              "description": ""
+            }
+          },
+          "produces": [
+            "application/json;charset=utf-8"
+          ]
+        }
+      }
     }
-  }
 }
 |]

@@ -4,6 +4,7 @@
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE QuasiQuotes        #-}
+{-# LANGUAGE TypeFamilies       #-}
 {-# LANGUAGE TypeOperators      #-}
 {-# LANGUAGE PackageImports     #-}
 module Servant.SwaggerSpec where
@@ -40,6 +41,7 @@ spec = describe "HasSwagger" $ do
   it "Todo API" $ checkAPI (Proxy :: Proxy TodoAPI) todoAPI
   it "Hackage API (with tags)" $ checkSwagger hackageSwaggerWithTags hackageAPI
   it "GetPost API (test subOperations)" $ checkSwagger getPostSwagger getPostAPI
+  it "UVerb API" $ checkSwagger uverbSwagger uverbAPI
   it "Comprehensive API" $ do
     let _x = toSwagger comprehensiveAPI
     True `shouldBe` True -- type-level test
@@ -406,3 +408,82 @@ getPostAPI = [aesonQQ|
 }
 |]
 
+-- =======================================================================
+-- UVerb API
+-- =======================================================================
+
+data Lunch = Lunch {name :: String}
+  deriving (Eq, Show, Generic)
+
+instance ToSchema Lunch
+
+instance HasStatus Lunch where
+  type StatusOf Lunch = 200
+
+data NoLunch = NoLunch
+  deriving (Eq, Show, Generic)
+
+instance ToSchema NoLunch
+
+instance HasStatus NoLunch where
+  type StatusOf NoLunch = 404
+
+type UVerbAPI2 =
+  "lunch" :> UVerb 'GET '[JSON] '[Lunch, NoLunch]
+
+uverbSwagger :: Swagger
+uverbSwagger = toSwagger (Proxy :: Proxy UVerbAPI2)
+
+uverbAPI :: Value
+uverbAPI =
+  [aesonQQ|
+  {
+    "swagger": "2.0",
+    "info": {
+      "version": "",
+      "title": ""
+    },
+    "definitions": {
+      "Lunch": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "NoLunch": {
+        "type": "string",
+        "enum": [
+          "NoLunch"
+        ]
+      }
+    },
+    "paths": {
+      "/lunch": {
+        "get": {
+          "responses": {
+            "404": {
+              "schema": {
+                "$ref": "#/definitions/NoLunch"
+              },
+              "description": ""
+            },
+            "200": {
+              "schema": {
+                "$ref": "#/definitions/Lunch"
+              },
+              "description": ""
+            }
+          },
+          "produces": [
+            "application/json;charset=utf-8"
+          ]
+        }
+      }
+    }
+}
+|]

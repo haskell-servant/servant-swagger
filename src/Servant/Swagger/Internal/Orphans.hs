@@ -21,7 +21,7 @@ import           Servant.API (WithStatus(..))
 instance ToSchema a => ToSchema (SourceT m a) where
     declareNamedSchema _ = declareNamedSchema (Proxy :: Proxy [a])
 
--- @since <TODO>
 #if __GLASGOW_HASKELL__ >= 881
+-- @since 1.1.11
 deriving instance ToSchema a => ToSchema (WithStatus s a)
 #endif

@@ -10,7 +10,7 @@ import           Data.Proxy
 import           Data.Swagger
 import           Servant.Types.SourceT
                  (SourceT)
-#if __GLASGOW_HASKELL__ >= 881
+#if MIN_VERSION_GLASGOW_HASKELL(8,8,1,0)
 import           Servant.API (WithStatus(..))
 #endif
 
@@ -21,7 +21,7 @@ import           Servant.API (WithStatus(..))
 instance ToSchema a => ToSchema (SourceT m a) where
     declareNamedSchema _ = declareNamedSchema (Proxy :: Proxy [a])
 
-#if __GLASGOW_HASKELL__ >= 881
+#if MIN_VERSION_GLASGOW_HASKELL(8,8,1,0)
 -- @since 1.1.11
 deriving instance ToSchema a => ToSchema (WithStatus s a)
 #endif

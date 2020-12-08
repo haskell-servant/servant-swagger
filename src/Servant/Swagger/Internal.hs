@@ -318,6 +318,10 @@ instance (KnownSymbol desc, HasSwagger api) => HasSwagger (Description desc :> a
   toSwagger _ = toSwagger (Proxy :: Proxy api)
     & allOperations.description %~ (Just (Text.pack (symbolVal (Proxy :: Proxy desc))) <>)
 
+instance (KnownSymbol opid, HasSwagger api) => HasSwagger (OperationId opid :> api) where
+  toSwagger _ = toSwagger (Proxy :: Proxy api)
+    & allOperations.operationId ?~ Text.pack (symbolVal (Proxy :: Proxy opid))
+
 instance (KnownSymbol desc, HasSwagger api) => HasSwagger (Summary desc :> api) where
   toSwagger _ = toSwagger (Proxy :: Proxy api)
     & allOperations.summary %~ (Just (Text.pack (symbolVal (Proxy :: Proxy desc))) <>)

@@ -45,8 +45,8 @@
         "/todo/{id}": {
             "get": {
                 "responses": {
-                    "404": {
-                        "description": "`id` not found"
+                    "400": {
+                        "description": "Invalid `id`"
                     },
                     "200": {
                         "schema": {
@@ -74,11 +74,8 @@
                     "application/json;charset=utf-8"
                 ],
                 "responses": {
-                    "404": {
-                        "description": "`id` not found"
-                    },
                     "400": {
-                        "description": "Invalid `body`"
+                        "description": "Invalid `body` or `id`"
                     },
                     "200": {
                         "schema": {

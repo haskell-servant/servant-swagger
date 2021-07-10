@@ -157,14 +157,6 @@ addConsumes cs = allOperations.consumes %~ (<> Just (MimeList cs))
 markdownCode :: Text -> Text
 markdownCode s = "`" <> s <> "`"
 
-addDefaultResponse404 :: ParamName -> Swagger -> Swagger
-addDefaultResponse404 pname = setResponseWith (\old _new -> alter404 old) 404 (return response404)
-  where
-    sname = markdownCode pname
-    description404 = sname <> " not found"
-    alter404 = description %~ ((sname <> " or ") <>)
-    response404 = mempty & description .~ description404
-
 addDefaultResponse400 :: ParamName -> Swagger -> Swagger
 addDefaultResponse400 pname = setResponseWith (\old _new -> alter400 old) 400 (return response400)
   where
@@ -292,7 +284,7 @@ instance (KnownSymbol sym, Typeable a, ToParamSchema a, HasSwagger sub, KnownSym
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
     & addParam param
     & prependPath capture
-    & addDefaultResponse404 tname
+    & addDefaultResponse400 tname
     where
       symbol = symbolVal (Proxy :: Proxy sym)
       pname = if symbol == ""

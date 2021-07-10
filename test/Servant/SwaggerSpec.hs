@@ -109,7 +109,7 @@ todoAPI = [aesonQQ|
                       "schema": { "$ref":"#/definitions/Todo" },
                       "description": ""
                     },
-                  "404": { "description": "`id` not found" }
+                  "400": { "description": "Invalid `id`" }
                 },
               "produces": [ "application/json;charset=utf-8" ],
               "parameters":
@@ -299,8 +299,8 @@ hackageAPI = modifyValue [aesonQQ|
       "/user/{username}":{
          "get":{
             "responses":{
-               "404":{
-                  "description":"`username` not found"
+               "400":{
+                  "description":"Invalid `username`"
                },
                "200":{
                   "schema":{

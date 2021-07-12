@@ -267,6 +267,10 @@ instance (HasSwagger sub) => HasSwagger (IsSecure :> sub) where
 instance (HasSwagger sub) => HasSwagger (RemoteHost :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)
 
+-- | @'Fragment'@ combinator does not change our specification at all.
+instance HasSwagger sub => HasSwagger (Fragment a :> sub) where
+  toSwagger _ = toSwagger (Proxy :: Proxy sub)
+
 -- | @'HttpVersion'@ combinator does not change our specification at all.
 instance (HasSwagger sub) => HasSwagger (HttpVersion :> sub) where
   toSwagger _ = toSwagger (Proxy :: Proxy sub)

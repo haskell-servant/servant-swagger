@@ -50,6 +50,7 @@ import           Servant.Swagger.Internal.Orphans ()
 -- >>> import Control.Applicative
 -- >>> import Control.Lens
 -- >>> import Data.Aeson
+-- >>> import Data.Aeson.Encode.Pretty
 -- >>> import Data.Swagger
 -- >>> import Data.Typeable
 -- >>> import GHC.Generics
@@ -73,6 +74,7 @@ import           Servant.Swagger.Internal.Orphans ()
 -- >>> type GetUser  = Capture "user_id" UserId :> Get '[JSON] User
 -- >>> type PostUser = ReqBody '[JSON] User :> Post '[JSON] UserId
 -- >>> type UserAPI  = GetUsers :<|> GetUser :<|> PostUser
+-- >>> orderedKeys = encodePretty' (defConfig { confCompare = compare, confIndent = Spaces 0 })
 
 -- $howto
 --
@@ -98,8 +100,8 @@ import           Servant.Swagger.Internal.Orphans ()
 -- $generate
 -- In order to generate @'Swagger'@ specification for a servant API, just use @'toSwagger'@:
 --
--- >>> BSL8.putStrLn $ encode $ toSwagger (Proxy :: Proxy UserAPI)
--- {"swagger":"2.0","info":{"title":"","version":""},"paths":{"/":{"get":{"produces":["application/json;charset=utf-8"],"responses":{"200":{"schema":{"items":{"$ref":"#/definitions/User"},"type":"array"},"description":""}}},"post":{"consumes":["application/json;charset=utf-8"],"produces":["application/json;charset=utf-8"],"parameters":[{"required":true,"schema":{"$ref":"#/definitions/User"},"name":"body","in":"body"}],"responses":{"400":{"description":"Invalid `body`"},"200":{"schema":{"$ref":"#/definitions/UserId"},"description":""}}}},"/{user_id}":{"get":{"produces":["application/json;charset=utf-8"],"parameters":[{"required":true,"name":"user_id","in":"path","type":"integer"}],"responses":{"400":{"description":"Invalid `user_id`"},"200":{"schema":{"$ref":"#/definitions/User"},"description":""}}}}},"definitions":{"User":{"required":["name","age"],"properties":{"name":{"type":"string"},"age":{"minimum":-9223372036854775808,"type":"integer","maximum":9223372036854775807}},"type":"object"},"UserId":{"type":"integer"}}}
+-- >>> BSL8.putStrLn . orderedKeys $ toSwagger (Proxy :: Proxy UserAPI)
+-- {"definitions":{"User":{"properties":{"age":{"maximum":9223372036854775807,"minimum":-9223372036854775808,"type":"integer"},"name":{"type":"string"}},"required":["name","age"],"type":"object"},"UserId":{"type":"integer"}},"info":{"title":"","version":""},"paths":{"/":{"get":{"produces":["application/json;charset=utf-8"],"responses":{"200":{"description":"","schema":{"items":{"$ref":"#/definitions/User"},"type":"array"}}}},"post":{"consumes":["application/json;charset=utf-8"],"parameters":[{"in":"body","name":"body","required":true,"schema":{"$ref":"#/definitions/User"}}],"produces":["application/json;charset=utf-8"],"responses":{"200":{"description":"","schema":{"$ref":"#/definitions/UserId"}},"400":{"description":"Invalid `body`"}}}},"/{user_id}":{"get":{"parameters":[{"in":"path","name":"user_id","required":true,"type":"integer"}],"produces":["application/json;charset=utf-8"],"responses":{"200":{"description":"","schema":{"$ref":"#/definitions/User"}},"400":{"description":"Invalid `user_id`"}}}}},"swagger":"2.0"}
 --
 -- By default @'toSwagger'@ will generate specification for all API routes, parameters, headers, responses and data schemas.
 --
@@ -113,14 +115,14 @@ import           Servant.Swagger.Internal.Orphans ()
 -- We can add this information using field lenses from @"Data.Swagger"@:
 --
 -- >>> :{
--- BSL8.putStrLn $ encode $ toSwagger (Proxy :: Proxy UserAPI)
+-- BSL8.putStrLn $ orderedKeys $ toSwagger (Proxy :: Proxy UserAPI)
 --   & info.title        .~ "User API"
 --   & info.version      .~ "1.0"
 --   & info.description  ?~ "This is an API for the Users service"
 --   & info.license      ?~ "MIT"
 --   & host              ?~ "example.com"
 -- :}
--- {"swagger":"2.0","info":{"license":{"name":"MIT"},"title":"User API","version":"1.0","description":"This is an API for the Users service"},"host":"example.com","paths":{"/":{"get":{"produces":["application/json;charset=utf-8"],"responses":{"200":{"schema":{"items":{"$ref":"#/definitions/User"},"type":"array"},"description":""}}},"post":{"consumes":["application/json;charset=utf-8"],"produces":["application/json;charset=utf-8"],"parameters":[{"required":true,"schema":{"$ref":"#/definitions/User"},"name":"body","in":"body"}],"responses":{"400":{"description":"Invalid `body`"},"200":{"schema":{"$ref":"#/definitions/UserId"},"description":""}}}},"/{user_id}":{"get":{"produces":["application/json;charset=utf-8"],"parameters":[{"required":true,"name":"user_id","in":"path","type":"integer"}],"responses":{"400":{"description":"Invalid `user_id`"},"200":{"schema":{"$ref":"#/definitions/User"},"description":""}}}}},"definitions":{"User":{"required":["name","age"],"properties":{"name":{"type":"string"},"age":{"minimum":-9223372036854775808,"type":"integer","maximum":9223372036854775807}},"type":"object"},"UserId":{"type":"integer"}}}
+-- {"definitions":{"User":{"properties":{"age":{"maximum":9223372036854775807,"minimum":-9223372036854775808,"type":"integer"},"name":{"type":"string"}},"required":["name","age"],"type":"object"},"UserId":{"type":"integer"}},"host":"example.com","info":{"description":"This is an API for the Users service","license":{"name":"MIT"},"title":"User API","version":"1.0"},"paths":{"/":{"get":{"produces":["application/json;charset=utf-8"],"responses":{"200":{"description":"","schema":{"items":{"$ref":"#/definitions/User"},"type":"array"}}}},"post":{"consumes":["application/json;charset=utf-8"],"parameters":[{"in":"body","name":"body","required":true,"schema":{"$ref":"#/definitions/User"}}],"produces":["application/json;charset=utf-8"],"responses":{"200":{"description":"","schema":{"$ref":"#/definitions/UserId"}},"400":{"description":"Invalid `body`"}}}},"/{user_id}":{"get":{"parameters":[{"in":"path","name":"user_id","required":true,"type":"integer"}],"produces":["application/json;charset=utf-8"],"responses":{"200":{"description":"","schema":{"$ref":"#/definitions/User"}},"400":{"description":"Invalid `user_id`"}}}}},"swagger":"2.0"}
 --
 -- It is also useful to annotate or modify certain endpoints.
 -- @'subOperations'@ provides a convenient way to zoom into a part of an API.
@@ -134,11 +136,11 @@ import           Servant.Swagger.Internal.Orphans ()
 -- >>> let getOps  = subOperations (Proxy :: Proxy (GetUsers :<|> GetUser)) (Proxy :: Proxy UserAPI)
 -- >>> let postOps = subOperations (Proxy :: Proxy PostUser) (Proxy :: Proxy UserAPI)
 -- >>> :{
--- BSL8.putStrLn $ encode $ toSwagger (Proxy :: Proxy UserAPI)
+-- BSL8.putStrLn $ orderedKeys $ toSwagger (Proxy :: Proxy UserAPI)
 --   & applyTagsFor getOps  ["get"  & description ?~ "GET operations"]
 --   & applyTagsFor postOps ["post" & description ?~ "POST operations"]
 -- :}
--- {"swagger":"2.0","info":{"title":"","version":""},"paths":{"/":{"get":{"tags":["get"],"produces":["application/json;charset=utf-8"],"responses":{"200":{"schema":{"items":{"$ref":"#/definitions/User"},"type":"array"},"description":""}}},"post":{"tags":["post"],"consumes":["application/json;charset=utf-8"],"produces":["application/json;charset=utf-8"],"parameters":[{"required":true,"schema":{"$ref":"#/definitions/User"},"name":"body","in":"body"}],"responses":{"400":{"description":"Invalid `body`"},"200":{"schema":{"$ref":"#/definitions/UserId"},"description":""}}}},"/{user_id}":{"get":{"tags":["get"],"produces":["application/json;charset=utf-8"],"parameters":[{"required":true,"name":"user_id","in":"path","type":"integer"}],"responses":{"400":{"description":"Invalid `user_id`"},"200":{"schema":{"$ref":"#/definitions/User"},"description":""}}}}},"definitions":{"User":{"required":["name","age"],"properties":{"name":{"type":"string"},"age":{"minimum":-9223372036854775808,"type":"integer","maximum":9223372036854775807}},"type":"object"},"UserId":{"type":"integer"}},"tags":[{"name":"get","description":"GET operations"},{"name":"post","description":"POST operations"}]}
+-- {"definitions":{"User":{"properties":{"age":{"maximum":9223372036854775807,"minimum":-9223372036854775808,"type":"integer"},"name":{"type":"string"}},"required":["name","age"],"type":"object"},"UserId":{"type":"integer"}},"info":{"title":"","version":""},"paths":{"/":{"get":{"produces":["application/json;charset=utf-8"],"responses":{"200":{"description":"","schema":{"items":{"$ref":"#/definitions/User"},"type":"array"}}},"tags":["get"]},"post":{"consumes":["application/json;charset=utf-8"],"parameters":[{"in":"body","name":"body","required":true,"schema":{"$ref":"#/definitions/User"}}],"produces":["application/json;charset=utf-8"],"responses":{"200":{"description":"","schema":{"$ref":"#/definitions/UserId"}},"400":{"description":"Invalid `body`"}},"tags":["post"]}},"/{user_id}":{"get":{"parameters":[{"in":"path","name":"user_id","required":true,"type":"integer"}],"produces":["application/json;charset=utf-8"],"responses":{"200":{"description":"","schema":{"$ref":"#/definitions/User"}},"400":{"description":"Invalid `user_id`"}},"tags":["get"]}}},"swagger":"2.0","tags":[{"description":"GET operations","name":"get"},{"description":"POST operations","name":"post"}]}
 --
 -- This applies @\"get\"@ tag to the @GET@ endpoints and @\"post\"@ tag to the @POST@ endpoint of the User API.
 

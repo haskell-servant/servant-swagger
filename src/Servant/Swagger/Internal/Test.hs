@@ -4,10 +4,12 @@
 {-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
+{-# LANGUAGE OverloadedStrings   #-}
 module Servant.Swagger.Internal.Test where
 
 import           Data.Aeson                         (ToJSON (..))
-import           Data.Aeson.Encode.Pretty           (encodePretty)
+import           Data.Aeson.Encode.Pretty           (encodePretty', defConfig,
+                                                     confCompare)
 import           Data.Swagger                       (Pattern, ToSchema,
                                                      toSchema)
 import           Data.Swagger.Schema.Validation
@@ -158,10 +160,6 @@ props _ f px = sequence_ specs
 -- <BLANKLINE>
 -- Swagger Schema:
 -- {
---     "required": [
---         "name",
---         "phone"
---     ],
 --     "properties": {
 --         "name": {
 --             "type": "string"
@@ -170,6 +168,10 @@ props _ f px = sequence_ specs
 --             "type": "integer"
 --         }
 --     },
+--     "required": [
+--         "name",
+--         "phone"
+--     ],
 --     "type": "object"
 -- }
 -- <BLANKLINE>
@@ -191,7 +193,8 @@ prettyValidateWith f x =
       , ppJSONString (toJSON schema)
       ]
   where
-    ppJSONString = TL.unpack . TL.decodeUtf8 . encodePretty
+    ppJSONString = TL.unpack . TL.decodeUtf8 . encodePretty' ppCfg
+    ppCfg = defConfig { confCompare = compare }
 
     json   = toJSON x
     schema = toSchema (Proxy :: Proxy a)

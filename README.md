@@ -1,5 +1,8 @@
 # servant-swagger
 
+⚠️ ⚠️ ⚠️  This repo will be soon migrated into the servant main depo ⚠️ ⚠️ ⚠️ 
+
+
 [![Build Status](https://travis-ci.org/haskell-servant/servant-swagger.svg?branch=master)](https://travis-ci.org/haskell-servant/servant-swagger)
 [![Hackage](https://img.shields.io/hackage/v/servant-swagger.svg)](http://hackage.haskell.org/package/servant-swagger)
 [![Stackage LTS](http://stackage.org/package/servant-swagger/badge/lts)](http://stackage.org/lts/package/servant-swagger)
